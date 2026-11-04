@@ -1,0 +1,6 @@
+# Impeccable engine binaries (downloaded automatically on first use)
+.claude/skills/impeccable/scripts/bin/
+.agents/skills/impeccable/scripts/bin/
+
+# Personal Claude Code settings
+.claude/settings.local.json
