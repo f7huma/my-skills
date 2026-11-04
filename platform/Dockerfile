@@ -38,7 +38,7 @@ COPY --from=assets /src/public/build /app/public/build
 COPY docker/app/entrypoint.sh /usr/local/bin/entrypoint
 # مستخدم غير جذري؛ لا يملك صلاحية الكتابة على الكود (لا يعدّل التطبيق كوده)
 RUN useradd -r -u 10001 -g www-data app \
- && mkdir -p /var/lib/humaidan/files /var/lib/humaidan/backups /app/storage/framework/{cache,sessions,views} /app/storage/logs /app/bootstrap/cache \
+ && mkdir -p /var/lib/humaidan/files /var/lib/humaidan/backups /var/lib/humaidan/restored /app/storage/framework/{cache,sessions,views} /app/storage/logs /app/bootstrap/cache \
  && chown -R app:www-data /var/lib/humaidan /app/storage /app/bootstrap/cache /data /config \
  && chmod 0700 /var/lib/humaidan/files /var/lib/humaidan/backups \
  && chmod +x /usr/local/bin/entrypoint \

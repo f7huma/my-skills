@@ -146,6 +146,20 @@ Schedule::command('ops:check')->hourly()->withoutOverlapping();
 Schedule::command('retention:purge')->weeklyOn(5, '03:30')->timezone('Asia/Riyadh');
 Schedule::command('queue:prune-failed --hours=720')->daily();
 
+// ------------------------------------------------------------------ اختبار محرك الفحص
+Artisan::command('ops:scanner-selftest', function (\App\Services\Files\MalwareScanner $scanner) {
+    // نص الاختبار القياسي EICAR (غير ضار) يُرسل مباشرة لمحرك الفحص دون حفظه
+    $eicar = 'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
+    $bad = $scanner->scan(fn ($sink) => $sink($eicar));
+    $good = $scanner->scan(fn ($sink) => $sink('humaidan clean sample '.now()));
+    $this->line('EICAR: '.$bad['status'].' ('.$bad['engine'].')');
+    $this->line('ملف سليم: '.$good['status']);
+    $ok = $bad['status'] === 'infected' && $good['status'] === 'clean';
+    $ok ? $this->info('محرك الفحص يعمل: يكتشف المصاب ويمرر السليم.') : $this->error('محرك الفحص لا يعمل كما ينبغي — المرفقات ستبقى محجوبة.');
+
+    return $ok ? 0 : 1;
+})->purpose('التحقق من أن ClamAV يكتشف ملف الاختبار القياسي EICAR');
+
 // ------------------------------------------------------------------ مراجعة إعداد الإنتاج
 Artisan::command('ops:security-check', function () {
     $checks = [

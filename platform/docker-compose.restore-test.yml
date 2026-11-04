@@ -12,7 +12,7 @@ services:
     command: ["web"]
     ports: ["127.0.0.1:18080:8080"]   # للتجربة عبر نفق SSH فقط
     volumes:
-      - restored_files:/var/lib/humaidan/files
+      - restored_files:/var/lib/humaidan/restored
       - restored_backups:/var/lib/humaidan/backups
     depends_on: [db]
     networks: [isolated, local]
