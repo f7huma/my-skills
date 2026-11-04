@@ -26,7 +26,8 @@ class TwoFactor
         $url = $this->g->getQRCodeUrl(config('office.short_name'), $user->email, $secret);
         $writer = new Writer(new ImageRenderer(new RendererStyle(200, 1), new SvgImageBackEnd));
 
-        return $writer->writeString($url);
+        // يُعاد كصورة data URI لا كـ HTML مضمّن
+        return 'data:image/svg+xml;base64,'.base64_encode($writer->writeString($url));
     }
 
     /** يمنع إعادة استخدام الرمز نفسه خلال نافذته */

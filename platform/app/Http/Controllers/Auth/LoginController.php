@@ -26,7 +26,7 @@ class LoginController extends Controller
         // نتحقق من كلمة المرور حتى عند عدم وجود المستخدم لتقليل فروق التوقيت
         $valid = $user && $user->password && Hash::check($data['password'], $user->password);
         if (! $user) {
-            Hash::check($data['password'], '$2y$12$abcdefghijklmnopqrstuuJ6tq0Yh9g5uHhm5QFQx2n8ZZ5d7m8rW');
+            Hash::check($data['password'], self::dummyHash());
         }
         if (! $valid || ! $user->is_active) {
             Audit::log('auth.failed', $user, ['reason' => $user && ! $user->is_active ? 'inactive' : 'credentials'], $user?->id);
@@ -41,6 +41,14 @@ class LoginController extends Controller
         }
 
         return $this->complete($request, $user, (bool) ($data['remember'] ?? false));
+    }
+
+    /** بصمة عشوائية تُولَّد مرة لكل عملية لموازنة زمن الاستجابة عند عدم وجود المستخدم */
+    private static function dummyHash(): string
+    {
+        static $hash = null;
+
+        return $hash ??= Hash::make(\Illuminate\Support\Str::random(40));
     }
 
     public function complete(Request $request, User $user, bool $remember)

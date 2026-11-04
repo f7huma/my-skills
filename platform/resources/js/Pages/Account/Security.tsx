@@ -60,7 +60,7 @@ export default function Security({ twoFactorEnabled, mfaRequired, setup, recover
 
         {!twoFactorEnabled && setup && (
           <div className="grid gap-5 sm:grid-cols-[200px_1fr]">
-            <div className="rounded-lg bg-white p-2" dangerouslySetInnerHTML={{ __html: setup.qr }} aria-label="رمز QR لإضافة الحساب في تطبيق المصادقة" role="img" />
+            <img src={setup.qr} alt="رمز QR لإضافة الحساب في تطبيق المصادقة" width={200} height={200} className="rounded-lg bg-white p-2" />
             <form onSubmit={(e) => { e.preventDefault(); confirm.post('/account/security/two-factor/confirm'); }} className="space-y-3">
               <p className="text-[13.5px] text-muted">امسح الرمز بتطبيق المصادقة، أو أدخل المفتاح يدويًا:</p>
               <p dir="ltr" className="num break-all rounded bg-surface px-2 py-1.5 text-[13px]">{setup.secret}</p>

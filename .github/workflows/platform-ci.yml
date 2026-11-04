@@ -35,7 +35,7 @@ jobs:
         with: { php-version: "8.3", extensions: "pdo_pgsql, intl, zip, gd, sodium", coverage: none }
       - uses: actions/setup-node@v4
         with: { node-version: "22", cache: npm, cache-dependency-path: platform/package-lock.json }
-      - run: sudo apt-get update && sudo apt-get install -y postgresql-client poppler-utils
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client-17 poppler-utils && echo "/usr/lib/postgresql/17/bin" >> $GITHUB_PATH
       - run: composer install --no-interaction --prefer-dist
       - run: npm ci
       - name: Typecheck and build
