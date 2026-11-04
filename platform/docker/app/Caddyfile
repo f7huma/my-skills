@@ -11,6 +11,16 @@
 	# لا يُخدم أي مسار تخزين مباشرة: المرفقات خارج جذر الويب أصلًا
 	@blocked path /storage/* /.env* /.git* /vendor/*
 	respond @blocked 404
-	header -Server
+	# رؤوس أمان لكل الاستجابات بما فيها الملفات الثابتة (JS/CSS/الصور) التي لا تمر بالتطبيق.
+	# "?" تعني: تُضاف فقط إن لم يضعها التطبيق (يحتفظ التطبيق بسياسة CSP الخاصة بكل صفحة).
+	header {
+		-Server
+		-X-Powered-By
+		?X-Content-Type-Options nosniff
+		?X-Frame-Options DENY
+		?Referrer-Policy same-origin
+		?Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=()"
+		?Content-Security-Policy "default-src 'none'; frame-ancestors 'none'"
+	}
 	php_server
 }

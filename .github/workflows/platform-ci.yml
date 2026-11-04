@@ -94,6 +94,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: docker build -t humaidan-app:ci .
+      - name: Smoke test the production web server (headers on static files)
+        run: |
+          k() { echo "base64:$(openssl rand -base64 32)"; }
+          docker run -d --name app -p 8080:8080 -e APP_KEY="$(k)" -e APP_URL=http://localhost:8080 \
+            -e DB_HOST=127.0.0.1 -e DB_PASSWORD=unused -e FILES_ENCRYPTION_KEY="$(k)" -e BACKUP_ENCRYPTION_KEY="$(k)" \
+            -e SCANNER_DRIVER=disabled humaidan-app:ci
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:8080/favicon.png && break; sleep 1; done
+          docker logs app | tail -20
+          H=$(curl -sI http://localhost:8080/favicon.png)
+          echo "$H"
+          for h in "permissions-policy" "x-content-type-options: nosniff" "x-frame-options: deny" "content-security-policy"; do
+            echo "$H" | grep -qi "$h" || { echo "missing header: $h"; exit 1; }
+          done
+          echo "$H" | grep -qi "x-powered-by" && { echo "X-Powered-By exposed"; exit 1; } || true
+          curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/.env | grep -q 404 || { echo ".env reachable"; exit 1; }
+          docker rm -f app
       - name: Container image scan (trivy)
         run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock aquasec/trivy:0.56.2 image --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed humaidan-app:ci
 

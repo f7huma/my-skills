@@ -9,7 +9,7 @@
 20020	WARN	(إصدار PHP في بيئة CI؛ صورة الإنتاج تُبنى من أحدث PHP 8.3 وتفحصها trivy)
 10021	WARN	(nosniff على الملفات الثابتة يضيفه Caddy في الإنتاج؛ خادم php artisan serve في CI لا يمر بالوسيط)
 10038	FAIL	(CSP Header Not Set)
-10063	FAIL	(Permissions Policy Header Not Set)
+10063	WARN	(يظهر فقط على الملفات الثابتة لأن خادم CI التجريبي لا يمر بالتطبيق؛ صفحات التطبيق تحمله، وخادم الإنتاج يضيفه لكل ملف ويُتحقق منه في خطوة image-scan)
 10037	FAIL	(X-Powered-By)
 10020	FAIL	(Anti-clickjacking Header)
 10035	WARN	(HSTS: يضيفه الوكيل عند HTTPS)
