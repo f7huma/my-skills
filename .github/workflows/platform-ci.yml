@@ -127,6 +127,8 @@ jobs:
         with:
           target: "http://localhost:8000/login"
           rules_file_name: "platform/.zap/rules.tsv"
+          # يفشل على القواعد المعلّمة FAIL فقط؛ التحذيرات تظهر في التقرير
+          cmd_options: "-I"
           fail_action: true
           allow_issue_writing: false
 

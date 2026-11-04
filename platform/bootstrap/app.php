@@ -22,8 +22,9 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: env('TRUSTED_PROXIES', '172.16.0.0/12,10.0.0.0/8,192.168.0.0/16,127.0.0.1'));
         $middleware->prepend(PreviewGate::class);
+        // رؤوس الأمان عامة: تشمل صفحات 404 والأخطاء التي لا تمر بمجموعة web
+        $middleware->append(SecurityHeaders::class);
         $middleware->web(append: [
-            SecurityHeaders::class,
             EnsureActiveSession::class,
             RequireTwoFactor::class,
             HandleInertiaRequests::class,

@@ -17,6 +17,10 @@ class SecurityHeaders
         $dev = app()->environment('local') && is_file(public_path('hot'));
         $devSrc = $dev ? ' http://localhost:5173 ws://localhost:5173 http://127.0.0.1:5173 ws://127.0.0.1:5173 http://[::1]:5173 ws://[::1]:5173' : '';
         $h = $response->headers;
+        $h->remove('X-Powered-By');
+        if (function_exists('header_remove')) {
+            @header_remove('X-Powered-By');
+        }
         if (! $h->has('Content-Security-Policy')) {
             $h->set('Content-Security-Policy', implode('; ', [
                 "default-src 'self'",
@@ -45,7 +49,7 @@ class SecurityHeaders
         if (config('office.noindex')) {
             $h->set('X-Robots-Tag', 'noindex, nofollow, noarchive');
         }
-        if ($request->user()) {
+        if ($request->hasSession() && $request->user()) {
             $h->set('Cache-Control', 'no-store, private');
         }
 
