@@ -27,3 +27,4 @@ Homestead.yaml
 Thumbs.db
 .taste-skill/
 .env.restore-test
+/storage/backups
