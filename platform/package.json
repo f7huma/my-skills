@@ -4,7 +4,9 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "typecheck": "tsc --noEmit -p tsconfig.json",
+        "test:e2e": "node tests/e2e/flows.cjs"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

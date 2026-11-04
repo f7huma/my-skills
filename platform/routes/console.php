@@ -145,3 +145,33 @@ Schedule::job(new WorkerHeartbeat)->everyFiveMinutes();
 Schedule::command('ops:check')->hourly()->withoutOverlapping();
 Schedule::command('retention:purge')->weeklyOn(5, '03:30')->timezone('Asia/Riyadh');
 Schedule::command('queue:prune-failed --hours=720')->daily();
+
+// ------------------------------------------------------------------ مراجعة إعداد الإنتاج
+Artisan::command('ops:security-check', function () {
+    $checks = [
+        ['APP_ENV=production', app()->environment('production')],
+        ['APP_DEBUG=false', ! config('app.debug')],
+        ['APP_URL يبدأ بـ https://', str_starts_with((string) config('app.url'), 'https://')],
+        ['SESSION_SECURE_COOKIE=true', (bool) config('session.secure')],
+        ['SESSION_ENCRYPT=true', (bool) config('session.encrypt')],
+        ['المصادقة الثنائية إلزامية للمحامي', (bool) config('office.mfa_required')],
+        ['SCANNER_DRIVER=clamav', config('attachments.scanner.driver') === 'clamav'],
+        ['FILES_ENCRYPTION_KEY مضبوط', filled(config('attachments.key'))],
+        ['BACKUP_ENCRYPTION_KEY مضبوط ومختلف عن مفتاح الملفات', filled(config('backup.key')) && config('backup.key') !== config('attachments.key')],
+        ['مفتاح الملفات مختلف عن APP_KEY', config('attachments.key') !== config('app.key')],
+        ['وجهة النسخ المنفصلة مضبوطة', filled(config('backup.offsite_path'))],
+        ['المرفقات خارج جذر الويب', ! str_starts_with(realpath(config('attachments.root')) ?: config('attachments.root'), public_path())],
+        ['قناة تنبيه مضبوطة', filled(config('office.ops.alert_mail')) || filled(config('office.ops.alert_webhook'))],
+        ['لا حسابات تجريبية (@example.test)', \App\Models\User::where('email', 'like', '%@example.test')->doesntExist()],
+        ['كل المحامين بمصادقة ثنائية', \App\Models\User::where('role', 'lawyer')->where('is_active', true)->whereNull('two_factor_confirmed_at')->doesntExist()],
+        ['لا قواعد مواعيد معتمدة دون مراجعة', \App\Models\DeadlineRule::where('status', 'active')->whereNull('reviewed_at')->doesntExist()],
+    ];
+    $fail = 0;
+    foreach ($checks as [$label, $ok]) {
+        $this->line(($ok ? '<info>✓</info> ' : '<error>✗</error> ').$label);
+        $fail += $ok ? 0 : 1;
+    }
+    $fail ? $this->error("{$fail} بند لم يتحقق — لا تُدخل بيانات حقيقية قبل معالجتها.") : $this->info('اكتملت مراجعة الإعداد الآلية. تبقى المراجعة البشرية في قائمة الإطلاق.');
+
+    return $fail ? 1 : 0;
+})->purpose('مراجعة آلية لإعداد الإنتاج قبل إدخال بيانات حقيقية');

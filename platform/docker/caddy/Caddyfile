@@ -1,0 +1,35 @@
+# الوكيل العكسي للإنتاج: HTTPS تلقائي (Let's Encrypt) للدومين في APP_DOMAIN
+{
+	email {$ACME_EMAIL}
+	admin off
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+	request_body {
+		max_size 30MB
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		-Server
+	}
+	reverse_proxy app:8080 {
+		header_up X-Forwarded-Proto https
+	}
+	log {
+		output stdout
+		# لا تُسجَّل الاستعلامات (قد تحوي أرقامًا أو أسماء) ولا ملفات تعريف الارتباط
+		format filter {
+			wrap json
+			fields {
+				request>uri query {
+					delete
+				}
+				request>headers>Cookie delete
+				request>headers>Authorization delete
+				resp_headers>Set-Cookie delete
+			}
+		}
+	}
+}

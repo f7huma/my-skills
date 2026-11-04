@@ -73,7 +73,7 @@ class DemoCasesSeeder extends Seeder
         $f1 = $c1->filings()->first();
         $cases->updateFiling($f1, ['filing_request_number' => 'NJ-REQ-778812', 'submitted_on' => $today->copy()->subDays(12)->toDateString(), 'status' => 'registered',
             'case_number' => '4470123456', 'registered_on' => $today->copy()->subDays(8)->toDateString(), 'court' => 'المحكمة التجارية بالرياض', 'circuit' => 'الدائرة التجارية الخامسة']);
-        $h1 = $hearings->schedule($c1, ['kind' => 'court', 'court_filing_id' => $f1->id, 'scheduled_at' => $today->copy()->addDays(2)->setTime(9, 30)->format('Y-m-d H:i'), 'authority' => 'المحكمة التجارية بالرياض', 'meeting_url' => 'https://example.test/hearing']);
+        $h1 = $hearings->schedule($c1, ['kind' => 'court', 'court_filing_id' => $f1->id, 'scheduled_at' => app(\App\Services\Calendar::class)->add($today, 2, 'business')->format('Y-m-d').' 09:30', 'authority' => 'المحكمة التجارية بالرياض', 'meeting_url' => 'https://example.test/hearing']);
         $tasks->create(['title' => 'إرفاق كشف الحساب المحدث', 'kind' => 'attach_document', 'due_mode' => 'next_hearing', 'anchor_offset_days' => -1], $c1);
         $tasks->create(['title' => 'مراجعة مستندات التوريد', 'kind' => 'manual', 'due_mode' => 'date', 'due_on' => $today->copy()->subDay()->toDateString()], $c1);
         $c1->memos()->create(['type' => 'statement_of_claim', 'title' => 'لائحة الدعوى — مستحقات التوريد', 'status' => 'filed', 'filed_on' => $today->copy()->subDays(12), 'approved_at' => now()->subDays(13)]);

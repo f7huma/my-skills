@@ -1,0 +1,25 @@
+# بيئة معزولة لاختبار الاستعادة: قاعدة ووحدة ملفات مستقلتان على شبكة داخلية، ولا تمس الإنتاج.
+# انظر docs/ar/04-النسخ-والاستعادة.md
+name: humaidan-restore-test
+services:
+  db:
+    image: postgres:17-alpine
+    environment: { POSTGRES_DB: humaidan, POSTGRES_USER: humaidan, POSTGRES_PASSWORD: restore-test-only }
+    networks: [isolated]
+  app:
+    image: ${APP_IMAGE:-humaidan-app:latest}
+    env_file: .env.restore-test
+    command: ["web"]
+    ports: ["127.0.0.1:18080:8080"]   # للتجربة عبر نفق SSH فقط
+    volumes:
+      - restored_files:/var/lib/humaidan/files
+      - restored_backups:/var/lib/humaidan/backups
+    depends_on: [db]
+    networks: [isolated, local]
+volumes:
+  restored_files:
+  restored_backups:
+networks:
+  isolated:
+    internal: true
+  local: {}

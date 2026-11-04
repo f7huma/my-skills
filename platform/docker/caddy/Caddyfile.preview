@@ -1,0 +1,23 @@
+# بيئة المعاينة: دومين مؤقت بشهادة صحيحة + تقييد وصول مستقل قبل شاشة الدخول + منع الفهرسة
+{
+	email {$ACME_EMAIL}
+	admin off
+}
+
+{$APP_DOMAIN} {
+	encode zstd gzip
+	header {
+		X-Robots-Tag "noindex, nofollow, noarchive"
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	basic_auth {
+		{$PREVIEW_BASIC_USER} {$PREVIEW_BASIC_HASH}
+	}
+	reverse_proxy app:8080 {
+		header_up X-Forwarded-Proto https
+	}
+	log {
+		output stdout
+	}
+}

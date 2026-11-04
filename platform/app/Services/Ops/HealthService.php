@@ -45,7 +45,7 @@ class HealthService
         if (! $last) {
             return ['fail', 'لا توجد نسخة احتياطية ناجحة بعد.', ['failed_24h' => $failed]];
         }
-        $age = $last->finished_at ? $last->finished_at->diffInHours(now()) : 999;
+        $age = $last->finished_at ? (int) floor($last->finished_at->diffInHours(now())) : 999;
         $file = rtrim(config('backup.path'), '/').'/'.$last->name.'.tar.enc';
         if (! is_file($file)) {
             return ['fail', 'ملف آخر نسخة غير موجود على القرص.', ['name' => $last->name]];

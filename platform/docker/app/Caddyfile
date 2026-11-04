@@ -1,0 +1,16 @@
+# خادم التطبيق الداخلي (HTTP فقط على الشبكة الداخلية). شهادة TLS عند الوكيل العكسي.
+{
+	frankenphp
+	auto_https off
+	admin off
+}
+
+:8080 {
+	root * /app/public
+	encode zstd gzip
+	# لا يُخدم أي مسار تخزين مباشرة: المرفقات خارج جذر الويب أصلًا
+	@blocked path /storage/* /.env* /.git* /vendor/*
+	respond @blocked 404
+	header -Server
+	php_server
+}

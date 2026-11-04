@@ -1,0 +1,8 @@
+# ZAP baseline rules: FAIL على التحذيرات عالية الخطورة
+10202	WARN	(Absence of Anti-CSRF Tokens - Inertia uses XSRF cookie header)
+10038	FAIL	(CSP header not set)
+10020	FAIL	(Anti-clickjacking header)
+10021	FAIL	(X-Content-Type-Options missing)
+40012	FAIL	(XSS reflected)
+40014	FAIL	(XSS persistent)
+40018	FAIL	(SQL injection)

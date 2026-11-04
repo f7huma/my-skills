@@ -1,0 +1,92 @@
+# النشر على Hostinger VPS (أو أي خادم Docker). كل الخدمات على هذا الخادم؛ لا خدمات تخزين أو تحليلات خارجية.
+# التشغيل:  docker compose --env-file .env.production up -d
+name: humaidan
+
+x-app: &app
+  image: ${APP_IMAGE:-humaidan-app:latest}
+  build: .
+  env_file: ${APP_ENV_FILE:-.env.production}
+  restart: unless-stopped
+  read_only: true
+  tmpfs: [/tmp, /data, /config]
+  security_opt: [no-new-privileges:true]
+  cap_drop: [ALL]
+  volumes:
+    - files:/var/lib/humaidan/files
+    - backups:/var/lib/humaidan/backups
+    - app_storage:/app/storage
+    - app_cache:/app/bootstrap/cache
+    - ${BACKUP_OFFSITE_MOUNT:-./docker/offsite-not-configured}:/mnt/offsite
+  depends_on:
+    db: { condition: service_healthy }
+  networks: [internal]
+
+services:
+  caddy:
+    image: caddy:2.10-alpine
+    restart: unless-stopped
+    ports: ["80:80", "443:443", "443:443/udp"]
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL:?set ACME_EMAIL}
+      PREVIEW_BASIC_USER: ${PREVIEW_BASIC_USER:-}
+      PREVIEW_BASIC_HASH: ${PREVIEW_BASIC_HASH:-}
+    volumes:
+      - ./docker/caddy/${CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [app]
+    networks: [internal, edge]
+
+  app:
+    <<: *app
+    command: ["web"]
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@file_get_contents('http://127.0.0.1:8080/up') === false ? 1 : 0);"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  worker:
+    <<: *app
+    command: ["worker"]
+
+  scheduler:
+    <<: *app
+    command: ["scheduler"]
+
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-humaidan}
+      POSTGRES_USER: ${DB_USERNAME:-humaidan}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD}
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]   # لا منافذ منشورة: قاعدة البيانات على الشبكة الداخلية فقط
+
+  clamav:
+    image: clamav/clamav:1.4
+    restart: unless-stopped
+    volumes: [clamav_db:/var/lib/clamav]
+    networks: [internal]
+    # تحديث التواقيع يتصل بخوادم ClamAV فقط؛ الملفات نفسها لا تغادر الخادم
+
+volumes:
+  pgdata:
+  files:
+  backups:
+  app_storage:
+  app_cache:
+  caddy_data:
+  caddy_config:
+  clamav_db:
+
+networks:
+  internal: {}
+  edge: {}

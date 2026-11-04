@@ -93,8 +93,8 @@ export default function OfficeLayout({ children }: { children: ReactNode }) {
 
       {menu && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="القائمة">
-          <div className="absolute inset-0 bg-[rgba(20,24,30,0.38)]" onClick={() => setMenu(false)} />
-          <div className="absolute inset-y-0 start-0 w-[min(300px,86vw)] bg-chrome shadow-xl" style={{ animation: 'dialog-in 180ms var(--ease-out)' }}>
+          <div className="drawer-scrim absolute inset-0 bg-[rgba(20,24,30,0.38)]" onClick={() => setMenu(false)} />
+          <div className="drawer-panel absolute inset-y-0 start-0 w-[min(300px,86vw)] bg-chrome shadow-xl">
             <button type="button" onClick={() => setMenu(false)} className="btn btn-ghost btn-sm absolute end-2 top-3" aria-label="إغلاق القائمة"><X className="size-4" /></button>
             {sidebar}
           </div>

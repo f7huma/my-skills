@@ -36,6 +36,14 @@ return Application::configure(basePath: dirname(__DIR__))
         // لا تُكتب قيم الحقول الحساسة في السجلات
         $exceptions->dontFlash(['password', 'password_confirmation', 'current_password', 'code', 'recovery_code', 'token']);
 
+        // أخطاء قاعدة البيانات تُسجَّل دون القيم المرتبطة (قد تحوي أسماء عملاء أو هويات)
+        $exceptions->report(function (\Illuminate\Database\QueryException $e) {
+            \Illuminate\Support\Facades\Log::error('db.query_failed', ['sqlstate' => $e->errorInfo[0] ?? $e->getCode(), 'sql' => $e->getSql()]);
+
+            return false;
+        });
+        $exceptions->dontReportDuplicates();
+
         // رسائل أخطاء آمنة بالعربية دون كشف التفاصيل الداخلية
         $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
             $status = $response->getStatusCode();

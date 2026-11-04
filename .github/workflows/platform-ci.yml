@@ -1,0 +1,133 @@
+# بوابة الجاهزية للنشر: أي فشل في الاختبارات الحرجة أو ثغرة عالية/حرجة غير معالجة يمنع وظيفة "ready-to-deploy".
+name: platform-ci
+
+on:
+  push:
+    paths: ["platform/**", ".github/workflows/platform-ci.yml"]
+  pull_request:
+    paths: ["platform/**", ".github/workflows/platform-ci.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: platform
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: { POSTGRES_DB: humaidan_test, POSTGRES_USER: humaidan, POSTGRES_PASSWORD: ci-only }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U humaidan" --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DB_HOST: 127.0.0.1
+      DB_USERNAME: humaidan
+      DB_PASSWORD: ci-only
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "8.3", extensions: "pdo_pgsql, intl, zip, gd, sodium", coverage: none }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22", cache: npm, cache-dependency-path: platform/package-lock.json }
+      - run: sudo apt-get update && sudo apt-get install -y postgresql-client poppler-utils
+      - run: composer install --no-interaction --prefer-dist
+      - run: npm ci
+      - name: Typecheck and build
+        run: npx tsc --noEmit -p tsconfig.json && npx vite build
+      - name: Prepare env
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=ci-only/; s/^SCANNER_DRIVER=.*/SCANNER_DRIVER=fake/; s/^DB_DATABASE=.*/DB_DATABASE=humaidan_e2e/" .env
+          echo "FILES_ENCRYPTION_KEY=$(php artisan files:generate-key | head -1)" >> .env
+          echo "BACKUP_ENCRYPTION_KEY=$(php artisan files:generate-key --backup | head -1)" >> .env
+          PGPASSWORD=ci-only createdb -h 127.0.0.1 -U humaidan humaidan_e2e
+      - name: PHPUnit (isolation, auth, files, workflows, calendar, reports, backup/restore)
+        run: php artisan test
+      - name: End-to-end browser flows (synthetic data)
+        run: |
+          npx playwright install --with-deps chromium
+          php artisan migrate:fresh --seed --force
+          php artisan serve --host=127.0.0.1 --port=8000 > /tmp/serve.log 2>&1 &
+          php artisan queue:work --queue=scans,default --sleep=1 > /tmp/queue.log 2>&1 &
+          sleep 3
+          BASE_URL=http://127.0.0.1:8000 node tests/e2e/flows.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: e2e-and-reports, path: "platform/storage/app/e2e\nplatform/storage/app/report-samples", if-no-files-found: ignore }
+
+  dependency-and-code-scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "8.3", extensions: "pdo_pgsql, intl, zip, gd, sodium" }
+      - run: composer install --no-interaction --prefer-dist --no-scripts
+      - name: Composer audit (fails on any advisory)
+        run: composer audit --no-dev --locked
+      - name: npm audit (fails on high/critical)
+        run: npm ci --ignore-scripts && npm audit --omit=dev --audit-level=high
+      - name: Secrets scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env: { GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}" }
+      - name: Static analysis (semgrep)
+        working-directory: .
+        run: docker run --rm -v "$PWD/platform:/src" semgrep/semgrep semgrep scan --config p/php --config p/react --config p/secrets --error --exclude vendor --exclude node_modules /src
+      - name: Filesystem vulnerability scan (trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with: { scan-type: fs, scan-ref: platform, severity: "HIGH,CRITICAL", exit-code: "1", ignore-unfixed: true }
+
+  image-scan:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t humaidan-app:ci .
+      - name: Container image scan (trivy)
+        uses: aquasecurity/trivy-action@0.28.0
+        with: { image-ref: "humaidan-app:ci", severity: "HIGH,CRITICAL", exit-code: "1", ignore-unfixed: true }
+
+  dast-baseline:
+    # فحص ديناميكي على بيئة اختبار مصرح بها داخل CI ببيانات اصطناعية فقط
+    runs-on: ubuntu-24.04
+    needs: tests
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env: { POSTGRES_DB: humaidan_dast, POSTGRES_USER: humaidan, POSTGRES_PASSWORD: ci-only }
+        ports: ["5432:5432"]
+        options: --health-cmd "pg_isready -U humaidan" --health-interval 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: "8.3", extensions: "pdo_pgsql, intl, zip, gd, sodium" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "22" }
+      - run: composer install --no-interaction --prefer-dist && npm ci && npx vite build
+      - run: |
+          cp .env.example .env && php artisan key:generate
+          sed -i "s/^DB_PASSWORD=.*/DB_PASSWORD=ci-only/; s/^DB_DATABASE=.*/DB_DATABASE=humaidan_dast/; s/^SCANNER_DRIVER=.*/SCANNER_DRIVER=fake/; s/^APP_DEBUG=.*/APP_DEBUG=false/" .env
+          echo "FILES_ENCRYPTION_KEY=$(php artisan files:generate-key | head -1)" >> .env
+          echo "BACKUP_ENCRYPTION_KEY=$(php artisan files:generate-key --backup | head -1)" >> .env
+          php artisan migrate --seed --force
+          php artisan serve --host=0.0.0.0 --port=8000 > /tmp/serve.log 2>&1 &
+          sleep 3
+      - name: OWASP ZAP baseline
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: "http://localhost:8000/login"
+          rules_file_name: "platform/.zap/rules.tsv"
+          fail_action: true
+          allow_issue_writing: false
+
+  ready-to-deploy:
+    runs-on: ubuntu-24.04
+    needs: [tests, dependency-and-code-scan, image-scan, dast-baseline]
+    steps:
+      - run: echo "كل البوابات نجحت — الإصدار مؤهل للنشر بعد المراجعة البشرية."

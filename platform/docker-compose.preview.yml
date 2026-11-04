@@ -1,0 +1,9 @@
+# بيئة معاينة منفصلة تمامًا (اسم مشروع ووحدات تخزين وقاعدة ومفاتيح مختلفة) على دومين مؤقت.
+# docker compose -p humaidan-preview -f docker-compose.yml -f docker-compose.preview.yml --env-file .env.preview up -d
+# إن كانت المعاينة على خادم الإنتاج نفسه فاستخدم وكيلًا واحدًا بموقعين بدل منفذين (انظر الدليل).
+services:
+  caddy:
+    volumes: !override
+      - ./docker/caddy/Caddyfile.preview:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
