@@ -4,6 +4,9 @@
 	admin off
 }
 
+# مواقع إضافية اختيارية تولّدها scripts/change-domain.sh (تحويل www والدومين السابق إلى الدومين الحالي)
+import /etc/caddy/extra/*.caddy
+
 {$APP_DOMAIN} {
 	encode zstd gzip
 	request_body {

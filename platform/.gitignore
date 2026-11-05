@@ -32,3 +32,6 @@ Thumbs.db
 # مخرجات أدوات التصميم المحلية
 .impeccable/mocks/
 .impeccable/review/
+
+# تحويلات الدومين المولّدة على الخادم
+docker/caddy/extra/*.caddy

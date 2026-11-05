@@ -33,6 +33,7 @@ services:
       PREVIEW_BASIC_HASH: ${PREVIEW_BASIC_HASH:-}
     volumes:
       - ./docker/caddy/${CADDYFILE:-Caddyfile}:/etc/caddy/Caddyfile:ro
+      - ./docker/caddy/extra:/etc/caddy/extra:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on: [app]
