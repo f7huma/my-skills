@@ -89,7 +89,7 @@ export default function Security({ twoFactorEnabled, mfaRequired, setup, recover
       <Section title="كلمة المرور" description="تغيير كلمة المرور يُنهي جلساتك على الأجهزة الأخرى.">
         <form onSubmit={(e) => { e.preventDefault(); pwd.put('/account/security/password', { onSuccess: () => pwd.reset() }); }} className="grid gap-4 sm:grid-cols-3">
           <TextField label="الحالية" type="password" ltr value={pwd.data.current_password} onChange={(e) => pwd.setData('current_password', e.target.value)} error={pwd.errors.current_password} autoComplete="current-password" />
-          <TextField label="الجديدة" type="password" ltr value={pwd.data.password} onChange={(e) => pwd.setData('password', e.target.value)} error={pwd.errors.password} autoComplete="new-password" hint="12 حرفًا على الأقل، حروف وأرقام." />
+          <TextField label="الجديدة" type="password" ltr value={pwd.data.password} onChange={(e) => pwd.setData('password', e.target.value)} error={pwd.errors.password} autoComplete="new-password" hint="4 أحرف أو أرقام على الأقل." />
           <TextField label="تأكيد الجديدة" type="password" ltr value={pwd.data.password_confirmation} onChange={(e) => pwd.setData('password_confirmation', e.target.value)} autoComplete="new-password" />
           <div className="sm:col-span-3"><Button variant="primary" type="submit" loading={pwd.processing}>حفظ كلمة المرور</Button></div>
         </form>

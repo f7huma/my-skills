@@ -12,7 +12,7 @@ export default function AcceptInvitation({ token, invitation }: { token: string;
       <form onSubmit={(e) => { e.preventDefault(); form.post(`/invitation/${token}`); }} className="space-y-4">
         <TextField label={invitation.existingAccount ? 'كلمة المرور الحالية' : 'كلمة المرور'} type="password" ltr autoComplete={invitation.existingAccount ? 'current-password' : 'new-password'}
           value={form.data.password} onChange={(e) => form.setData('password', e.target.value)} error={form.errors.password}
-          hint={invitation.existingAccount ? undefined : '12 حرفًا على الأقل، تتضمن حروفًا وأرقامًا.'} required />
+          hint={invitation.existingAccount ? undefined : '4 أحرف أو أرقام على الأقل.'} required />
         <TextField label="تأكيد كلمة المرور" type="password" ltr autoComplete="new-password" value={form.data.password_confirmation} onChange={(e) => form.setData('password_confirmation', e.target.value)} required />
         <Button variant="primary" type="submit" className="w-full" loading={form.processing}>متابعة</Button>
       </form>

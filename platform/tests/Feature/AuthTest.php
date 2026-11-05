@@ -74,6 +74,16 @@ class AuthTest extends TestCase
         $this->assertSame(1, Invitation::where('email', 'first@lawyer.test')->whereNull('revoked_at')->count());
     }
 
+    public function test_password_needs_only_four_characters_of_any_kind(): void
+    {
+        $this->demo();
+        $client = $this->client('شركة الأمثلة');
+        $res = app(InvitationService::class)->create(['email' => 'short@example.test', 'name' => 'مستخدم', 'role' => 'client', 'client_id' => $client->id, 'can_view' => true, 'can_submit_claims' => false], $this->lawyer()->id);
+        $path = parse_url($res['url'], PHP_URL_PATH);
+        $this->post($path, ['password' => '123', 'password_confirmation' => '123'])->assertSessionHasErrors('password');
+        $this->post($path, ['password' => '1234', 'password_confirmation' => '1234'])->assertRedirect(route('home'));
+    }
+
     public function test_deactivation_ends_existing_sessions_immediately(): void
     {
         $this->demo();

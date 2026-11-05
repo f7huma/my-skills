@@ -81,7 +81,7 @@ class SecurityController extends Controller
     {
         $data = $request->validate([
             'current_password' => 'required|string',
-            'password' => ['required', 'confirmed', Password::min(12)->letters()->numbers()],
+            'password' => ['required', 'confirmed', Password::min(4)],
         ]);
         $user = $request->user();
         if (! Hash::check($data['current_password'], $user->password)) {

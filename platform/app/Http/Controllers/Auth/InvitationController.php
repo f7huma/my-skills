@@ -33,7 +33,7 @@ class InvitationController extends Controller
     public function accept(Request $request, string $token)
     {
         $data = $request->validate([
-            'password' => ['required', 'confirmed', Password::min(12)->letters()->numbers()],
+            'password' => ['required', 'confirmed', Password::min(4)],
         ]);
 
         $user = DB::transaction(function () use ($token, $data) {
