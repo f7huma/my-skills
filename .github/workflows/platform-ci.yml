@@ -151,5 +151,8 @@ jobs:
   ready-to-deploy:
     runs-on: ubuntu-24.04
     needs: [tests, dependency-and-code-scan, image-scan, dast-baseline]
+    defaults:
+      run:
+        working-directory: .
     steps:
       - run: echo "كل البوابات نجحت — الإصدار مؤهل للنشر بعد المراجعة البشرية."

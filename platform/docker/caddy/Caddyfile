@@ -23,9 +23,7 @@
 		format filter {
 			wrap json
 			fields {
-				request>uri query {
-					delete
-				}
+				request>uri regexp "\?.*$" ""
 				request>headers>Cookie delete
 				request>headers>Authorization delete
 				resp_headers>Set-Cookie delete
