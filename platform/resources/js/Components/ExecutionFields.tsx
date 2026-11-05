@@ -4,7 +4,7 @@ import type { Option } from '@/types';
 export type ExecData = Record<string, string | boolean>;
 
 /** حقول التنفيذ: نوع التنفيذ منفصل عن نوع السند، وتظهر حقول كل نوع بحسب الحاجة */
-export function ExecutionFields({ data, set, errors, options }: { data: ExecData; set: (k: string, v: string | boolean) => void; errors: Record<string, string>; options: { executionTypes: Option[]; instrumentTypes: Option[]; statuses: Option[]; currencies: string[] } }) {
+export function ExecutionFields({ data, set, errors, options }: { data: ExecData; set: (k: string, v: string | boolean) => void; errors: Record<string, string>; options: { executionTypes: Option[]; instrumentTypes: Option[]; statuses: Option[]; currencies: string[]; cases?: Option[] } }) {
   const v = (k: string) => String(data[k] ?? '');
   const text = (k: string, label: string, props: Record<string, unknown> = {}) => <TextField label={label} value={v(k)} onChange={(e) => set(k, e.target.value)} error={errors[k]} {...props} />;
   const date = (k: string, label: string, hint?: string) => <TextField label={label} type="date" value={v(k)} onChange={(e) => set(k, e.target.value)} error={errors[k]} hint={hint} />;
@@ -43,10 +43,12 @@ export function ExecutionFields({ data, set, errors, options }: { data: ExecData
         {text('request_number', 'رقم طلب التنفيذ', { ltr: true })}
         <SelectField label="الحالة" options={options.statuses} value={v('status')} onChange={(e) => set('status', e.target.value)} />
         <div className="grid grid-cols-[1fr_100px] gap-2">{text('amount_claimed', 'المبلغ المطلوب', { ltr: true, inputMode: 'decimal' })}<SelectField label="العملة" options={options.currencies} value={v('currency')} onChange={(e) => set('currency', e.target.value)} /></div>
-        {date('submitted_on', 'تاريخ تقديم الطلب')}{date('accepted_on', 'تاريخ القبول')}{date('order_issued_on', 'صدور أمر التنفيذ')}
-        {date('notified_on', 'تاريخ التبليغ أو الإعلان', 'من واقع المستند أو ما ظهر في ناجز.')}
-        <SelectField label="طريقة التبليغ" placeholder="—" options={[{ value: 'notification', label: 'إبلاغ' }, { value: 'publication', label: 'إعلان' }]} value={v('notification_method')} onChange={(e) => set('notification_method', e.target.value)} />
-        {date('enforcement_started_on', 'بدء الإجراءات الجبرية')}
+        {date('submitted_on', 'تاريخ تقديم الطلب')}
+        {options.cases && (
+          <SelectField className="sm:col-span-2" label="القضية المرتبطة (اختياري)" placeholder={options.cases.length ? 'بدون ربط بقضية' : 'لا قضايا لهذا العميل'} options={options.cases}
+            value={v('legal_case_id')} onChange={(e) => set('legal_case_id', e.target.value)} error={errors.legal_case_id}
+            hint="عند الربط تُحتسب مبالغ هذا الطلب ومواعيده ضمن القضية، دون تكرار." />
+        )}
       </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         <TextArea label="ملخص موجه للعميل" rows={3} value={v('client_summary')} onChange={(e) => set('client_summary', e.target.value)} hint="يظهر في البوابة كآخر تحديث." />

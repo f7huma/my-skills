@@ -12,7 +12,7 @@ import type { Doc, Option, Totals } from '@/types';
 type Exec = Record<string, any> & { id: number; reference: string; client: string; clientId: number; case: { id: number; reference: string; title: string } | null; lockVersion: number; weeklyDue: string | null };
 type Action = { id: number; type: string; typeId: number; submittedOn: string | null; status: string; statusLabel: string; result: string | null; eligibleOn: string | null; nextFollowupOn: string | null; notes: string | null };
 type Props = {
-  execution: Exec; parties: { id: number; name: string; role: string; party_type: string; identifier: string | null }[];
+  execution: Exec; cases: Option[]; parties: { id: number; name: string; role: string; party_type: string; identifier: string | null }[];
   decisions: { id: number; label: string; number: string | null; decidedOn: string | null; notes: string | null; document: Doc | null }[]; actions: Action[];
   tasks: { id: number; title: string; kindLabel: string; dueOn: string | null; status: string; lockVersion: number }[]; deadlines: DeadlineRow[];
   timeline: { id: number; title: string; details: string | null; at: string; clientVisible: boolean; user: string | null }[]; documents: Doc[]; collections: CollectionRow[]; totals: Totals;
@@ -171,7 +171,7 @@ export default function Show(p: Props) {
       <Modal open={edit.open} onClose={edit.close} title="تحديث طلب التنفيذ" wide>
         <form onSubmit={(ev) => { ev.preventDefault(); form.put(`/office/executions/${e.id}`, { preserveScroll: true, onSuccess: edit.close }); }} className="space-y-5">
           <FormError errors={form.errors as Record<string, string>} />
-          <ExecutionFields data={form.data} set={(k, v) => form.setData(k, v)} errors={form.errors as Record<string, string>} options={p.options} />
+          <ExecutionFields data={form.data} set={(k, v) => form.setData(k, v)} errors={form.errors as Record<string, string>} options={{ ...p.options, cases: p.cases }} />
           <Button variant="primary" type="submit" loading={form.processing}>حفظ</Button>
         </form>
       </Modal>

@@ -42,8 +42,10 @@ class ExecutionService
                 }
             }
             if ($case) {
-                $case->stage = 'execution';
-                $case->save();
+                if ($case->work_status !== 'completed') {
+                    $case->stage = 'execution';
+                    $case->save();
+                }
                 Timeline::record($case, 'execution.created', 'فتح طلب تنفيذ '.$e->reference, null, $e, true);
             }
             Timeline::record($e, 'execution.created', 'إنشاء طلب التنفيذ', ExecutionRequest::EXECUTION_TYPES[$e->execution_type].' — '.ExecutionRequest::INSTRUMENT_TYPES[$e->instrument_type], $e, true);
@@ -75,9 +77,42 @@ class ExecutionService
                     Timeline::record($e, 'execution.'.$f, $label, 'التاريخ: '.$e->{$f}->toDateString(), $e, true);
                 }
             }
+            if (array_key_exists('legal_case_id', $data)) {
+                $this->linkCase($e, $data['legal_case_id'] ? LegalCase::find($data['legal_case_id']) : null);
+            }
             $this->deadlines->syncExecutionCompliance($e);
             Audit::log('execution.updated', $e, ['status' => $e->status]);
         });
+    }
+
+    /**
+     * ربط طلب التنفيذ بقضية للعميل نفسه (أو فك الربط). تنتقل معه مبالغه ومواعيده ومهامه إلى القضية
+     * حتى تظهر في مجاميعها، دون إنشاء أي مبلغ جديد (لا ازدواج في الاحتساب).
+     */
+    public function linkCase(ExecutionRequest $e, ?LegalCase $case): void
+    {
+        if ((int) $e->legal_case_id === (int) $case?->id) {
+            return;
+        }
+        if ($case && $case->client_id !== $e->client_id) {
+            throw new \InvalidArgumentException('case belongs to another client');
+        }
+        $old = $e->legal_case_id ? LegalCase::find($e->legal_case_id) : null;
+        $e->forceFill(['legal_case_id' => $case?->id])->save();
+        Collection::where('execution_request_id', $e->id)->update(['legal_case_id' => $case?->id]);
+        \App\Models\Deadline::where('execution_request_id', $e->id)->update(['legal_case_id' => $case?->id]);
+        \App\Models\Task::where('execution_request_id', $e->id)->update(['legal_case_id' => $case?->id]);
+        if ($old) {
+            Timeline::record($old, 'execution.unlinked', 'فك ربط طلب التنفيذ '.$e->reference, null, $e, false);
+        }
+        if ($case) {
+            if ($case->work_status !== 'completed' && in_array($case->stage, ['judgment', 'objection', 'court'], true)) {
+                $case->forceFill(['stage' => 'execution'])->save();
+            }
+            Timeline::record($case, 'execution.linked', 'ربط طلب التنفيذ '.$e->reference.' بالقضية', null, $e, true);
+        }
+        Timeline::record($e, 'execution.linked', $case ? 'ربط الطلب بالقضية '.$case->reference : 'فك ربط الطلب من القضية', null, $e, true);
+        Audit::log('execution.case_linked', $e, ['case' => $case?->id, 'previous' => $old?->id]);
     }
 
     private function fields(array $data): array

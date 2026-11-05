@@ -50,4 +50,29 @@ class HistoricalWorkTest extends TestCase
         $this->assertSame('completed', ExecutionRequest::latest('id')->first()->status);
         $this->assertSame($deadlines, Deadline::count());
     }
+
+    public function test_execution_can_be_linked_to_a_case_of_the_same_client_only(): void
+    {
+        $this->demo();
+        $this->actingAs($this->lawyer());
+        $org = $this->client('شركة الأمثلة');
+        $other = $this->client('نورة');
+        $this->post(route('executions.store'), ['client_id' => $org->id, 'execution_type' => 'financial', 'instrument_type' => 'other', 'instrument_label' => 'شيك',
+            'status' => 'submitted', 'currency' => 'SAR', 'amount_claimed' => '700'])->assertSessionHasNoErrors();
+        $e = ExecutionRequest::latest('id')->first();
+        $this->assertNull($e->legal_case_id);
+        $case = LegalCase::where('client_id', $org->id)->first();
+        $foreign = LegalCase::where('client_id', $other->id)->first();
+        $base = ['execution_type' => 'financial', 'instrument_type' => 'other', 'instrument_label' => 'شيك', 'status' => 'submitted', 'currency' => 'SAR'];
+
+        $this->put(route('executions.update', $e), $base + ['legal_case_id' => $foreign->id, 'lock_version' => $e->lock_version])->assertSessionHasErrors('legal_case_id');
+        $this->assertNull($e->fresh()->legal_case_id);
+
+        $this->put(route('executions.update', $e), $base + ['legal_case_id' => $case->id, 'lock_version' => $e->fresh()->lock_version])->assertSessionHasNoErrors();
+        $e->refresh();
+        $this->assertSame($case->id, $e->legal_case_id);
+        $this->assertSame(1, \App\Models\Collection::where('execution_request_id', $e->id)->where('legal_case_id', $case->id)->count(), 'المبلغ ينتقل مع الطلب دون تكرار');
+
+        $this->post(route('executions.store'), $base + ['client_id' => $org->id, 'legal_case_id' => $foreign->id])->assertSessionHasErrors('legal_case_id');
+    }
 }

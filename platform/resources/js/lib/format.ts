@@ -86,3 +86,33 @@ export function hijri(d: string | null | undefined): string {
     return '';
   }
 }
+
+export const HIJRI_MONTHS = ['محرم', 'صفر', 'ربيع الأول', 'ربيع الآخر', 'جمادى الأولى', 'جمادى الآخرة', 'رجب', 'شعبان', 'رمضان', 'شوال', 'ذو القعدة', 'ذو الحجة'];
+
+const hijriFmt = (() => {
+  try { return new Intl.DateTimeFormat('en-GB-u-ca-islamic-umalqura-nu-latn', { day: 'numeric', month: 'numeric', year: 'numeric', timeZone: 'UTC' }); } catch { return null; }
+})();
+
+/** أجزاء التاريخ الهجري (أم القرى) لتاريخ ميلادي YYYY-MM-DD */
+export function hijriParts(d: string | null | undefined): { y: number; m: number; d: number } | null {
+  if (!d || !hijriFmt) return null;
+  const [y, m, day] = d.slice(0, 10).split('-').map(Number);
+  if (!y || !m || !day) return null;
+  const parts = hijriFmt.formatToParts(new Date(Date.UTC(y, m - 1, day)));
+  const get = (t: string) => Number(parts.find((p) => p.type === t)?.value);
+  return { y: get('year'), m: get('month'), d: get('day') };
+}
+
+/** تحويل تاريخ هجري (أم القرى) إلى ميلادي YYYY-MM-DD، أو null إن لم يوجد اليوم في ذلك الشهر */
+export function fromHijri(hy: number, hm: number, hd: number): string | null {
+  if (!hijriFmt || !hy || !hm || !hd || hm < 1 || hm > 12 || hd < 1 || hd > 30) return null;
+  // تقدير أولي ثم بحث في نافذة حول التقدير
+  const approx = Date.UTC(622, 6, 16) + ((hy - 1) * 354.36707 + (hm - 1) * 29.530589 + (hd - 1)) * 86400000;
+  for (let off = -45; off <= 45; off++) {
+    const t = new Date(approx + off * 86400000);
+    const iso = t.toISOString().slice(0, 10);
+    const p = hijriParts(iso);
+    if (p && p.y === hy && p.m === hm && p.d === hd) return iso;
+  }
+  return null;
+}

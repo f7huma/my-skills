@@ -57,7 +57,9 @@ class ExecutionController extends Controller
             'instrumentTypes' => Office::options(ExecutionRequest::INSTRUMENT_TYPES),
             'statuses' => Office::options(ExecutionRequest::STATUSES),
             'currencies' => config('office.currencies'),
-            'preset' => ['client_id' => $request->integer('client') ?: null,
+            'cases' => \App\Models\LegalCase::whereNull('archived_at')->orderByDesc('updated_at')->get(['id', 'client_id', 'reference', 'title'])
+                ->map(fn ($c) => ['value' => $c->id, 'label' => $c->reference.' — '.$c->title, 'clientId' => $c->client_id]),
+            'preset' => ['client_id' => $request->integer('client') ?: null, 'case_id' => $request->integer('case') ?: null,
                 'status' => in_array($request->query('status'), ['completed', 'closed'], true) ? $request->query('status') : null],
         ]);
     }
@@ -98,8 +100,13 @@ class ExecutionController extends Controller
             'client_id' => 'required|exists:clients,id',
             'parties' => 'array|max:20', 'parties.*.name' => 'required|string|max:200', 'parties.*.role' => 'required|in:applicant,respondent',
             'parties.*.party_type' => 'nullable|in:individual,organization', 'parties.*.identifier' => 'nullable|string|max:30',
+            'legal_case_id' => 'nullable|integer|exists:legal_cases,id',
         ], self::messages());
-        $e = $svc->create($data);
+        $case = ! empty($data['legal_case_id']) ? \App\Models\LegalCase::find($data['legal_case_id']) : null;
+        if ($case && $case->client_id !== (int) $data['client_id']) {
+            return back()->withErrors(['legal_case_id' => 'القضية المختارة لعميل آخر.'])->withInput();
+        }
+        $e = $svc->create($data, $case);
 
         return redirect()->route('executions.show', $e)->with('success', 'أُنشئ طلب التنفيذ '.$e->reference.'.');
     }
@@ -114,11 +121,13 @@ class ExecutionController extends Controller
             'execution' => [
                 'id' => $e->id, 'reference' => $e->reference, 'client' => $e->client->name, 'clientId' => $e->client_id,
                 'case' => $e->legalCase ? ['id' => $e->legalCase->id, 'reference' => $e->legalCase->reference, 'title' => $e->legalCase->title] : null,
-                'lockVersion' => $e->lock_version, 'weeklyDue' => $svc->weeklyFollowupDue($e),
+                'lockVersion' => $e->lock_version, 'weeklyDue' => $svc->weeklyFollowupDue($e), 'legal_case_id' => $e->legal_case_id ? (string) $e->legal_case_id : '',
             ] + collect($e->getAttributes())->only(array_keys(self::rules()))->map(fn ($v, $k) => in_array($k, ['weekly_followup'], true) ? (bool) $v : $v)
                 ->merge(collect(['submitted_on', 'accepted_on', 'order_issued_on', 'notified_on', 'enforcement_started_on', 'deed_date', 'note_issued_on', 'note_due_on'])
                     ->mapWithKeys(fn ($k) => [$k => $e->{$k}?->toDateString()]))->all(),
             'parties' => $e->parties->map->only(['id', 'name', 'role', 'party_type', 'identifier']),
+            'cases' => \App\Models\LegalCase::where('client_id', $e->client_id)->orderByDesc('updated_at')->get(['id', 'reference', 'title'])
+                ->map(fn ($c) => ['value' => $c->id, 'label' => $c->reference.' — '.$c->title]),
             'decisions' => $e->decisions->map(fn (ExecutionDecision $d) => ['id' => $d->id, 'label' => $d->label, 'number' => $d->number,
                 'decidedOn' => $d->decided_on?->toDateString(), 'notes' => $d->notes, 'document' => $d->document ? Office::document($d->document) : null]),
             'actions' => $e->actions->sortByDesc('submitted_on')->values()->map(fn (ExecutionAction $a) => ['id' => $a->id, 'type' => $a->type->name, 'typeId' => $a->action_type_id,
@@ -153,7 +162,10 @@ class ExecutionController extends Controller
 
     public function update(Request $request, ExecutionRequest $execution, ExecutionService $svc)
     {
-        $data = $request->validate(self::rules() + ['lock_version' => 'required|integer'], self::messages());
+        $data = $request->validate(self::rules() + ['lock_version' => 'required|integer', 'legal_case_id' => 'nullable|integer|exists:legal_cases,id'], self::messages());
+        if (! empty($data['legal_case_id']) && \App\Models\LegalCase::whereKey($data['legal_case_id'])->value('client_id') !== $execution->client_id) {
+            return back()->withErrors(['legal_case_id' => 'القضية المختارة لعميل آخر.']);
+        }
         $svc->update($execution, $data, (int) $data['lock_version']);
 
         return back()->with('success', 'حُفظ طلب التنفيذ.');

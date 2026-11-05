@@ -2,7 +2,7 @@ import { Link, router, useForm } from '@inertiajs/react';
 import { FileText, Download, ShieldAlert, ShieldCheck, Loader2, Eye, EyeOff, Trash2, Upload, Inbox } from 'lucide-react';
 import { ReactNode, useEffect, useId, useRef, useState, forwardRef, InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import type { Doc, Option, Paginated } from '@/types';
-import { dateTime, fileSize, hijri, localDate, money } from '@/lib/format';
+import { dateTime, fileSize, fromHijri, hijri, HIJRI_MONTHS, hijriParts, localDate, money } from '@/lib/format';
 
 export function cx(...c: (string | false | null | undefined)[]) {
   return c.filter(Boolean).join(' ');
@@ -74,11 +74,80 @@ function FieldShell({ id, label, error, hint, className, required, children }: F
   );
 }
 
+const modeKey = 'date-input-mode';
+const readMode = (): 'g' | 'h' => { try { return localStorage.getItem(modeKey) === 'h' ? 'h' : 'g'; } catch { return 'g'; } };
+
+/**
+ * حقل تاريخ يقبل الميلادي أو الهجري (أم القرى). القيمة المخزنة دائمًا ميلادية YYYY-MM-DD،
+ * والتحويل يتم في المتصفح. يُحفظ اختيار النمط لكل مستخدم على جهازه.
+ */
+function DateInput({ id, value, onValue, invalid, describedBy, required, disabled }: { id: string; value: string; onValue: (v: string) => void; invalid?: boolean; describedBy?: string; required?: boolean; disabled?: boolean }) {
+  const [mode, setMode] = useState<'g' | 'h'>(readMode);
+  const cur = hijriParts(value);
+  const [h, setH] = useState<{ y: string; m: string; d: string }>({ y: cur ? String(cur.y) : '', m: cur ? String(cur.m) : '', d: cur ? String(cur.d) : '' });
+  const [bad, setBad] = useState(false);
+  useEffect(() => {
+    const p = hijriParts(value);
+    if (p) setH({ y: String(p.y), m: String(p.m), d: String(p.d) });
+    else if (!value) setH((x) => (x.y && x.m && x.d ? { y: '', m: '', d: '' } : x));
+  }, [value]);
+  const switchTo = (m: 'g' | 'h') => { setMode(m); setBad(false); try { localStorage.setItem(modeKey, m); } catch { /* اختياري */ } };
+  const updateH = (k: 'y' | 'm' | 'd', v: string) => {
+    const next = { ...h, [k]: v };
+    setH(next);
+    if (next.y && next.m && next.d) {
+      const g = fromHijri(Number(next.y), Number(next.m), Number(next.d));
+      setBad(!g);
+      if (g) onValue(g);
+    } else if (!next.y && !next.m && !next.d) { setBad(false); onValue(''); }
+  };
+  const seg = (m: 'g' | 'h', label: string) => (
+    <button type="button" onClick={() => switchTo(m)} aria-pressed={mode === m} disabled={disabled}
+      className={cx('h-full rounded-[6px] px-2 text-[12px] leading-none transition-colors', mode === m ? 'bg-ink font-medium text-white' : 'text-muted hover:text-text')}>{label}</button>
+  );
+  return (
+    <div className="relative">
+      {/* مبدّل التقويم في سطر عنوان الحقل حتى يبقى العرض كاملًا للإدخال */}
+      <div className="absolute -top-[31px] end-0 flex h-[26px] items-center rounded-[8px] border border-line bg-raised p-0.5" role="group" aria-label="نوع التقويم">
+        {seg('g', 'ميلادي')}{seg('h', 'هجري')}
+      </div>
+      <div className="flex items-stretch">
+        {mode === 'g' ? (
+          <input id={id} type="date" className="input min-w-0 flex-1" value={value} onChange={(e) => onValue(e.target.value)} required={required} disabled={disabled}
+            aria-invalid={invalid ? true : undefined} aria-describedby={describedBy} />
+        ) : (
+          <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,0.75fr)_minmax(0,1.7fr)_minmax(0,1fr)] gap-1.5" role="group" aria-label="تاريخ هجري">
+            <select id={id} className="input px-2" aria-label="اليوم الهجري" value={h.d} onChange={(e) => updateH('d', e.target.value)} disabled={disabled} aria-invalid={invalid || bad ? true : undefined} aria-describedby={describedBy}>
+              <option value="">اليوم</option>{Array.from({ length: 30 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
+            </select>
+            <select className="input px-2" aria-label="الشهر الهجري" value={h.m} onChange={(e) => updateH('m', e.target.value)} disabled={disabled}>
+              <option value="">الشهر</option>{HIJRI_MONTHS.map((n, i) => <option key={n} value={i + 1}>{n}</option>)}
+            </select>
+            <input className="input num px-2 text-center" aria-label="السنة الهجرية" inputMode="numeric" placeholder="1448" maxLength={4} value={h.y}
+              onChange={(e) => updateH('y', e.target.value.replace(/\D/g, '').slice(0, 4))} disabled={disabled} />
+          </div>
+        )}
+      </div>
+      {mode === 'h' && bad && <p className="field-error" role="alert">هذا اليوم غير موجود في الشهر الهجري المختار (الشهر ٢٩ يومًا).</p>}
+      {mode === 'h' && !bad && value && <p className="field-hint">يوافق <bdi dir="ltr" className="num">{value}</bdi> م</p>}
+      {mode === 'g' && hijri(value) && <p className="field-hint">يوافق <bdi dir="ltr" className="num">{hijri(value)}</bdi>هـ</p>}
+    </div>
+  );
+}
+
 export const TextField = forwardRef<HTMLInputElement, FieldWrap & InputHTMLAttributes<HTMLInputElement> & { ltr?: boolean }>(
   function TextField({ label, error, hint, className, ltr, required, ...rest }, ref) {
     const h = rest.type === 'date' && typeof rest.value === 'string' ? hijri(rest.value) : '';
     const fullHint = h ? <>{hint}{hint ? ' · ' : ''}يوافق <bdi dir="ltr" className="num">{h}</bdi>هـ</> : hint;
     const { id, describedBy } = useFieldIds(error, fullHint);
+    if (rest.type === 'date') {
+      return (
+        <FieldShell id={id} label={label} error={error} hint={hint} className={className} required={required}>
+          <DateInput id={id} value={String(rest.value ?? '')} required={required} disabled={rest.disabled} invalid={Boolean(error)} describedBy={describedBy}
+            onValue={(v) => rest.onChange?.({ target: { value: v }, currentTarget: { value: v } } as unknown as React.ChangeEvent<HTMLInputElement>)} />
+        </FieldShell>
+      );
+    }
     return (
       <FieldShell id={id} label={label} error={error} hint={fullHint} className={className} required={required}>
         <input ref={ref} id={id} required={required} aria-invalid={error ? true : undefined} aria-describedby={describedBy} {...rest} className={cx('input', ltr && 'input-ltr num')} />
