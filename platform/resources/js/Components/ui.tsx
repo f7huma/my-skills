@@ -24,7 +24,7 @@ export function Money({ value, currency, className }: { value: string | number |
 }
 
 // ------------------------------------------------------------------ الأزرار
-type BtnProps = { variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; size?: 'sm' | 'md'; loading?: boolean; className?: string; children: ReactNode };
+type BtnProps = { variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'light'; size?: 'sm' | 'md'; loading?: boolean; className?: string; children: ReactNode };
 
 export function Button({ variant = 'secondary', size = 'md', loading, className, children, ...rest }: BtnProps & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
@@ -140,7 +140,7 @@ export function PageHeader({ title, subtitle, actions, crumbs }: { title: ReactN
             ))}
           </nav>
         )}
-        <h1 className="text-[22px] font-bold leading-snug text-text sm:text-[24px]">{title}</h1>
+        <h1 className="text-[24px] font-semibold leading-snug text-text sm:text-[28px]">{title}</h1>
         {subtitle && <div className="mt-1 text-[14px] text-muted">{subtitle}</div>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -154,7 +154,7 @@ export function Panel({ title, actions, children, className, bodyClassName, id, 
       {(title || actions) && (
         <div className="flex items-center justify-between gap-3 px-5 pt-4 pb-2">
           <div className="min-w-0">
-            {title && <h2 id={id ? id + '-title' : undefined} className="text-[15.5px] font-semibold text-text">{title}</h2>}
+            {title && <h2 id={id ? id + "-title" : undefined} className="text-[16px] font-semibold text-text">{title}</h2>}
             {description && <p className="text-[13px] text-muted">{description}</p>}
           </div>
           {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}

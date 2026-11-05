@@ -28,3 +28,7 @@ Thumbs.db
 .taste-skill/
 .env.restore-test
 /storage/backups
+
+# مخرجات أدوات التصميم المحلية
+.impeccable/mocks/
+.impeccable/review/

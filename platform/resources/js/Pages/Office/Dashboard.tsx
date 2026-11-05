@@ -1,8 +1,9 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Check, CalendarX2 } from 'lucide-react';
+import { Check, CalendarX2, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ButtonLink, certaintyTone, cx, EmptyState, Money, Num, Panel, Pill, poaLabel, poaTone } from '@/Components/ui';
 import { dayMonth, relative, timeOnly, weekday, dateOnly, count } from '@/lib/format';
+import { BarChart, CountUp, Meter, Pipeline } from '@/Components/motion';
 
 type Item = {
   key: string; type: 'hearing' | 'task' | 'memo' | 'execution' | 'deadline'; label: string; title: string; date: string | null; time?: string;
@@ -17,10 +18,11 @@ type Props = {
   poas: { id: number; number: string; client: string; clientId: number; expires: string; state: string }[];
   counters: { activeCases: number; resumable: number; alerted: number; needsDetermination: number };
   clients: { id: number; name: string; type: string; reference: string; active: number }[];
+  insights: { months: { month: string; total: number }[]; collectedThisMonth: number; stages: { key: string; label: string; count: number }[] };
 };
 
 const typeMark: Record<Item['type'], string> = {
-  hearing: 'bg-accent', task: 'bg-ink', memo: 'bg-[#5b6b85]', execution: 'bg-[#8a6a1f]', deadline: 'bg-negative',
+  hearing: 'text-ink', task: 'text-[#7d8794]', memo: 'text-[#5f6976]', execution: 'text-amber', deadline: 'text-signal',
 };
 
 function addDays(d: string, n: number) {
@@ -29,31 +31,42 @@ function addDays(d: string, n: number) {
   return t.toISOString().slice(0, 10);
 }
 
-/** شريط الأيام السبعة: عدد البنود لكل يوم، واليوم معلَّم بلون البيانات */
-function WeekStrip({ agenda }: { agenda: Agenda }) {
+/** شريط الأسبوع: سبع عُقد ماسية حجمها بقدر حمل اليوم؛ اليوم مضاء، والضغط على يوم يحصر القائمة فيه */
+function WeekRibbon({ agenda, selected, onSelect }: { agenda: Agenda; selected: string | null; onSelect: (d: string | null) => void }) {
   const days = Array.from({ length: 7 }, (_, i) => addDays(agenda.range.from, i));
   const all = [...agenda.today, ...agenda.week];
-  const counts = days.map((d) => ({ d, hearings: all.filter((i) => i.date === d && i.type === 'hearing').length, other: all.filter((i) => i.date === d && i.type !== 'hearing').length }));
+  const load = days.map((d) => {
+    const items = all.filter((i) => i.date === d);
+    return { d, n: items.length, hearings: items.filter((i) => i.type === 'hearing').length, deadline: items.some((i) => i.type === 'deadline') };
+  });
+  const max = Math.max(1, ...load.map((l) => l.n));
   return (
-    <ol className="grid grid-cols-7 gap-1.5" aria-label="توزيع بنود الأسبوع على الأيام">
-      {counts.map(({ d, hearings, other }, i) => {
-        const today = i === 0;
-        const fri = [5, 6].includes(new Date(d + 'T12:00:00Z').getUTCDay());
-        return (
-          <li key={d} className={cx('rounded-lg px-2 py-2 text-center', today ? 'bg-accent-soft ring-1 ring-accent' : fri ? 'bg-[#eceef1]' : 'bg-raised')}>
-            <a href={`#day-${d}`} className="block focus-visible:outline-none" aria-label={`${weekday(d)} ${d}: ${hearings} جلسة و${other} بند آخر`}>
-              <span className={cx('block text-[12px]', today ? 'font-semibold text-[#0f4640]' : 'text-muted')}>{today ? 'اليوم' : weekday(d).replace('ال', '')}</span>
-              <span className="block text-[11.5px] text-muted"><Num>{d.slice(5).replace('-', '/')}</Num></span>
-              <span className="mt-1 flex items-center justify-center gap-1 text-[13px]">
-                {hearings > 0 && <span className="font-semibold text-accent" title="جلسات"><Num>{hearings}</Num>ج</span>}
-                {other > 0 && <span className="text-text" title="مهام ومواعيد"><Num>{other}</Num></span>}
-                {hearings + other === 0 && <span className="text-faint">—</span>}
-              </span>
-            </a>
-          </li>
-        );
-      })}
-    </ol>
+    <div className="relative mt-7">
+      <span aria-hidden className="absolute inset-x-[7%] top-[26px] h-px bg-white/15" />
+      <ol className="relative grid grid-cols-7" aria-label="أيام الأسبوع — اختر يومًا لعرض بنوده">
+        {load.map(({ d, n, hearings, deadline }, i) => {
+          const today = i === 0;
+          const off = [5, 6].includes(new Date(d + 'T12:00:00Z').getUTCDay());
+          const on = selected === d;
+          const size = n ? 14 + (n / max) * 18 : 10;
+          return (
+            <li key={d} className="flex justify-center">
+              <button type="button" onClick={() => onSelect(on ? null : d)} aria-pressed={on}
+                aria-label={`${weekday(d)} ${d}: ${n} بند${hearings ? `، منها ${hearings} جلسة` : ''}${deadline ? '، وفيه موعد نظامي' : ''}`}
+                className={cx('group flex w-full flex-col items-center rounded-xl pb-2 pt-1 transition-colors duration-200', on ? 'bg-white/10' : 'hover:bg-white/[0.05]')}>
+                <span className="grid h-[44px] place-items-center">
+                  <span className={cx('rounded-[4px] transition-[filter] duration-200 group-hover:brightness-125', deadline ? 'bg-[#ff8a80]' : today ? 'bg-white' : n ? 'bg-[#aeb7c2]' : 'border border-white/30 bg-transparent')}
+                    style={{ width: size, height: size, transform: 'rotate(45deg)', animation: `node-in 700ms var(--ease-expo) ${i * 60}ms both` }} />
+                </span>
+                <span className={cx('mt-1 text-[12.5px]', today ? 'font-semibold text-white' : off ? 'text-[#8f99a5]' : 'text-[#c9d0d8]')}>{today ? 'اليوم' : weekday(d).replace('ال', '')}</span>
+                <span className="num text-[11.5px] text-[#a9b2bd]">{d.slice(8)}/{d.slice(5, 7)}</span>
+                <span className={cx('num mt-0.5 text-[12px]', n ? 'text-white' : 'text-[#8f99a5]')}>{n ? n : '—'}</span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }
 
@@ -66,7 +79,7 @@ function AgendaRow({ it }: { it: Item }) {
   };
   return (
     <li className={cx('group flex items-start gap-3 py-2.5 transition-opacity duration-200', done && 'opacity-40')}>
-      <span aria-hidden className={cx('mt-2 size-2 shrink-0 rounded-full', typeMark[it.type])} />
+      <span aria-hidden className={cx('diamond mt-2.5', typeMark[it.type])} />
       <div className="min-w-0 flex-1">
         <Link href={it.href} className="block font-medium text-text hover:underline underline-offset-4">{it.title}</Link>
         <p className="flex flex-wrap gap-x-2 text-[12.5px] text-muted">
@@ -100,64 +113,135 @@ function Group({ title, items, tone, id, emptyText }: { title: string; items: It
   );
 }
 
+function daysUntil(from: string, to: string | null) {
+  if (!to) return null;
+  const a = Date.parse(from + 'T00:00:00Z'); const b = Date.parse(to + 'T00:00:00Z');
+  return Math.round((b - a) / 86400000);
+}
+const monthLabel = (m: string) => new Intl.DateTimeFormat('ar-SA-u-ca-gregory-nu-latn', { month: 'long', timeZone: 'UTC' }).format(new Date(m + '-15T12:00:00Z'));
+
 export default function Dashboard(p: Props) {
-  const { agenda } = p;
+  const { agenda, insights } = p;
   const [clientQ, setClientQ] = useState('');
+  const [day, setDay] = useState<string | null>(null);
   const byDay = useMemo(() => {
     const m = new Map<string, Item[]>();
     agenda.week.forEach((i) => { if (i.date) m.set(i.date, [...(m.get(i.date) ?? []), i]); });
     return [...m.entries()];
   }, [agenda.week]);
   const hearingsToday = agenda.today.filter((i) => i.type === 'hearing').length;
+  const weekDeadlines = [...agenda.today, ...agenda.week].filter((i) => i.type === 'deadline').length;
   const finding = [
     agenda.overdue.length ? `${agenda.overdue.length} بند متأخر` : null,
-    hearingsToday ? `${hearingsToday} ${hearingsToday === 1 ? 'جلسة' : 'جلسات'} اليوم` : null,
     p.claims.filter((c) => c.status === 'under_review').length ? `${p.claims.filter((c) => c.status === 'under_review').length} مطالبة بانتظار الدراسة` : null,
     agenda.unscheduled.length ? `${agenda.unscheduled.length} مهمة تنتظر تحديد موعد` : null,
-  ].filter(Boolean).join(' · ') || 'لا توجد بنود عاجلة هذا الأسبوع';
+  ].filter(Boolean).join(' · ');
   const clients = p.clients.filter((c) => !clientQ || c.name.includes(clientQ) || c.reference.toLowerCase().includes(clientQ.toLowerCase()));
+  const nearest = p.deadlines.find((d) => d.end);
+  const left = nearest ? daysUntil(agenda.range.from, nearest.end) : null;
+  const dayItems = day ? [...agenda.today, ...agenda.week].filter((i) => i.date === day) : [];
+  const stats: [string, number, string?, number?][] = [
+    ['جلسات اليوم', hearingsToday],
+    ['مواعيد نظامية هذا الأسبوع', weekDeadlines, weekDeadlines ? 'text-[#ffb4ac]' : undefined],
+    ['قضايا سارية', p.counters.activeCases],
+    ['المقبوض هذا الشهر · ر.س', insights.collectedThisMonth, undefined, 0],
+  ];
 
   return (
     <>
-      <Head title="إنجاز الأسبوع" />
-      <header className="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="text-[22px] font-bold sm:text-[24px]">إنجاز الأسبوع</h1>
-          <p className="mt-0.5 text-[14px] text-muted">
-            {weekday(agenda.range.from)} {dayMonth(agenda.range.from)} ({agenda.range.fromHijri}) — حتى {dayMonth(agenda.range.to)}
-          </p>
-          <p className={cx('mt-1 text-[14px] font-medium', agenda.overdue.length ? 'text-negative' : 'text-text')}>{finding}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <ButtonLink href="/office/tasks" size="sm">كل المهام</ButtonLink>
-          <ButtonLink href="/office/clients/create" size="sm">عميل جديد</ButtonLink>
-          <ButtonLink href="/office/executions/create" size="sm">طلب تنفيذ</ButtonLink>
-        </div>
-      </header>
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
-        {/* قائمة الإنجاز */}
-        <section className="card px-5 pb-4 pt-4" aria-labelledby="agenda-title">
-          <h2 id="agenda-title" className="sr-only">قائمة إنجاز الأسبوع</h2>
-          <WeekStrip agenda={agenda} />
-          <div className="mt-2">
-            {agenda.overdue.length > 0 && <Group id="g-overdue" title="متأخر" tone="negative" items={agenda.overdue} emptyText="" />}
-            <Group id="g-today" title="اليوم" items={agenda.today} emptyText="لا جلسات ولا مهام مستحقة اليوم." />
-            <section aria-labelledby="g-week" className="py-1">
-              <h3 id="g-week" className="pt-3 text-[13.5px] font-semibold">بقية الأسبوع <span className="font-normal text-muted"><Num>{agenda.week.length}</Num></span></h3>
-              {byDay.length === 0 && <p className="py-2 text-[13px] text-muted">لا بنود في بقية الأسبوع.</p>}
-              {byDay.map(([d, items]) => (
-                <div key={d} id={`day-${d}`} className="scroll-mt-20">
-                  <p className="mt-2 text-[12.5px] text-muted">{weekday(d)} <Num>{d}</Num></p>
-                  <ul className="divide-y divide-rule">{items.map((i) => <AgendaRow key={i.key} it={i} />)}</ul>
-                </div>
-              ))}
-            </section>
-            <Group id="g-unscheduled" title="بانتظار تحديد موعد" items={agenda.unscheduled} emptyText="كل المهام لها مواعيد." />
+      <Head title="أسبوع المكتب" />
+      {/* الشريط الفحمي: الأرقام تعدّ، وشريط الأسبوع تحتها */}
+      <section className="night rise relative overflow-hidden rounded-[22px] px-5 pb-4 pt-6 sm:px-8" aria-labelledby="week-title">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 id="week-title" className="text-[26px] font-semibold leading-tight text-white sm:text-[30px]">أسبوع المكتب</h1>
+            <p className="mt-1 text-[14px] text-[#c9d0d8]">{weekday(agenda.range.from)} {dayMonth(agenda.range.from)} · {agenda.range.fromHijri}</p>
+            {finding && <p className={cx('mt-1.5 text-[13.5px] font-medium', agenda.overdue.length ? 'text-[#ffb4ac]' : 'text-[#c9d0d8]')}>{finding}</p>}
           </div>
+          <div className="flex flex-wrap gap-2">
+            <ButtonLink href="/office/cases/create" variant="light" size="sm"><Plus className="size-4" aria-hidden />قضية جديدة</ButtonLink>
+            <ButtonLink href="/office/executions/create" variant="ghost" size="sm">طلب تنفيذ</ButtonLink>
+            <ButtonLink href="/office/clients/create" variant="ghost" size="sm">عميل جديد</ButtonLink>
+          </div>
+        </div>
+        <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-4">
+          {stats.map(([label, value, tone, dec]) => (
+            <div key={label} className="border-s border-white/15 ps-4">
+              <dt className="text-[12.5px] text-[#a9b2bd]">{label}</dt>
+              <dd className={cx('mt-1 text-[34px] font-semibold leading-none text-white sm:text-[40px]', tone)}><CountUp value={value} decimals={dec ?? 0} /></dd>
+            </div>
+          ))}
+        </dl>
+        <WeekRibbon agenda={agenda} selected={day} onSelect={setDay} />
+      </section>
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        <section className="card px-5 pb-4 pt-4" aria-labelledby="agenda-title">
+          <div className="flex items-center justify-between gap-3">
+            <h2 id="agenda-title" className="text-[16px] font-semibold">{day ? `بنود ${weekday(day)}` : 'قائمة الإنجاز'}</h2>
+            {day ? <button type="button" className="btn btn-ghost btn-sm" onClick={() => setDay(null)}>عرض الأسبوع كاملًا</button>
+              : <Link href="/office/tasks" className="text-[13px] text-muted hover:text-text">كل المهام</Link>}
+          </div>
+          {day ? (
+            dayItems.length ? <ul className="divide-y divide-rule">{dayItems.map((i) => <AgendaRow key={i.key} it={i} />)}</ul>
+              : <p className="py-6 text-center text-[13.5px] text-muted">لا بنود في هذا اليوم.</p>
+          ) : (
+            <div>
+              {agenda.overdue.length > 0 && <Group id="g-overdue" title="متأخر" tone="negative" items={agenda.overdue} emptyText="" />}
+              <Group id="g-today" title="اليوم" items={agenda.today} emptyText="لا جلسات ولا مهام مستحقة اليوم." />
+              <section aria-labelledby="g-week" className="py-1">
+                <h3 id="g-week" className="pt-3 text-[13.5px] font-semibold">بقية الأسبوع <span className="font-normal text-muted"><Num>{agenda.week.length}</Num></span></h3>
+                {byDay.length === 0 && <p className="py-2 text-[13px] text-muted">لا بنود في بقية الأسبوع.</p>}
+                {byDay.map(([d, items]) => (
+                  <div key={d} id={`day-${d}`} className="scroll-mt-20">
+                    <p className="mt-2 text-[12.5px] text-muted">{weekday(d)} <Num>{d}</Num></p>
+                    <ul className="divide-y divide-rule">{items.map((i) => <AgendaRow key={i.key} it={i} />)}</ul>
+                  </div>
+                ))}
+              </section>
+              <Group id="g-unscheduled" title="بانتظار تحديد موعد" items={agenda.unscheduled} emptyText="كل المهام لها مواعيد." />
+            </div>
+          )}
         </section>
 
         <div className="grid grid-cols-1 content-start gap-4">
+          <Panel id="nearest" title="الموعد النظامي الأقرب" actions={<Link href="/office/deadlines" className="text-[13px] text-muted hover:text-text">كل المواعيد</Link>}>
+            {!nearest || left === null ? <p className="text-[13.5px] text-muted">لا مواعيد نظامية مفتوحة.</p> : (
+              <>
+                <div className="flex items-center gap-4">
+                  <span className={cx('text-[64px] font-semibold leading-none', left <= 3 ? 'text-signal' : left <= 10 ? 'text-amber' : 'text-ink')}>
+                    <CountUp value={Math.max(0, left)} />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="font-semibold">{left < 0 ? 'انتهى الموعد' : left === 0 ? 'ينتهي اليوم' : left === 1 ? 'يوم واحد متبقٍ' : left === 2 ? 'يومان متبقيان' : left <= 10 ? 'أيام متبقية' : 'يومًا متبقيًا'}</p>
+                    <Link href={`/office/deadlines#deadline-${nearest.id}`} className="block truncate text-[13px] text-muted hover:text-text">{nearest.reason}{nearest.ref && <> · <Num>{nearest.ref}</Num></>}</Link>
+                  </div>
+                </div>
+                <div className="mt-3"><Meter value={Math.max(0, 30 - Math.max(0, left))} max={30} tone={left <= 3 ? 'signal' : left <= 10 ? 'amber' : 'ink'} label="قرب الموعد خلال ٣٠ يومًا" /></div>
+                <ul className="mt-3 divide-y divide-rule">
+                  {p.deadlines.filter((d) => d.id !== nearest.id).slice(0, 3).map((d) => (
+                    <li key={d.id} className="flex items-center justify-between gap-3 py-2">
+                      <Link href={`/office/deadlines#deadline-${d.id}`} className="min-w-0 truncate text-[13.5px] hover:underline underline-offset-4">{d.reason}</Link>
+                      <span className="flex shrink-0 items-center gap-2">
+                        <Pill tone={d.alerted ? 'negative' : certaintyTone(d.certainty)}>{d.alerted ? 'انتهى' : d.certaintyLabel}</Pill>
+                        <span className="w-[74px] text-end text-[12.5px]"><Num>{d.end ?? '—'}</Num></span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </Panel>
+
+          <Panel id="collected" title="المقبوض فعليًا" description="آخر ستة أشهر بالريال — مرّر على الشهر لقراءته">
+            <BarChart label="المقبوض شهريًا" unit="ر.س" data={insights.months.map((m) => ({ key: m.month, label: monthLabel(m.month), value: m.total }))}
+              format={(v) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(v)} />
+          </Panel>
+
+          <Panel id="pipeline" title="القضايا حسب المرحلة" description={<>المجموع <Num>{count(insights.stages.reduce((a, s) => a + s.count, 0))}</Num> — اضغط مرحلة لفتح قائمتها</>}>
+            <Pipeline stages={insights.stages} />
+          </Panel>
+
           <Panel id="claims" title="المطالبات الواردة" actions={<Link href="/office/claims" className="text-[13px] text-muted hover:text-text">عرض الكل</Link>}>
             {p.claims.length === 0 ? <p className="text-[13.5px] text-muted">لا مطالبات بانتظار الدراسة.</p> : (
               <ul className="divide-y divide-rule">
@@ -186,9 +270,9 @@ export default function Dashboard(p: Props) {
               <ul className="divide-y divide-rule">
                 {p.hearings.map((h) => (
                   <li key={h.id} className="flex items-start gap-3 py-2.5">
-                    <div className="w-[64px] shrink-0 text-[12.5px] leading-5">
-                      <div className="font-semibold text-text"><Num>{h.at.slice(5, 10).replace('-', '/')}</Num></div>
-                      <div className="text-muted"><Num>{timeOnly(h.at)}</Num></div>
+                    <div className="grid w-[54px] shrink-0 place-items-center rounded-[10px] bg-raised py-1 text-center leading-tight">
+                      <span className="num text-[16px] font-semibold text-ink">{h.at.slice(8, 10)}</span>
+                      <span className="num text-[11px] text-muted">{timeOnly(h.at)}</span>
                     </div>
                     <div className="min-w-0">
                       <Link href={`/office/cases/${h.caseId}?tab=hearings`} className="block truncate font-medium hover:underline underline-offset-4">{h.title}</Link>
@@ -200,34 +284,20 @@ export default function Dashboard(p: Props) {
             )}
           </Panel>
 
-          <Panel id="counters" title="المواعيد والعدادات" actions={<Link href="/office/deadlines" className="text-[13px] text-muted hover:text-text">الشاشة الموحدة</Link>}>
-            <dl className="mb-3 grid grid-cols-2 gap-px overflow-hidden rounded-lg bg-line">
+          <Panel id="counters" title="العدادات">
+            <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[12px] bg-line">
               {[
-                ['قضايا سارية', p.counters.activeCases, false],
-                ['موقوفة/مشطوبة قابلة للاستكمال', p.counters.resumable, false],
+                ['موقوفة أو مشطوبة قابلة للاستكمال', p.counters.resumable, false],
                 ['عدادات انتهت (تنبيه)', p.counters.alerted, p.counters.alerted > 0],
                 ['تحتاج تحديدًا', p.counters.needsDetermination, p.counters.needsDetermination > 0],
+                ['وكالات قريبة من الانتهاء', p.poas.length, p.poas.length > 0],
               ].map(([l, v, warn]) => (
                 <div key={String(l)} className="bg-surface px-3 py-2.5">
                   <dt className="text-[12px] text-muted">{l}</dt>
-                  <dd className={cx('text-[20px] font-semibold', warn ? 'text-negative' : 'text-text')}><Num>{count(Number(v))}</Num></dd>
+                  <dd className={cx('text-[22px] font-semibold', warn ? 'text-signal' : 'text-text')}><CountUp value={Number(v)} /></dd>
                 </div>
               ))}
             </dl>
-            <ul className="divide-y divide-rule">
-              {p.deadlines.slice(0, 4).map((d) => (
-                <li key={d.id} className="flex items-center justify-between gap-3 py-2">
-                  <div className="min-w-0">
-                    <Link href={`/office/deadlines#deadline-${d.id}`} className="block truncate text-[13.5px] font-medium hover:underline underline-offset-4">{d.reason}</Link>
-                    <p className="text-[12px] text-muted">{d.ref && <Num>{d.ref}</Num>}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <Pill tone={d.alerted ? 'negative' : certaintyTone(d.certainty)}>{d.alerted ? 'انتهى' : d.certaintyLabel}</Pill>
-                    <span className="w-[74px] text-end text-[12.5px]"><Num>{d.end ?? '—'}</Num></span>
-                  </div>
-                </li>
-              ))}
-            </ul>
           </Panel>
 
           <Panel id="poas" title="وكالات قريبة من الانتهاء">

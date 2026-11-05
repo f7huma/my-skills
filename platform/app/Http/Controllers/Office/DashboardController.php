@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Office;
 use App\Http\Controllers\Controller;
 use App\Models\Claim;
 use App\Models\Client;
+use App\Models\Collection;
 use App\Models\Deadline;
 use App\Models\Hearing;
 use App\Models\LegalCase;
@@ -50,7 +51,29 @@ class DashboardController extends Controller
             'clients' => Client::whereNull('archived_at')->withCount(['cases as active_cases_count' => fn ($q) => $q->whereIn('work_status', LegalCase::ACTIVE_STATUSES)])
                 ->orderBy('name')->limit(12)->get(['id', 'name', 'type', 'reference'])
                 ->map(fn ($c) => ['id' => $c->id, 'name' => $c->name, 'type' => $c->type, 'reference' => $c->reference, 'active' => $c->active_cases_count]),
+            'insights' => $this->insights($today),
         ]);
+    }
+
+    /** أرقام اللوحة: المقبوض فعليًا بالريال لآخر ستة أشهر، وتوزيع القضايا على المراحل */
+    private function insights($today): array
+    {
+        $from = $today->copy()->startOfMonth()->subMonths(5);
+        $rows = Collection::query()->where('kind', 'received')->where('currency', 'SAR')
+            ->whereDate('occurred_on', '>=', $from->toDateString())
+            ->selectRaw("to_char(occurred_on, 'YYYY-MM') as m, sum(amount)::text as total")->groupBy('m')->pluck('total', 'm');
+        $months = [];
+        for ($i = 0; $i < 6; $i++) {
+            $m = $from->copy()->addMonths($i)->format('Y-m');
+            $months[] = ['month' => $m, 'total' => (float) ($rows[$m] ?? 0)];
+        }
+        $stages = LegalCase::whereNull('archived_at')->selectRaw('stage, count(*) as n')->groupBy('stage')->pluck('n', 'stage');
+
+        return [
+            'months' => $months,
+            'collectedThisMonth' => end($months)['total'],
+            'stages' => collect(LegalCase::STAGES)->map(fn ($label, $key) => ['key' => $key, 'label' => $label, 'count' => (int) ($stages[$key] ?? 0)])->values(),
+        ];
     }
 
     public function search(Request $request, SearchService $search)

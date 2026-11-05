@@ -47,5 +47,13 @@ class DemoSeeder extends Seeder
         $mk('noura@example.test', 'نورة (عميل آخر)', $other, true, true);
 
         $this->call(DemoCasesSeeder::class, false, ['lawyer' => $lawyer, 'ind' => $ind, 'org' => $org, 'other' => $other]);
+
+        // سجل تحصيل اصطناعي للأشهر الخمسة الماضية (عميل منفصل) لتظهر الرسوم البيانية في بيئة التجربة
+        $base = today_local()->startOfMonth();
+        foreach ([[5, '18400.00'], [4, '31250.00'], [3, '12800.00'], [2, '46700.00'], [1, '38900.00']] as [$ago, $amount]) {
+            \App\Models\Collection::create(['client_id' => $other->id, 'kind' => 'received', 'source' => 'other', 'amount' => $amount, 'currency' => 'SAR',
+                'occurred_on' => $base->copy()->subMonths($ago)->addDays(9), 'entry_key' => (string) \Illuminate\Support\Str::uuid(),
+                'description' => 'دفعة تجريبية', 'visible_to_client' => true]);
+        }
     }
 }

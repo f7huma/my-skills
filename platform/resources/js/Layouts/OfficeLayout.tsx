@@ -32,12 +32,13 @@ function NavList({ items, url, badge }: { items: typeof nav; url: string; badge:
         return (
           <li key={it.href}>
             <Link href={it.href} aria-current={active ? 'page' : undefined}
-              className={cx('flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-[14px] transition-colors duration-150',
-                active ? 'bg-active font-semibold text-text' : 'text-[#3f4650] hover:bg-[#e6e9ec] hover:text-text')}>
-              <Icon className="size-[17px] shrink-0" strokeWidth={1.6} aria-hidden />
+              className={cx('relative flex h-10 items-center gap-3 rounded-[10px] px-3 text-[14px] transition-colors duration-150',
+                active ? 'bg-white/[0.09] font-medium text-white' : 'text-[#b9c1cb] hover:bg-white/[0.05] hover:text-white')}>
+              {active && <span aria-hidden className="diamond absolute -start-[3px] text-white" />}
+              <Icon className="size-[18px] shrink-0" strokeWidth={1.5} aria-hidden />
               <span className="flex-1 truncate">{it.label}</span>
               {'badge' in it && it.badge === 'claims' && badge > 0 && (
-                <span className="rounded-md bg-ink px-1.5 text-[11.5px] font-semibold leading-5 text-white" aria-label={`${badge} مطالبة بانتظار الدراسة`}><Num>{badge}</Num></span>
+                <span className="rounded-md bg-signal px-1.5 text-[11.5px] font-semibold leading-5 text-white" aria-label={`${badge} مطالبة بانتظار الدراسة`}><Num>{badge}</Num></span>
               )}
             </Link>
           </li>
@@ -58,24 +59,24 @@ export default function OfficeLayout({ children }: { children: ReactNode }) {
   const badge = counts?.claimsInbox ?? 0;
 
   const sidebar = (
-    <div className="flex h-full flex-col gap-5 px-3 pb-4 pt-4">
-      <Link href="/office" className="px-1.5" aria-label="الرئيسية — مكتب فيصل حميضان الحميضان"><Brand /></Link>
+    <div className="night flex h-full flex-col gap-6 px-3 pb-4 pt-5">
+      <Link href="/office" className="px-2" aria-label="الرئيسية — مكتب فيصل حميضان الحميضان"><Brand light /></Link>
       <nav aria-label="التنقل الرئيسي" className="flex-1 space-y-6 overflow-y-auto">
         <NavList items={nav} url={page.url} badge={badge} />
         <div>
-          <p className="mb-1.5 px-2.5 text-[12.5px] text-muted">إدارة المكتب</p>
+          <p className="mb-1.5 px-3 text-[12px] text-[#a9b2bd]">إدارة المكتب</p>
           <NavList items={admin} url={page.url} badge={0} />
         </div>
       </nav>
-      <div className="space-y-1 border-t border-[#dde1e5] pt-3">
-        <Link href="/account/security" className="flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13.5px] hover:bg-[#e6e9ec]">
-          <ShieldCheck className={cx('size-4', auth?.user.twoFactor ? 'text-positive' : 'text-[#7a4307]')} aria-hidden />
+      <div className="space-y-1 border-t border-white/10 pt-3">
+        <Link href="/account/security" className="flex items-center gap-2.5 rounded-[10px] px-3 py-1.5 text-[13.5px] text-white hover:bg-white/[0.05]">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/10 text-[13px] font-semibold">{auth?.user.name?.trim().charAt(0)}</span>
           <span className="min-w-0">
             <span className="block truncate font-medium">{auth?.user.name}</span>
-            <span className="block text-[12px] text-muted">{auth?.user.twoFactor ? 'المصادقة الثنائية مفعّلة' : 'فعّل المصادقة الثنائية'}</span>
+            <span className="flex items-center gap-1 text-[12px] text-[#a9b2bd]"><ShieldCheck className="size-3.5" aria-hidden />أمان الحساب</span>
           </span>
         </Link>
-        <Link href="/logout" method="post" as="button" className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-[13.5px] text-muted hover:bg-[#e6e9ec] hover:text-text">
+        <Link href="/logout" method="post" as="button" className="flex w-full items-center gap-2.5 rounded-[10px] px-3 py-1.5 text-[13.5px] text-[#b9c1cb] hover:bg-white/[0.05] hover:text-white">
           <LogOut className="size-4" aria-hidden />تسجيل الخروج
         </Link>
       </div>
@@ -86,30 +87,32 @@ export default function OfficeLayout({ children }: { children: ReactNode }) {
     <div className="min-h-dvh bg-chrome">
       <a href="#main" className="skip-link">تخطَّ إلى المحتوى</a>
       {env && env !== 'local' && env !== 'testing' && (
-        <div className="bg-[#7a4307] px-4 py-1 text-center text-[12.5px] text-white">بيئة {env === 'preview' ? 'معاينة — بيانات اصطناعية فقط' : env}</div>
+        <div className="bg-amber px-4 py-1 text-center text-[12.5px] text-white">بيئة {env === 'preview' ? 'معاينة — بيانات اصطناعية فقط' : env}</div>
       )}
       {/* الإطار: شريط جانبي وشريط علوي على أرضية واحدة بلا فاصل */}
-      <aside className="fixed inset-y-0 start-0 hidden w-[244px] lg:block no-print" aria-label="القائمة">{sidebar}</aside>
+      <aside className="fixed inset-y-0 start-0 hidden w-[256px] lg:block no-print" aria-label="القائمة">{sidebar}</aside>
 
       {menu && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="القائمة">
           <div className="drawer-scrim absolute inset-0 bg-[rgba(20,24,30,0.38)]" onClick={() => setMenu(false)} />
-          <div className="drawer-panel absolute inset-y-0 start-0 w-[min(300px,86vw)] bg-chrome shadow-xl">
-            <button type="button" onClick={() => setMenu(false)} className="btn btn-ghost btn-sm absolute end-2 top-3" aria-label="إغلاق القائمة"><X className="size-4" /></button>
+          <div className="drawer-panel night absolute inset-y-0 start-0 w-[min(300px,86vw)] shadow-xl">
+            <button type="button" onClick={() => setMenu(false)} className="btn btn-ghost btn-sm absolute end-2 top-4 z-10" aria-label="إغلاق القائمة"><X className="size-4" /></button>
             {sidebar}
           </div>
         </div>
       )}
 
-      <div className="lg:ps-[244px]">
-        <div className="sticky top-0 z-30 flex h-14 items-center gap-3 bg-chrome px-3 sm:px-4 no-print lg:h-12">
+      <div className="lg:ps-[256px]">
+        <div className="sticky top-0 z-30 flex h-14 items-center gap-3 bg-chrome/90 px-3 backdrop-blur-md sm:px-5 no-print lg:h-16">
           <button type="button" className="btn btn-ghost btn-sm lg:hidden" onClick={() => setMenu(true)} aria-label="فتح القائمة" aria-expanded={menu}><Menu className="size-5" /></button>
           <div className="lg:hidden"><Brand compact /></div>
           <div className="flex flex-1 justify-center"><GlobalSearch /></div>
           <Link href="/office/cases/create" className="btn btn-primary btn-sm hidden sm:inline-flex"><Briefcase className="size-4" aria-hidden />قضية جديدة</Link>
         </div>
-        <main id="main" tabIndex={-1} className="sheet mx-0 mb-0 min-h-[calc(100dvh-56px)] rounded-none border-x-0 px-4 py-5 outline-none sm:px-6 sm:py-6 lg:me-2 lg:mb-2 lg:min-h-[calc(100dvh-56px)] lg:rounded-[16px] lg:border-x">
-          {children}
+        <main id="main" tabIndex={-1} className="min-h-[calc(100dvh-64px)] px-0 pb-6 outline-none sm:px-4 lg:pe-4 lg:ps-2">
+          {/* اللوحة الرئيسية ترسم أسطحها بنفسها؛ بقية الصفحات على ورقة بيضاء واحدة */}
+          {page.component === 'Office/Dashboard' ? <div className="px-4 sm:px-0">{children}</div>
+            : <div className="sheet min-h-[calc(100dvh-88px)] rounded-none border-x-0 px-4 py-6 sm:rounded-[18px] sm:border-x sm:px-7">{children}</div>}
         </main>
       </div>
       <Flash />

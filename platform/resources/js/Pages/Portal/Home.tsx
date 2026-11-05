@@ -1,6 +1,7 @@
 import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FilePlus2 } from 'lucide-react';
 import { Button, caseTone, claimTone, EmptyState, Money, Num, Pill } from '@/Components/ui';
+import { CountUp, Meter } from '@/Components/motion';
 import { relative } from '@/lib/format';
 import type { SharedProps } from '@/types';
 
@@ -19,33 +20,42 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
   return (
     <>
       <Head title="ملفاتي" />
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[22px] font-bold sm:text-[24px]">ملفاتك لدى المكتب</h1>
-          <p className="mt-1 text-[14px] text-muted">
-            {auth?.user.name} · <Num>{cases.length}</Num> قضية · <Num>{executions.length}</Num> طلب تنفيذ
-            {latest?.lastUpdate && <> · آخر تحديث {relative(latest.lastUpdate)}</>}
-          </p>
+      {/* الشريط الفحمي: ملفات العميل ومبالغه تعدّ أمامه */}
+      <section className="night rise mb-6 overflow-hidden rounded-[22px] px-5 pb-6 pt-6 sm:px-8" aria-labelledby="portal-title">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 id="portal-title" className="text-[26px] font-semibold leading-tight text-white sm:text-[30px]">ملفاتك لدى المكتب</h1>
+            <p className="mt-1 text-[14px] text-[#c9d0d8]">{auth?.user.name}{latest?.lastUpdate && <> · آخر تحديث {relative(latest.lastUpdate)}</>}</p>
+          </div>
+          {canSubmit && <Button variant="light" onClick={() => router.post('/portal/claims')}><FilePlus2 className="size-4" aria-hidden />إدراج مطالبة جديدة</Button>}
         </div>
-        {canSubmit && <Button variant="primary" onClick={() => router.post('/portal/claims')}><FilePlus2 className="size-4" aria-hidden />إدراج مطالبة جديدة</Button>}
-      </header>
+        {canView && (
+          <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
+            <div className="border-s border-white/15 ps-4"><dt className="text-[12.5px] text-[#a9b2bd]">القضايا</dt><dd className="mt-1 text-[36px] font-semibold leading-none text-white"><CountUp value={cases.length} /></dd></div>
+            <div className="border-s border-white/15 ps-4"><dt className="text-[12.5px] text-[#a9b2bd]">طلبات التنفيذ</dt><dd className="mt-1 text-[36px] font-semibold leading-none text-white"><CountUp value={executions.length} /></dd></div>
+            {(received.length ? received : [['SAR', '0']]).slice(0, 2).map(([c, v]) => {
+              const claimed = Number(totals.claimed[c] ?? 0);
+              return (
+                <div key={c} className="col-span-2 border-s border-white/15 ps-4">
+                  <dt className="text-[12.5px] text-[#a9b2bd]">المحصّل فعليًا · {c}</dt>
+                  <dd className="mt-1 text-[36px] font-semibold leading-none text-[#9be3bf]"><CountUp value={Number(v)} decimals={2} /></dd>
+                  {claimed > 0 && (
+                    <div className="mt-3 max-w-[340px]">
+                      <div className="[&>div]:bg-white/15"><Meter value={Number(v)} max={claimed} tone="positive" label={`المحصّل من المطالب به (${c})`} /></div>
+                      <p className="mt-1.5 text-[12px] text-[#a9b2bd]">من <bdi className="num">{new Intl.NumberFormat('en-US').format(claimed)}</bdi> مطالب بها</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </dl>
+        )}
+      </section>
 
-      {canView && (
-        <section aria-labelledby="money-title" className="mb-8 grid gap-px overflow-hidden rounded-xl bg-line sm:grid-cols-3">
-          <h2 id="money-title" className="sr-only">المبالغ</h2>
-          <div className="bg-surface px-5 py-4 sm:col-span-1">
-            <p className="text-[13px] text-muted">المحصّل فعليًا</p>
-            {received.length ? received.map(([c, v]) => <p key={c} className="mt-1 text-[26px] font-bold leading-tight text-accent"><Money value={v} currency={c} /></p>)
-              : <p className="mt-1 text-[26px] font-bold leading-tight text-faint"><Num>0.00</Num></p>}
-          </div>
-          <div className="bg-surface px-5 py-4">
-            <p className="text-[13px] text-muted">المتفق عليه صلحًا</p>
-            {Object.entries(totals.agreed).length ? Object.entries(totals.agreed).map(([c, v]) => <p key={c} className="mt-1 text-[18px] font-semibold"><Money value={v} currency={c} /></p>) : <p className="mt-1 text-[18px] text-faint">—</p>}
-          </div>
-          <div className="bg-surface px-5 py-4">
-            <p className="text-[13px] text-muted">المبالغ المطالب بها</p>
-            {Object.entries(totals.claimed).length ? Object.entries(totals.claimed).map(([c, v]) => <p key={c} className="mt-1 text-[18px] font-semibold"><Money value={v} currency={c} /></p>) : <p className="mt-1 text-[18px] text-faint">—</p>}
-          </div>
+      {canView && Object.entries(totals.agreed).length > 0 && (
+        <section aria-label="المتفق عليه صلحًا" className="card mb-6 flex flex-wrap items-center justify-between gap-3 px-5 py-4">
+          <p className="text-[13.5px] text-muted">المتفق عليه صلحًا</p>
+          <p className="flex flex-wrap gap-4 text-[18px] font-semibold">{Object.entries(totals.agreed).map(([c, v]) => <Money key={c} value={v} currency={c} />)}</p>
         </section>
       )}
 
@@ -53,10 +63,10 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
         <section aria-labelledby="cases-title" className="mb-8">
           <h2 id="cases-title" className="mb-3 text-[17px] font-semibold">القضايا</h2>
           {cases.length === 0 ? <EmptyState title="لا توجد قضايا ظاهرة بعد">تظهر هنا القضايا التي يفتحها المكتب لك.</EmptyState> : (
-            <ul className="divide-y divide-rule rounded-xl border border-line">
+            <ul className="card divide-y divide-rule overflow-hidden">
               {cases.map((c) => (
                 <li key={c.id}>
-                  <Link href={`/portal/cases/${c.id}`} className="block px-4 py-4 transition-colors hover:bg-raised sm:px-5">
+                  <Link href={`/portal/cases/${c.id}`} className="block px-4 py-4 transition-colors hover:bg-raised sm:px-6">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="font-semibold text-text">{c.title}</p>
                       <Pill tone={caseTone(c.statusKey)}>{c.status}</Pill>
@@ -78,10 +88,10 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
         <section aria-labelledby="exec-title" className="mb-8">
           <h2 id="exec-title" className="mb-3 text-[17px] font-semibold">طلبات التنفيذ</h2>
           {executions.length === 0 ? <EmptyState title="لا توجد طلبات تنفيذ">تظهر هنا طلبات التنفيذ وحالاتها والمبالغ المحصلة.</EmptyState> : (
-            <ul className="divide-y divide-rule rounded-xl border border-line">
+            <ul className="card divide-y divide-rule overflow-hidden">
               {executions.map((e) => (
                 <li key={e.id}>
-                  <Link href={`/portal/executions/${e.id}`} className="block px-4 py-4 transition-colors hover:bg-raised sm:px-5">
+                  <Link href={`/portal/executions/${e.id}`} className="block px-4 py-4 transition-colors hover:bg-raised sm:px-6">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="font-semibold">{e.type} — {e.instrument}</p>
                       <Pill tone="info">{e.status}</Pill>
@@ -103,7 +113,7 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
             <Link href="/portal/claims" className="text-[13px] text-muted hover:text-text">كل المطالبات</Link>
           </div>
           {claims.length === 0 ? <EmptyState title="لم ترسل مطالبات بعد" action={<Button onClick={() => router.post('/portal/claims')}>إدراج مطالبة</Button>} /> : (
-            <ul className="divide-y divide-rule rounded-xl border border-line">
+            <ul className="card divide-y divide-rule overflow-hidden">
               {claims.map((c) => (
                 <li key={c.id}>
                   <Link href={`/portal/claims/${c.id}`} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 hover:bg-raised sm:px-5">
