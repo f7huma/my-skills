@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # إعداد وتشغيل المنصة الحقيقية app.alhumaydhanlaw.com.
-# يسأل سؤالين فقط: بريدك الذي ستدخل به، وكلمة مرور صندوق no-reply@alhumaydhanlaw.com.
+# يسأل سؤالين فقط: بريدك الذي ستدخل به، وكلمة مرور صندوق no-reply@alhumaydhanlaw.com
+# (إن لم يكن لديك صندوق بريد اضغط Enter فقط: تعمل المنصة بلا بريد وتُعرض روابط الدعوات داخلها لتنسخها).
 # يولّد كل المفاتيح ويحفظها في /root/humaidan-production-keys.txt (انسخها لخزنتك ثم احذف الملف).
 # التشغيل:  bash /opt/humaidan-prod/platform/scripts/setup-production.sh
 set -euo pipefail
@@ -46,20 +47,29 @@ fi
 say "3/8 معلوماتك"
 if [ ! -f .env.production ]; then
   read -r -p "اكتب بريدك الذي ستدخل به للمنصة ثم Enter: " LAWYER_EMAIL </dev/tty
-  read -r -s -p "الصق كلمة مرور صندوق $MAIL_USER ثم Enter (لن تظهر): " MAIL_PASS </dev/tty; echo
+  read -r -s -p "الصق كلمة مرور صندوق $MAIL_USER ثم Enter (لن تظهر). إن لم يكن لديك صندوق بريد اضغط Enter فقط: " MAIL_PASS </dev/tty; echo
   DB_PASS="$(pass)"; APPK="$(key)"; FK="$(key)"; BK="$(key)"
   cp .env.example .env.production
   for kv in "APP_ENV=production" "APP_DEBUG=false" "APP_URL=https://$DOMAIN" "APP_KEY=$APPK" \
             "DB_HOST=db" "DB_DATABASE=humaidan" "DB_USERNAME=humaidan" "DB_PASSWORD=$DB_PASS" \
             "SESSION_SECURE_COOKIE=true" "SESSION_ENCRYPT=true" "MFA_REQUIRED_FOR_LAWYER=true" \
             "SCANNER_DRIVER=clamav" "FILES_ENCRYPTION_KEY=$FK" "BACKUP_ENCRYPTION_KEY=$BK" \
-            "OPS_ALERT_MAIL=$OFFICE_EMAIL" "LOG_CHANNEL=stderr" "LOG_LEVEL=warning" \
-            "MAIL_MAILER=smtp" "MAIL_SCHEME=smtps" "MAIL_HOST=smtp.hostinger.com" "MAIL_PORT=465" \
-            "MAIL_USERNAME=$MAIL_USER" "MAIL_FROM_ADDRESS=$MAIL_USER" \
+            "LOG_CHANNEL=stderr" "LOG_LEVEL=warning" \
             "ATTACHMENTS_ROOT=/var/lib/humaidan/files" "BACKUP_PATH=/var/lib/humaidan/backups"; do
     set_env .env.production "${kv%%=*}" "${kv#*=}"
   done
-  set_env .env.production MAIL_PASSWORD "'$MAIL_PASS'"
+  if [ -n "$MAIL_PASS" ]; then
+    for kv in "OPS_ALERT_MAIL=$OFFICE_EMAIL" "MAIL_MAILER=smtp" "MAIL_SCHEME=smtps" "MAIL_HOST=smtp.hostinger.com" \
+              "MAIL_PORT=465" "MAIL_USERNAME=$MAIL_USER" "MAIL_FROM_ADDRESS=$MAIL_USER"; do
+      set_env .env.production "${kv%%=*}" "${kv#*=}"
+    done
+    set_env .env.production MAIL_PASSWORD "'$MAIL_PASS'"
+  else
+    # بلا بريد: لا يُرسل شيء خارج الخادم؛ روابط الدعوات تظهر داخل المنصة مرة واحدة لتنسخها وترسلها بنفسك
+    set_env .env.production MAIL_MAILER log
+    set_env .env.production MAIL_FROM_ADDRESS "$MAIL_USER"
+    echo "سيعمل البريد لاحقًا متى أضفت صندوقًا — المنصة تعمل الآن بدونه."
+  fi
   cat > .env <<EOF
 COMPOSE_PROJECT_NAME=humaidan
 APP_ENV_FILE=.env.production
