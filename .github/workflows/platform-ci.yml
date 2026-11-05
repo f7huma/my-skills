@@ -97,11 +97,15 @@ jobs:
       - name: Smoke test the production web server (headers on static files)
         run: |
           k() { echo "base64:$(openssl rand -base64 32)"; }
-          docker run -d --name app -p 8080:8080 -e APP_KEY="$(k)" -e APP_URL=http://localhost:8080 \
+          # نفس قيود الإنتاج في docker-compose.yml: قراءة فقط، بلا صلاحيات، no-new-privileges
+          docker run -d --name app -p 8080:8080 --read-only --cap-drop ALL --security-opt no-new-privileges:true \
+            --tmpfs /tmp --tmpfs /data --tmpfs /config -v smoke_storage:/app/storage -v smoke_cache:/app/bootstrap/cache \
+            -e APP_KEY="$(k)" -e APP_URL=http://localhost:8080 \
             -e DB_HOST=127.0.0.1 -e DB_PASSWORD=unused -e FILES_ENCRYPTION_KEY="$(k)" -e BACKUP_ENCRYPTION_KEY="$(k)" \
             -e SCANNER_DRIVER=disabled humaidan-app:ci
           for i in $(seq 1 30); do curl -sf -o /dev/null http://localhost:8080/favicon.png && break; sleep 1; done
           docker logs app | tail -20
+          [ "$(docker inspect -f '{{.State.Running}}' app)" = true ] || { echo "app container is not running"; exit 1; }
           H=$(curl -sI http://localhost:8080/favicon.png)
           echo "$H"
           for h in "permissions-policy" "x-content-type-options: nosniff" "x-frame-options: deny" "content-security-policy"; do

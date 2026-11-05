@@ -30,6 +30,12 @@ RUN install-php-extensions pdo_pgsql pgsql intl zip gd opcache pcntl sodium bcma
  && apt-get purge -y curl gnupg && apt-get autoremove -y \
  && rm -rf /var/lib/apt/lists/* \
  && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+# الصورة الأساسية تمنح frankenphp صلاحية ملف (cap_net_bind_service) لا نحتاجها (المنفذ 8080)،
+# ومع cap_drop: ALL و no-new-privileges يرفض النظام تشغيله. النسخ يزيل هذه الصلاحية.
+RUN cp /usr/local/bin/frankenphp /tmp/frankenphp && mv -f /tmp/frankenphp /usr/local/bin/frankenphp \
+ && chmod 0755 /usr/local/bin/frankenphp
+# فحص الصحة الموروث يستخدم curl والمنفذ 2019 (غير موجودين هنا)؛ فحص خدمة web معرّف في docker-compose.yml
+HEALTHCHECK NONE
 COPY docker/app/php.ini $PHP_INI_DIR/conf.d/zz-app.ini
 COPY docker/app/Caddyfile /etc/frankenphp/Caddyfile
 WORKDIR /app
