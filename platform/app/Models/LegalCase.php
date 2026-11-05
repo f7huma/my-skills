@@ -52,7 +52,7 @@ class LegalCase extends Model
 
     protected function casts(): array
     {
-        return ['claim_amount' => 'decimal:2', 'client_summary_updated_at' => 'datetime', 'archived_at' => 'datetime'];
+        return ['claim_amount' => 'decimal:2', 'closed_on' => 'date', 'client_summary_updated_at' => 'datetime', 'archived_at' => 'datetime'];
     }
 
     protected static function booted(): void

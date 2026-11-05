@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { Button, Checkbox, claimTone, cx, DocumentList, KeyValues, Modal, Money, Num, PageHeader, Panel, Pill, SelectField, TextArea, TextField, useModal } from '@/Components/ui';
+import { Button, Checkbox, claimTone, cx, DocumentList, KeyValues, Modal, Money, Num, PageHeader, Panel, Pill, SelectField, TextArea, TextField, useModal, DateText } from '@/Components/ui';
 import { dateTime } from '@/lib/format';
 import type { Doc, Option } from '@/types';
 
@@ -22,7 +22,7 @@ export default function Show({ claim, messages, documents, categories, instrumen
     <>
       <Head title={'مطالبة ' + claim.reference} />
       <PageHeader title={<>مطالبة <Num>{claim.reference}</Num></>} crumbs={[{ label: 'المطالبات الواردة', href: '/office/claims' }]}
-        subtitle={<span className="flex flex-wrap items-center gap-2">{claim.client} ضد {claim.opponentName} · أرسلها {claim.submitter} <Num>{dateTime(claim.submittedAt)}</Num><Pill tone={claimTone(claim.status)}>{claim.statusLabel}</Pill>{claim.missingDocuments && <Pill tone="negative">ناقص مستند</Pill>}</span>}
+        subtitle={<span className="flex flex-wrap items-center gap-2">{claim.client} ضد {claim.opponentName} · أرسلها {claim.submitter} <DateText value={claim.submittedAt} time /><Pill tone={claimTone(claim.status)}>{claim.statusLabel}</Pill>{claim.missingDocuments && <Pill tone="negative">ناقص مستند</Pill>}</span>}
         actions={open ? <>
           <Button size="sm" variant="primary" onClick={m1.show}>تحويل إلى قضية</Button>
           <Button size="sm" onClick={m2.show}>تحويل إلى ملف تنفيذ</Button>
@@ -58,7 +58,7 @@ export default function Show({ claim, messages, documents, categories, instrumen
             <ol className="mb-3 space-y-2">{messages.map((m) => (
               <li key={m.id} className={cx('rounded-lg p-3', m.visible ? 'bg-accent-soft' : 'well')}>
                 <p className="text-[14px]">{m.body}</p>
-                <p className="mt-1 text-[12px] text-muted">{m.visible ? 'ظاهرة للعميل' : 'داخلية'} · {m.author ?? '—'} · <Num>{dateTime(m.at)}</Num></p>
+                <p className="mt-1 text-[12px] text-muted">{m.visible ? 'ظاهرة للعميل' : 'داخلية'} · {m.author ?? '—'} · <DateText value={m.at} time /></p>
               </li>
             ))}</ol>
             <form onSubmit={(e) => { e.preventDefault(); note.post(`/office/claims/${claim.id}/note`, { preserveScroll: true, onSuccess: () => note.reset() }); }} className="space-y-2">

@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Bookmark, X } from 'lucide-react';
 import { useState } from 'react';
-import { ButtonLink, caseTone, EmptyState, Num, PageHeader, Pagination, Pill } from '@/Components/ui';
+import { ButtonLink, caseTone, EmptyState, Num, PageHeader, Pagination, Pill, DateText } from '@/Components/ui';
 import { dateTime } from '@/lib/format';
 import type { Option, Paginated } from '@/types';
 
@@ -62,7 +62,7 @@ export default function Index({ cases, filters, savedFilters, options }: { cases
                   <td>{c.caseNumber ? <Num>{c.caseNumber}</Num> : <span className="text-faint">—</span>}</td>
                   <td className="text-muted">{c.stage}</td>
                   <td><Pill tone={caseTone(c.status)}>{c.statusLabel}</Pill></td>
-                  <td className="end">{c.nextHearing ? <Num>{dateTime(c.nextHearing)}</Num> : <span className="text-faint">—</span>}</td>
+                  <td className="end">{c.nextHearing ? <DateText value={c.nextHearing} time /> : <span className="text-faint">—</span>}</td>
                 </tr>
               ))}</tbody>
             </table>
@@ -72,7 +72,7 @@ export default function Index({ cases, filters, savedFilters, options }: { cases
               <Link href={`/office/cases/${c.id}`} className="block">
                 <span className="flex items-start justify-between gap-2"><span className="font-medium">{c.title}</span><Pill tone={caseTone(c.status)}>{c.statusLabel}</Pill></span>
                 <span className="block text-[13px] text-muted">{c.client} · {c.stage}</span>
-                <span className="block text-[12.5px] text-muted"><Num>{c.caseNumber ?? c.reference}</Num>{c.nextHearing && <> · الجلسة <Num>{dateTime(c.nextHearing)}</Num></>}</span>
+                <span className="block text-[12.5px] text-muted"><Num>{c.caseNumber ?? c.reference}</Num>{c.nextHearing && <> · الجلسة <DateText value={c.nextHearing} time /></>}</span>
               </Link>
             </li>
           ))}</ul>

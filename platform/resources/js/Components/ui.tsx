@@ -2,7 +2,7 @@ import { Link, router, useForm } from '@inertiajs/react';
 import { FileText, Download, ShieldAlert, ShieldCheck, Loader2, Eye, EyeOff, Trash2, Upload, Inbox } from 'lucide-react';
 import { ReactNode, useEffect, useId, useRef, useState, forwardRef, InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import type { Doc, Option, Paginated } from '@/types';
-import { dateTime, fileSize, money } from '@/lib/format';
+import { dateTime, fileSize, hijri, localDate, money } from '@/lib/format';
 
 export function cx(...c: (string | false | null | undefined)[]) {
   return c.filter(Boolean).join(' ');
@@ -11,6 +11,21 @@ export function cx(...c: (string | false | null | undefined)[]) {
 /** رقم أو مرجع معزول الاتجاه داخل النص العربي */
 export function Num({ children, className }: { children: ReactNode; className?: string }) {
   return <bdi dir="ltr" className={cx('num', className)}>{children}</bdi>;
+}
+
+/** تاريخ ميلادي مع مقابله الهجري. يقبل YYYY-MM-DD أو وقتًا ISO (يُعرض بتوقيت الرياض مع الساعة عند time) */
+export function DateText({ value, time = false, fallback = '—', className }: { value: string | null | undefined; time?: boolean; fallback?: string; className?: string }) {
+  if (!value) return <span className={cx('text-faint', className)}>{fallback}</span>;
+  const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
+  if (!isDateOnly && Number.isNaN(Date.parse(value))) return <span className={className}>{value}</span>;
+  const g = isDateOnly ? value : (time ? dateTime(value) : localDate(value));
+  const h = hijri(isDateOnly ? value : localDate(value));
+  return (
+    <span className={cx('whitespace-nowrap', className)}>
+      <bdi dir="ltr" className="num">{g}</bdi>
+      {h && <span className="ms-1.5 text-[0.88em] text-muted"><bdi dir="ltr" className="num">{h}</bdi>هـ</span>}
+    </span>
+  );
 }
 
 export function Money({ value, currency, className }: { value: string | number | null | undefined; currency?: string | null; className?: string }) {
@@ -61,9 +76,11 @@ function FieldShell({ id, label, error, hint, className, required, children }: F
 
 export const TextField = forwardRef<HTMLInputElement, FieldWrap & InputHTMLAttributes<HTMLInputElement> & { ltr?: boolean }>(
   function TextField({ label, error, hint, className, ltr, required, ...rest }, ref) {
-    const { id, describedBy } = useFieldIds(error, hint);
+    const h = rest.type === 'date' && typeof rest.value === 'string' ? hijri(rest.value) : '';
+    const fullHint = h ? <>{hint}{hint ? ' · ' : ''}يوافق <bdi dir="ltr" className="num">{h}</bdi>هـ</> : hint;
+    const { id, describedBy } = useFieldIds(error, fullHint);
     return (
-      <FieldShell id={id} label={label} error={error} hint={hint} className={className} required={required}>
+      <FieldShell id={id} label={label} error={error} hint={fullHint} className={className} required={required}>
         <input ref={ref} id={id} required={required} aria-invalid={error ? true : undefined} aria-describedby={describedBy} {...rest} className={cx('input', ltr && 'input-ltr num')} />
       </FieldShell>
     );
@@ -256,7 +273,7 @@ export function Timeline({ events, showUser }: { events: { id: number; title: st
           <span aria-hidden className={cx('absolute -start-[5px] top-2 size-[9px] rounded-full border-2 border-surface', e.clientVisible ? 'bg-accent' : 'bg-control')} />
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
             <p className="font-medium text-text">{e.title}</p>
-            <span className="text-[12.5px] text-muted"><Num>{dateTime(e.at)}</Num></span>
+            <span className="text-[12.5px] text-muted"><DateText value={e.at} time /></span>
             {showUser && e.user && <span className="text-[12.5px] text-muted">· {e.user}</span>}
             {e.clientVisible !== undefined && e.clientVisible && <span className="text-[12px] text-accent">ظاهر للعميل</span>}
           </div>
@@ -299,7 +316,7 @@ export function DocumentList({ docs, manage, empty = 'لا توجد مستندا
               {d.categoryLabel && <span>{d.categoryLabel}</span>}
               {d.partyLabel && <span>· {d.partyLabel}</span>}
               <span>· <Num>{fileSize(d.size)}</Num></span>
-              {d.uploadedAt && <span>· <Num>{dateTime(d.uploadedAt)}</Num></span>}
+              {d.uploadedAt && <span>· <DateText value={d.uploadedAt} time /></span>}
             </p>
           </div>
           <ScanBadge scan={d.scan} />

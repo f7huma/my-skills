@@ -73,3 +73,16 @@ export function fileSize(b: number): string {
 }
 
 export const totalsList = (t: Record<string, string> | undefined) => Object.entries(t ?? {});
+
+/** التاريخ الهجري (تقويم أم القرى) لتاريخ محلي YYYY-MM-DD: 25/05/1448 */
+export function hijri(d: string | null | undefined): string {
+  if (!d) return '';
+  const [y, m, day] = d.slice(0, 10).split('-').map(Number);
+  if (!y || !m || !day) return '';
+  try {
+    return new Intl.DateTimeFormat('en-GB-u-ca-islamic-umalqura-nu-latn', { day: '2-digit', month: '2-digit', year: 'numeric', timeZone: 'UTC' })
+      .format(new Date(Date.UTC(y, m - 1, day))).replace(/\s*AH$/, '');
+  } catch {
+    return '';
+  }
+}

@@ -119,7 +119,8 @@ class ClientController extends Controller
                     'state' => $p->effectiveStatus($warn), 'notes' => $p->notes, 'document' => $p->document ? Office::document($p->document) : null]),
             'cases' => $client->cases()->with('category:id,name')->orderByDesc('updated_at')->get()->map(fn (LegalCase $c) => [
                 'id' => $c->id, 'reference' => $c->reference, 'title' => $c->title, 'stage' => LegalCase::STAGES[$c->stage], 'status' => $c->work_status,
-                'statusLabel' => LegalCase::WORK_STATUSES[$c->work_status], 'category' => $c->category?->name, 'role' => LegalCase::CLIENT_ROLES[$c->client_role]]),
+                'statusLabel' => LegalCase::WORK_STATUSES[$c->work_status], 'category' => $c->category?->name, 'role' => LegalCase::CLIENT_ROLES[$c->client_role],
+                'outcome' => $c->outcome ? LegalCase::OUTCOMES[$c->outcome] : null, 'closedOn' => $c->closed_on?->toDateString()]),
             'executions' => $client->executionRequests()->orderByDesc('updated_at')->get()->map(fn (ExecutionRequest $e) => [
                 'id' => $e->id, 'reference' => $e->reference, 'requestNumber' => $e->request_number, 'type' => ExecutionRequest::EXECUTION_TYPES[$e->execution_type],
                 'status' => ExecutionRequest::STATUSES[$e->status] ?? $e->status, 'caseId' => $e->legal_case_id]),

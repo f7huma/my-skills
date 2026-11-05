@@ -6,15 +6,14 @@ import { DeadlineList, type DeadlineRow } from '@/Components/Deadlines';
 import { emptyTask, TaskFields, type TaskInput } from '@/Components/TaskFields';
 import {
   Button, ButtonLink, caseTone, Checkbox, cx, DocumentList, EmptyState, FormError, KeyValues, Modal, Money, Num, PageHeader, Panel, Pill, SelectField,
-  Tabs, TextArea, TextField, Timeline, UploadForm, useModal,
-} from '@/Components/ui';
+  Tabs, TextArea, TextField, Timeline, UploadForm, useModal, DateText } from '@/Components/ui';
 import { dateTime, relative, weekday } from '@/lib/format';
 import { useTab } from '@/lib/useTab';
 import type { Doc, Option, Totals } from '@/types';
 
 type CaseT = {
   id: number; reference: string; title: string; clientId: number; client: string; categoryId: number | null; category: string | null; clientRole: string; clientRoleLabel: string;
-  stage: string; stageLabel: string; status: string; statusLabel: string; outcome: string | null; outcomeLabel: string | null; claimAmount: string | null; currency: string;
+  stage: string; stageLabel: string; status: string; statusLabel: string; outcome: string | null; outcomeLabel: string | null; closedOn: string | null; claimAmount: string | null; currency: string;
   poaId: number | null; poa: { number: string; state: string } | null; clientSummary: string | null; clientSummaryUpdatedAt: string | null; internalNotes: string | null;
   lockVersion: number; sourceClaimId: number | null; createdAt: string;
 };
@@ -62,7 +61,7 @@ function SummaryTab({ p }: { p: Props }) {
         <Panel title="بيانات القضية" actions={<Button size="sm" variant="ghost" onClick={edit.show}><Pencil className="size-4" aria-hidden />تعديل</Button>}>
           <KeyValues items={[
             ['العميل', <Link href={`/office/clients/${c.clientId}`} className="text-accent hover:underline">{c.client}</Link>],
-            ['صفة العميل', c.clientRoleLabel], ['التصنيف', c.category], ['المرحلة الإجرائية', c.stageLabel], ['حالة العمل', c.statusLabel], ['النتيجة', c.outcomeLabel],
+            ['صفة العميل', c.clientRoleLabel], ['التصنيف', c.category], ['المرحلة الإجرائية', c.stageLabel], ['حالة العمل', c.statusLabel], ['النتيجة', c.outcomeLabel], ['تاريخ الانتهاء', c.closedOn ? <DateText value={c.closedOn} /> : null],
             ['المبلغ محل الدعوى', c.claimAmount && <Money value={c.claimAmount} currency={c.currency} />],
             ['الوكالة المستخدمة', c.poa && <>وكالة <Num>{c.poa.number}</Num>{c.poa.state !== 'active' && <Pill tone={c.poa.state === 'expiring' ? 'warning' : 'negative'} className="ms-2">{c.poa.state === 'expiring' ? 'قريبة الانتهاء' : c.poa.state === 'expired' ? 'منتهية' : 'ملغاة'}</Pill>}</>],
             ['رقم القضية', p.filings.find((f) => f.caseNumber)?.caseNumber && <Num>{p.filings.find((f) => f.caseNumber)!.caseNumber}</Num>],
@@ -83,11 +82,11 @@ function SummaryTab({ p }: { p: Props }) {
         <Panel title="الآن">
           <ul className="space-y-2.5 text-[14px]">
             <li className="flex items-start gap-2"><Clock className="mt-0.5 size-4 text-muted" aria-hidden />
-              {nextHearing ? <span>{nextHearing.kindLabel}: <Num>{dateTime(nextHearing.at)}</Num>{nextHearing.authority && <span className="text-muted"> · {nextHearing.authority}</span>}</span> : <span className="text-muted">لا جلسة مجدولة.</span>}
+              {nextHearing ? <span>{nextHearing.kindLabel}: <DateText value={nextHearing.at} time />{nextHearing.authority && <span className="text-muted"> · {nextHearing.authority}</span>}</span> : <span className="text-muted">لا جلسة مجدولة.</span>}
             </li>
             <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 size-4 text-muted" aria-hidden /><span><Num>{openTasks.length}</Num> مهمة مفتوحة{openTasks.filter((t) => !t.dueOn).length > 0 && <span className="text-muted"> (منها <Num>{openTasks.filter((t) => !t.dueOn).length}</Num> بلا موعد)</span>}</span></li>
             {p.deadlines.filter((d) => d.status !== 'closed').slice(0, 3).map((d) => (
-              <li key={d.id} className="flex items-start gap-2"><Scale className="mt-0.5 size-4 text-muted" aria-hidden /><span>{d.reason}: <Num>{d.endOn ?? 'يحتاج تحديدًا'}</Num></span></li>
+              <li key={d.id} className="flex items-start gap-2"><Scale className="mt-0.5 size-4 text-muted" aria-hidden /><span>{d.reason}: <DateText value={d.endOn} fallback="يحتاج تحديدًا" /></span></li>
             ))}
           </ul>
         </Panel>
@@ -138,7 +137,7 @@ function ReconciliationTab({ p }: { p: Props }) {
         <Panel key={r.id} title={<>طلب صلح {r.number ? <Num>{r.number}</Num> : <span className="text-muted">بلا رقم بعد</span>}</>}
           actions={<Pill tone={r.status === 'settled' ? 'positive' : ['failed', 'other_party_absent'].includes(r.status) ? 'warning' : 'info'}>{r.statusLabel}</Pill>}>
           <KeyValues cols={3} items={[
-            ['تاريخ التقديم', r.submittedOn && <Num>{r.submittedOn}</Num>], ['تاريخ النتيجة', r.outcomeOn && <Num>{r.outcomeOn}</Num>],
+            ['تاريخ التقديم', r.submittedOn && <DateText value={r.submittedOn} />], ['تاريخ النتيجة', r.outcomeOn && <DateText value={r.outcomeOn} />],
             ['المبلغ المتفق عليه', r.agreedAmount && <Money value={r.agreedAmount} currency={r.currency} />], ['ملاحظات', r.notes],
             ['تقرير الصلح', r.report?.url && <a href={r.report.url} className="text-accent hover:underline">تنزيل التقرير</a>],
             ['جلسات الصلح', <Num>{p.hearings.filter((h) => h.reconciliationId === r.id).length}</Num>],
@@ -201,9 +200,9 @@ function CourtTab({ p }: { p: Props }) {
           actions={<><Pill tone={f.status === 'registered' ? 'positive' : f.status === 'returned' ? 'warning' : f.status === 'rejected' ? 'negative' : 'info'}>{f.statusLabel}</Pill>
             <Button size="sm" variant="ghost" onClick={() => { setEdit(f); modal.show(); }}>تحديث</Button></>}>
           <KeyValues cols={3} items={[
-            ['رقم طلب التقييد', f.requestNumber && <Num>{f.requestNumber}</Num>], ['تاريخ تقديم الطلب', f.submittedOn && <Num>{f.submittedOn}</Num>],
-            ['رقم القضية', f.caseNumber && <Num>{f.caseNumber}</Num>], ['تاريخ القيد', f.registeredOn && <Num>{f.registeredOn}</Num>],
-            ['تاريخ الإحالة', f.referredOn && <Num>{f.referredOn}</Num>], ['المحكمة', f.court], ['الدائرة', f.circuit], ['ملاحظات', f.notes],
+            ['رقم طلب التقييد', f.requestNumber && <Num>{f.requestNumber}</Num>], ['تاريخ تقديم الطلب', f.submittedOn && <DateText value={f.submittedOn} />],
+            ['رقم القضية', f.caseNumber && <Num>{f.caseNumber}</Num>], ['تاريخ القيد', f.registeredOn && <DateText value={f.registeredOn} />],
+            ['تاريخ الإحالة', f.referredOn && <DateText value={f.referredOn} />], ['المحكمة', f.court], ['الدائرة', f.circuit], ['ملاحظات', f.notes],
           ]} />
         </Panel>
       ))}
@@ -252,7 +251,7 @@ function HearingsTab({ p }: { p: Props }) {
         <section key={h.id} id={`hearing-${h.id}`} className={cx('card scroll-mt-20 px-5 py-4', h.status !== 'scheduled' && h.status !== 'completed' && 'bg-raised')}>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <h3 className="font-semibold">{h.kindLabel} — <Num>{dateTime(h.at)}</Num></h3>
+              <h3 className="font-semibold">{h.kindLabel} — <DateText value={h.at} time /></h3>
               <p className="text-[13px] text-muted">{h.at && weekday(h.localAt!.slice(0, 10))}{h.authority && ` · ${h.authority}`}{h.anchoredTasks > 0 && ` · ${h.anchoredTasks} مهمة مرتبطة بموعدها`}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -400,7 +399,7 @@ function TasksTab({ p }: { p: Props }) {
               <input type="checkbox" className="check mt-1" checked={t.status === 'done'} onChange={() => toggle(t)} aria-label={(t.status === 'done' ? 'إعادة فتح: ' : 'إنجاز: ') + t.title} />
               <div className="min-w-0 flex-1">
                 <p className={cx('font-medium', t.status !== 'open' && 'text-muted line-through')}>{t.title}</p>
-                <p className="text-[12.5px] text-muted">{t.kindLabel} · {t.dueOn ? <Num>{t.dueOn}</Num> : 'بانتظار تحديد موعد'}
+                <p className="text-[12.5px] text-muted">{t.kindLabel} · {t.dueOn ? <DateText value={t.dueOn} /> : 'بانتظار تحديد موعد'}
                   {t.dueMode === 'next_hearing' && ` · مرتبط بالجلسة (${t.anchorOffset! >= 0 ? '+' : ''}${t.anchorOffset} يوم)`}
                   {t.dueMode === 'relative' && ` · ${t.relativeDays} ${t.relativeDayType === 'business' ? 'يوم عمل' : 'يوم'} من ${t.relativeEvent ?? 'الواقعة'}`}</p>
                 {t.changes.length > 0 && <p className="text-[12px] text-muted">آخر تغيير: <Num>{t.changes[0].old ?? '—'}</Num> ← <Num>{t.changes[0].new ?? '—'}</Num> ({t.changes[0].reason})</p>}
@@ -420,7 +419,7 @@ function TasksTab({ p }: { p: Props }) {
           <ul className="divide-y divide-rule">{p.memos.map((m) => (
             <li key={m.id} className="flex items-center justify-between gap-2 py-2.5">
               <div className="min-w-0"><Link href={`/office/memos/${m.id}`} className="block truncate font-medium hover:underline underline-offset-4">{m.title}</Link>
-                <p className="text-[12.5px] text-muted">{m.type} · إصدار <Num>{m.version}</Num>{m.dueOn && <> · الموعد <Num>{m.dueOn}</Num></>}{m.filedOn && <> · أودعت <Num>{m.filedOn}</Num></>}</p></div>
+                <p className="text-[12.5px] text-muted">{m.type} · إصدار <Num>{m.version}</Num>{m.dueOn && <> · الموعد <DateText value={m.dueOn} /></>}{m.filedOn && <> · أودعت <DateText value={m.filedOn} /></>}</p></div>
               <Pill tone={m.status === 'filed' ? 'positive' : m.status === 'approved' ? 'accent' : m.status === 'ready_for_review' ? 'info' : 'neutral'}>{m.statusLabel}</Pill>
             </li>
           ))}</ul>
@@ -487,7 +486,7 @@ function JudgmentTab({ p }: { p: Props }) {
         <div className="grid grid-cols-1 content-start gap-4">
           {j && (
             <Panel title="النهائية">
-              {j.finality === 'final' ? <p className="flex items-center gap-2 text-positive"><CheckCircle2 className="size-4" aria-hidden />الحكم نهائي — أكّده المحامي <Num>{dateTime(j.finalityConfirmedAt)}</Num></p> : (
+              {j.finality === 'final' ? <p className="flex items-center gap-2 text-positive"><CheckCircle2 className="size-4" aria-hidden />الحكم نهائي — أكّده المحامي <DateText value={j.finalityConfirmedAt} time /></p> : (
                 <form onSubmit={(e) => { e.preventDefault(); fin.post(`/office/cases/${p.case.id}/judgment/finality`, { preserveScroll: true }); }} className="space-y-3">
                   <p className="text-[13.5px] text-muted">تأكيد النهائية إجراء صريح منك، ولا يُفترض بانتهاء أي عداد.</p>
                   <SelectField label="مستند النهائية (اختياري)" placeholder="بدون" options={docs.map((d) => ({ value: d.id, label: d.label || d.name }))} value={fin.data.document} onChange={(e) => fin.setData('document', e.target.value)} />

@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { caseTone, DocumentList, KeyValues, Money, Num, Pill, Timeline } from '@/Components/ui';
+import { caseTone, DocumentList, KeyValues, Money, Num, Pill, Timeline, DateText } from '@/Components/ui';
 import { dateTime, relative } from '@/lib/format';
 import type { Doc } from '@/types';
 
@@ -39,9 +39,9 @@ export default function CaseShow({ case: c }: { case: C }) {
               ['المحكمة', c.court],
               ['الدائرة', c.circuit],
               ['حالة طلب التقييد', c.filingStatus],
-              ['الجلسة القادمة', c.nextHearing && <>{c.nextHearing.kind} — <Num>{dateTime(c.nextHearing.at)}</Num></>],
+              ['الجلسة القادمة', c.nextHearing && <>{c.nextHearing.kind} — <DateText value={c.nextHearing.at} time /></>],
               ['النتيجة', c.judgment?.outcome ?? c.outcome],
-              ['تاريخ النطق بالحكم', c.judgment?.pronouncedOn && <Num>{c.judgment.pronouncedOn}</Num>],
+              ['تاريخ النطق بالحكم', c.judgment?.pronouncedOn && <DateText value={c.judgment.pronouncedOn} />],
               ['صك الحكم', c.judgment ? (c.judgment.deedIssued ? 'صدر' : 'بانتظار صدوره') : null],
               ['النهائية', c.judgment?.final ? 'الحكم نهائي' : null],
             ]} />
@@ -58,7 +58,7 @@ export default function CaseShow({ case: c }: { case: C }) {
               <ul className="divide-y divide-rule">
                 {c.collections.map((m, i) => (
                   <li key={i} className="flex items-center justify-between py-2">
-                    <span><span className="block text-[14px]">{m.kind}</span><span className="text-[12px] text-muted">{m.source} · <Num>{m.on}</Num></span></span>
+                    <span><span className="block text-[14px]">{m.kind}</span><span className="text-[12px] text-muted">{m.source} · <DateText value={m.on} /></span></span>
                     <Money value={m.amount} currency={m.currency} className={m.kindKey === 'received' ? 'font-semibold text-accent' : 'font-medium'} />
                   </li>
                 ))}

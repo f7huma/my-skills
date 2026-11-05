@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { Check, CalendarX2, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { ButtonLink, certaintyTone, cx, EmptyState, Money, Num, Panel, Pill, poaLabel, poaTone } from '@/Components/ui';
+import { ButtonLink, certaintyTone, cx, EmptyState, Money, Num, Panel, Pill, poaLabel, poaTone, DateText } from '@/Components/ui';
 import { dayMonth, relative, timeOnly, weekday, dateOnly, count } from '@/lib/format';
 import { BarChart, CountUp, Meter, Pipeline } from '@/Components/motion';
 
@@ -224,7 +224,7 @@ export default function Dashboard(p: Props) {
                       <Link href={`/office/deadlines#deadline-${d.id}`} className="min-w-0 truncate text-[13.5px] hover:underline underline-offset-4">{d.reason}</Link>
                       <span className="flex shrink-0 items-center gap-2">
                         <Pill tone={d.alerted ? 'negative' : certaintyTone(d.certainty)}>{d.alerted ? 'انتهى' : d.certaintyLabel}</Pill>
-                        <span className="w-[74px] text-end text-[12.5px]"><Num>{d.end ?? '—'}</Num></span>
+                        <span className="text-end text-[12.5px]"><DateText value={d.end} /></span>
                       </span>
                     </li>
                   ))}
@@ -307,7 +307,7 @@ export default function Dashboard(p: Props) {
                   <li key={v.id} className="flex items-center justify-between gap-3 py-2">
                     <div className="min-w-0">
                       <Link href={`/office/clients/${v.clientId}?tab=poa`} className="block truncate font-medium hover:underline underline-offset-4">{v.client}</Link>
-                      <p className="text-[12.5px] text-muted">وكالة <Num>{v.number}</Num> · تنتهي <Num>{v.expires}</Num></p>
+                      <p className="text-[12.5px] text-muted">وكالة <Num>{v.number}</Num> · تنتهي <DateText value={v.expires} /></p>
                     </div>
                     <Pill tone={poaTone(v.state)}>{poaLabel[v.state]}</Pill>
                   </li>

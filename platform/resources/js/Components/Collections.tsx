@@ -1,6 +1,6 @@
 import { router, useForm } from '@inertiajs/react';
 import { Plus, Trash2 } from 'lucide-react';
-import { Button, EmptyState, Modal, Money, Num, Panel, SelectField, TextField, TotalsGrid, useModal, Checkbox } from '@/Components/ui';
+import { Button, EmptyState, Modal, Money, Num, Panel, SelectField, TextField, TotalsGrid, useModal, Checkbox, DateText } from '@/Components/ui';
 import type { Doc, Option, Totals } from '@/types';
 
 export type CollectionRow = { id: number; kind: string; kindLabel: string; source: string; sourceLabel: string; amount: string; currency: string; on: string; description: string | null; visible: boolean; document: Doc | null; executionId: number | null };
@@ -37,7 +37,7 @@ export function CollectionsPanel({ rows, totals, kinds, sources, currencies, cas
               <tr key={r.id}>
                 <td className="font-medium">{r.kindLabel}{!r.visible && <span className="ms-2 text-[12px] text-muted">(داخلي)</span>}</td>
                 <td className="text-muted">{r.sourceLabel}{r.executionId && !executionId ? ' — ملف تنفيذ' : ''}</td>
-                <td><Num>{r.on}</Num></td>
+                <td><DateText value={r.on} /></td>
                 <td className="max-w-[260px] truncate text-muted">{r.description ?? '—'}{r.document?.url && <> · <a href={r.document.url} className="text-accent hover:underline">المستند</a></>}</td>
                 <td className="end"><Money value={r.amount} currency={r.currency} className={r.kind === 'received' ? 'font-semibold text-accent' : ''} /></td>
                 <td className="end"><button type="button" className="btn btn-ghost btn-sm" aria-label="حذف العملية" onClick={() => remove(r)}><Trash2 className="size-4" /></button></td>

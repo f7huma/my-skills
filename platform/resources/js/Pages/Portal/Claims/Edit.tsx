@@ -1,7 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { CheckCircle2, Circle, Send, Save, Upload } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
-import { Button, cx, DocumentList, FormError, Num, SelectField, TextArea, TextField } from '@/Components/ui';
+import { Button, cx, DocumentList, FormError, Num, SelectField, TextArea, TextField, DateText } from '@/Components/ui';
 import type { Doc, Option } from '@/types';
 import { dateTime } from '@/lib/format';
 
@@ -66,7 +66,7 @@ export default function Edit({ claim, submitKey, requiredByType, categories, par
       {completion.length > 0 && (
         <section className="mb-6 rounded-xl border border-[var(--warning-border)] bg-[var(--pill-warning-bg)] px-5 py-4" aria-labelledby="req">
           <h2 id="req" className="font-semibold text-[var(--pill-warning-ink)]">طلب استكمال من المكتب</h2>
-          {completion.map((m) => <p key={m.id} className="mt-1 text-[14px]">{m.body} <span className="text-[12px] text-muted">(<Num>{dateTime(m.at)}</Num>)</span></p>)}
+          {completion.map((m) => <p key={m.id} className="mt-1 text-[14px]">{m.body} <span className="text-[12px] text-muted">(<DateText value={m.at} time />)</span></p>)}
         </section>
       )}
 

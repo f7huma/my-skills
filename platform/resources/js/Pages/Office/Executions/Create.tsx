@@ -4,16 +4,17 @@ import { ExecutionFields } from '@/Components/ExecutionFields';
 import { Button, PageHeader, SelectField, TextField } from '@/Components/ui';
 import type { Option } from '@/types';
 
-export default function Create(p: { clients: Option[]; executionTypes: Option[]; instrumentTypes: Option[]; statuses: Option[]; currencies: string[]; preset: { client_id: number | null } }) {
+export default function Create(p: { clients: Option[]; executionTypes: Option[]; instrumentTypes: Option[]; statuses: Option[]; currencies: string[]; preset: { client_id: number | null; status?: string | null } }) {
   const form = useForm<Record<string, any>>({
-    client_id: p.preset.client_id ? String(p.preset.client_id) : '', execution_type: 'financial', instrument_type: 'electronic_promissory_note', instrument_label: '', status: 'draft', currency: 'SAR',
+    client_id: p.preset.client_id ? String(p.preset.client_id) : '', execution_type: 'financial', instrument_type: 'electronic_promissory_note', instrument_label: '', status: p.preset.status ?? 'draft', currency: 'SAR',
     request_number: '', amount_claimed: '', weekly_followup: false, parties: [{ name: '', role: 'respondent', party_type: 'individual', identifier: '' }],
   });
+  const past = ['completed', 'closed', 'rejected'].includes(String(form.data.status));
   const parties = form.data.parties as { name: string; role: string; party_type: string; identifier: string }[];
   return (
     <div className="max-w-[960px]">
       <Head title="طلب تنفيذ" />
-      <PageHeader title="طلب تنفيذ مستقل" subtitle="مثل التنفيذ بسند لأمر إلكتروني. طلبات التنفيذ المرتبطة بحكم تُنشأ من تبويب الحكم في القضية." crumbs={[{ label: 'التنفيذ', href: '/office/executions' }]} />
+      <PageHeader title={p.preset.status ? 'إضافة طلب تنفيذ منتهٍ' : 'طلب تنفيذ مستقل'} subtitle={past ? 'طلب منتهٍ سابقًا لحصر أعمال العميل: لا تُنشأ له مهام ولا مواعيد تلقائية. يمكنك إضافة المبالغ المحصّلة بعد الحفظ.' : 'مثل التنفيذ بسند لأمر إلكتروني. طلبات التنفيذ المرتبطة بحكم تُنشأ من تبويب الحكم في القضية.'} crumbs={[{ label: 'التنفيذ', href: '/office/executions' }]} />
       <form onSubmit={(e) => { e.preventDefault(); form.transform((d) => ({ ...d, parties: (d.parties as { name: string }[]).filter((x) => x.name.trim()) })); form.post('/office/executions'); }} className="space-y-6" noValidate>
         <SelectField label="العميل (طالب التنفيذ)" required options={p.clients} placeholder="اختر العميل" value={form.data.client_id} onChange={(e) => form.setData('client_id', e.target.value)} error={form.errors.client_id} className="max-w-md" />
         <ExecutionFields data={form.data} set={(k, v) => form.setData(k, v)} errors={form.errors as Record<string, string>} options={p} />
@@ -29,7 +30,7 @@ export default function Create(p: { clients: Option[]; executionTypes: Option[];
           ))}
           <Button type="button" size="sm" onClick={() => form.setData('parties', [...parties, { name: '', role: 'respondent', party_type: 'individual', identifier: '' }])}><Plus className="size-4" aria-hidden />طرف</Button>
         </fieldset>
-        <Button variant="primary" type="submit" loading={form.processing}>إنشاء الطلب</Button>
+        <Button variant="primary" type="submit" loading={form.processing}>{past ? 'حفظ الطلب المنتهي' : 'إنشاء الطلب'}</Button>
       </form>
     </div>
   );

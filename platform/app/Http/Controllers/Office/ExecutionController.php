@@ -57,7 +57,8 @@ class ExecutionController extends Controller
             'instrumentTypes' => Office::options(ExecutionRequest::INSTRUMENT_TYPES),
             'statuses' => Office::options(ExecutionRequest::STATUSES),
             'currencies' => config('office.currencies'),
-            'preset' => ['client_id' => $request->integer('client') ?: null],
+            'preset' => ['client_id' => $request->integer('client') ?: null,
+                'status' => in_array($request->query('status'), ['completed', 'closed'], true) ? $request->query('status') : null],
         ]);
     }
 

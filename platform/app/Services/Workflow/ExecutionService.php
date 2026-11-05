@@ -53,7 +53,10 @@ class ExecutionService
                     'occurred_on' => $e->submitted_on ?? today_local(), 'entry_key' => (string) Str::uuid(), 'created_by' => auth()->id(),
                     'description' => 'المبلغ المطلوب في طلب التنفيذ']);
             }
-            $this->deadlines->syncExecutionCompliance($e);
+            // طلب منتهٍ يُدخل لحصر أعمال العميل: لا مهلة امتثال ولا متابعة
+            if (! in_array($e->status, ['completed', 'closed', 'rejected'], true)) {
+                $this->deadlines->syncExecutionCompliance($e);
+            }
             Audit::log('execution.created', $e, ['type' => $e->execution_type, 'instrument' => $e->instrument_type]);
 
             return $e;

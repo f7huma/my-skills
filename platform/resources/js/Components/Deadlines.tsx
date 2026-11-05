@@ -1,5 +1,5 @@
 import { router, useForm } from '@inertiajs/react';
-import { Button, certaintyTone, cx, EmptyState, Modal, Num, Pill, SelectField, TextArea, TextField, useModal } from '@/Components/ui';
+import { Button, certaintyTone, cx, EmptyState, Modal, Num, Pill, SelectField, TextArea, TextField, useModal, DateText } from '@/Components/ui';
 import { remainingLabel } from '@/lib/format';
 import type { Option } from '@/types';
 import { useState } from 'react';
@@ -58,7 +58,7 @@ export function DeadlineList({ rows, kinds, certainties, showRef }: { rows: Dead
               </div>
               <p className="mt-0.5 text-[12.5px] text-muted">
                 {d.kindLabel}{showRef && d.ref && <> · <Num>{d.ref}</Num></>}{showRef && d.client && <> · {d.client}</>}
-                {d.startOn && <> · البداية <Num>{d.startOn}</Num></>}
+                {d.startOn && <> · البداية <DateText value={d.startOn} /></>}
                 {d.updatedAt && <> · آخر تعديل <Num>{d.updatedAt.slice(0, 10)}</Num>{d.updatedBy ? ` (${d.updatedBy})` : ''}</>}
               </p>
               {d.basis && <p className="mt-1 text-[13px] text-text/80">الأساس: {d.basis}</p>}
@@ -66,7 +66,7 @@ export function DeadlineList({ rows, kinds, certainties, showRef }: { rows: Dead
             </div>
             <div className="flex items-center gap-3 sm:flex-col sm:items-end">
               <div className="text-end">
-                <p className="text-[15px] font-semibold"><Num>{d.endOn ?? '—'}</Num></p>
+                <p className="text-[15px] font-semibold"><DateText value={d.endOn} /></p>
                 {d.endHijri && <p className="text-[12px] text-muted">{d.endHijri}</p>}
                 <p className={cx('text-[12.5px]', (d.remaining ?? 1) < 0 ? 'font-semibold text-negative' : 'text-muted')}>{remainingLabel(d.remaining, d.dayType)}</p>
               </div>

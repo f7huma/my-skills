@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { Archive, Pencil, Plus } from 'lucide-react';
-import { Button, ButtonLink, caseTone, Checkbox, claimTone, DocumentList, EmptyState, KeyValues, Modal, Money, Num, PageHeader, Panel, Pill, poaLabel, poaTone, Tabs, TextArea, TextField, TotalsGrid, UploadForm, useModal } from '@/Components/ui';
+import { Button, ButtonLink, caseTone, Checkbox, claimTone, DocumentList, EmptyState, KeyValues, Modal, Money, Num, PageHeader, Panel, Pill, poaLabel, poaTone, Tabs, TextArea, TextField, TotalsGrid, UploadForm, useModal, DateText } from '@/Components/ui';
 import { dateTime } from '@/lib/format';
 import { useTab } from '@/lib/useTab';
 import type { Doc, Option, SharedProps, Totals } from '@/types';
@@ -12,7 +12,7 @@ type Props = {
   client: { id: number; reference: string; type: string; typeLabel: string; name: string; nationalId: string | null; unifiedNumber: string | null; commercialRegistration: string | null; address: string | null; nationalAddress: string | null; phone: string | null; email: string | null; internalNotes: string | null; archived: boolean };
   counts: { total: number; active: number; completed: number; resumable: number };
   poas: Poa[];
-  cases: { id: number; reference: string; title: string; stage: string; status: string; statusLabel: string; category: string | null; role: string }[];
+  cases: { id: number; reference: string; title: string; stage: string; status: string; statusLabel: string; category: string | null; role: string; outcome: string | null; closedOn: string | null }[];
   executions: { id: number; reference: string; requestNumber: string | null; type: string; status: string; caseId: number | null }[];
   claims: { id: number; reference: string; opponent: string; status: string; statusLabel: string; amount: string | null; currency: string }[];
   documents: Doc[]; allDocumentsCount: number; totals: Totals;
@@ -112,7 +112,7 @@ export default function Show(p: Props) {
               <Panel title="الوكالات">
                 {p.poas.length === 0 ? <p className="text-[13.5px] text-muted">لا وكالات مسجلة.</p> : (
                   <ul className="divide-y divide-rule">{p.poas.slice(0, 3).map((v) => (
-                    <li key={v.id} className="flex items-center justify-between py-2"><span>وكالة <Num>{v.number}</Num> <span className="text-[12.5px] text-muted">· تنتهي <Num>{v.expires ?? '—'}</Num></span></span><Pill tone={poaTone(v.state)}>{poaLabel[v.state]}</Pill></li>
+                    <li key={v.id} className="flex items-center justify-between py-2"><span>وكالة <Num>{v.number}</Num> <span className="text-[12.5px] text-muted">· تنتهي <DateText value={v.expires} /></span></span><Pill tone={poaTone(v.state)}>{poaLabel[v.state]}</Pill></li>
                   ))}</ul>
                 )}
               </Panel>
@@ -131,7 +131,7 @@ export default function Show(p: Props) {
                 <thead><tr><th>الرقم</th><th>الإصدار</th><th>الانتهاء</th><th>الحالة</th><th>المرفق</th><th><span className="sr-only">إجراءات</span></th></tr></thead>
                 <tbody>{p.poas.map((v) => (
                   <tr key={v.id}>
-                    <td className="font-medium"><Num>{v.number}</Num></td><td><Num>{v.issued ?? '—'}</Num></td><td><Num>{v.expires ?? '—'}</Num></td>
+                    <td className="font-medium"><Num>{v.number}</Num></td><td><DateText value={v.issued} /></td><td><DateText value={v.expires} /></td>
                     <td><Pill tone={poaTone(v.state)}>{poaLabel[v.state]}</Pill></td>
                     <td>{v.document?.url ? <a className="text-accent hover:underline" href={v.document.url}>تنزيل</a> : <span className="text-faint">—</span>}</td>
                     <td className="end"><button type="button" className="btn btn-ghost btn-sm" onClick={() => { editPoa.set(v); poaModal.show(); }}>تعديل</button></td>
@@ -157,13 +157,14 @@ export default function Show(p: Props) {
         )}
 
         {tab === 'cases' && (
-          <Panel title="القضايا" actions={<ButtonLink href={`/office/cases/create?client=${c.id}`} size="sm" variant="primary">قضية جديدة</ButtonLink>}>
+          <Panel title="القضايا" actions={<><ButtonLink href={`/office/cases/create?client=${c.id}&archived=1`} size="sm">إضافة قضية منتهية</ButtonLink><ButtonLink href={`/office/cases/create?client=${c.id}`} size="sm" variant="primary">قضية جديدة</ButtonLink></>}>
             {p.cases.length === 0 ? <EmptyState title="لا قضايا لهذا العميل" /> : (
               <div className="overflow-x-auto"><table className="table">
-                <thead><tr><th>القضية</th><th>المرجع</th><th>الصفة</th><th>المرحلة</th><th>الحالة</th></tr></thead>
+                <thead><tr><th>القضية</th><th>المرجع</th><th>الصفة</th><th>المرحلة</th><th>الحالة</th><th>النتيجة / الانتهاء</th></tr></thead>
                 <tbody>{p.cases.map((x) => (
                   <tr key={x.id}><td className="font-medium"><Link href={`/office/cases/${x.id}`} className="hover:underline underline-offset-4">{x.title}</Link></td>
-                    <td><Num>{x.reference}</Num></td><td className="text-muted">{x.role}</td><td className="text-muted">{x.stage}</td><td><Pill tone={caseTone(x.status)}>{x.statusLabel}</Pill></td></tr>
+                    <td><Num>{x.reference}</Num></td><td className="text-muted">{x.role}</td><td className="text-muted">{x.stage}</td><td><Pill tone={caseTone(x.status)}>{x.statusLabel}</Pill></td>
+                    <td className="text-[13px] text-muted">{x.outcome && <span className="block">{x.outcome}</span>}{x.closedOn && <DateText value={x.closedOn} />}{!x.outcome && !x.closedOn && '—'}</td></tr>
                 ))}</tbody>
               </table></div>
             )}
@@ -171,7 +172,7 @@ export default function Show(p: Props) {
         )}
 
         {tab === 'executions' && (
-          <Panel title="التنفيذ" actions={<ButtonLink href={`/office/executions/create?client=${c.id}`} size="sm" variant="primary">طلب تنفيذ</ButtonLink>}>
+          <Panel title="التنفيذ" actions={<><ButtonLink href={`/office/executions/create?client=${c.id}&status=completed`} size="sm">إضافة تنفيذ منتهٍ</ButtonLink><ButtonLink href={`/office/executions/create?client=${c.id}`} size="sm" variant="primary">طلب تنفيذ</ButtonLink></>}>
             {p.executions.length === 0 ? <EmptyState title="لا طلبات تنفيذ" /> : (
               <ul className="divide-y divide-rule">{p.executions.map((e) => (
                 <li key={e.id} className="flex items-center justify-between py-2.5"><Link href={`/office/executions/${e.id}`} className="font-medium hover:underline underline-offset-4">{e.type} — <Num>{e.requestNumber ?? e.reference}</Num></Link><Pill tone="info">{e.status}</Pill></li>
@@ -201,7 +202,7 @@ export default function Show(p: Props) {
                 {p.pendingInvitations.map((i) => (
                   <li key={'i' + i.id} className="flex flex-wrap items-center justify-between gap-2 py-3">
                     <span><span className="font-medium">{i.name}</span> <span className="text-[12.5px] text-muted"><Num>{i.email}</Num></span></span>
-                    <span className="flex items-center gap-2 text-[12.5px] text-muted"><Pill tone="warning">دعوة معلقة</Pill>تنتهي <Num>{dateTime(i.expires_at)}</Num>
+                    <span className="flex items-center gap-2 text-[12.5px] text-muted"><Pill tone="warning">دعوة معلقة</Pill>تنتهي <DateText value={i.expires_at} time />
                       <button type="button" className="btn btn-ghost btn-sm" onClick={() => router.delete(`/office/admin/invitations/${i.id}`, { preserveScroll: true })}>إلغاء</button></span>
                   </li>
                 ))}
@@ -226,7 +227,7 @@ function MemberRow({ m }: { m: Props['members'][number] }) {
     <li className="flex flex-wrap items-center justify-between gap-3 py-3">
       <div className="min-w-0">
         <p className="font-medium">{m.name} {!m.active && <Pill tone="negative">معطّل</Pill>} {m.revoked && <Pill>عضوية ملغاة</Pill>}</p>
-        <p className="text-[12.5px] text-muted"><Num>{m.email}</Num> · آخر دخول {m.lastLogin ? <Num>{dateTime(m.lastLogin)}</Num> : 'لم يدخل بعد'}</p>
+        <p className="text-[12.5px] text-muted"><Num>{m.email}</Num> · آخر دخول {m.lastLogin ? <DateText value={m.lastLogin} time /> : 'لم يدخل بعد'}</p>
       </div>
       <div className="flex flex-wrap items-center gap-4 text-[13.5px]">
         <label className="flex items-center gap-1.5"><input type="checkbox" className="check" checked={m.canView} disabled={m.revoked} onChange={(e) => save({ can_view: e.target.checked, can_submit_claims: m.canSubmitClaims, revoked: m.revoked })} />متابعة</label>

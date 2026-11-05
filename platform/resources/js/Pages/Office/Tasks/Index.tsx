@@ -1,6 +1,6 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { emptyTask, TaskFields, type TaskInput } from '@/Components/TaskFields';
-import { Button, cx, EmptyState, Num, PageHeader, Panel } from '@/Components/ui';
+import { Button, cx, EmptyState, Num, PageHeader, Panel, DateText } from '@/Components/ui';
 import type { Option } from '@/types';
 
 type T = { id: number; title: string; kindLabel: string; dueMode: string; dueOn: string | null; status: string; lockVersion: number; case: { id: number; reference: string; title: string } | null; execution: { id: number; reference: string } | null };
@@ -30,7 +30,7 @@ export default function Index({ tasks, status, kinds, dueModes }: { tasks: T[]; 
                     {t.case && <> · <Link href={`/office/cases/${t.case.id}?tab=tasks`} className="hover:text-text"><Num>{t.case.reference}</Num> {t.case.title}</Link></>}
                     {t.execution && <> · <Link href={`/office/executions/${t.execution.id}`} className="hover:text-text"><Num>{t.execution.reference}</Num></Link></>}</p>
                 </div>
-                <span className={cx('shrink-0 text-[13px]', t.dueOn && t.dueOn < today && t.status === 'open' ? 'font-semibold text-negative' : 'text-muted')}>{t.dueOn ? <Num>{t.dueOn}</Num> : 'بلا موعد'}</span>
+                <span className={cx('shrink-0 text-[13px]', t.dueOn && t.dueOn < today && t.status === 'open' ? 'font-semibold text-negative' : 'text-muted')}>{t.dueOn ? <DateText value={t.dueOn} /> : 'بلا موعد'}</span>
               </li>
             ))}</ul>
           )}

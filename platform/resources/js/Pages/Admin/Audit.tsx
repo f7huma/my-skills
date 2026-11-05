@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { useState } from 'react';
-import { Num, PageHeader, Pagination } from '@/Components/ui';
+import { Num, PageHeader, Pagination, DateText } from '@/Components/ui';
 import { dateTime } from '@/lib/format';
 import type { Paginated } from '@/types';
 
@@ -21,7 +21,7 @@ export default function Audit({ logs, filters }: { logs: Paginated<Row>; filters
         <thead><tr><th>الوقت</th><th>الإجراء</th><th>المستخدم</th><th>السجل</th><th>تفاصيل</th><th>IP</th></tr></thead>
         <tbody>{logs.data.map((l) => (
           <tr key={l.id}>
-            <td className="whitespace-nowrap"><Num>{dateTime(l.at)}</Num></td>
+            <td className="whitespace-nowrap"><DateText value={l.at} time /></td>
             <td><Num>{l.action}</Num></td>
             <td>{l.user ?? <span className="text-faint">النظام</span>}</td>
             <td className="text-muted"><Num>{l.subject ?? '—'}</Num></td>

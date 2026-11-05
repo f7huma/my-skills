@@ -87,7 +87,7 @@ class CaseController extends Controller
             'poas' => \App\Models\PowerOfAttorney::where('status', 'active')->get(['id', 'client_id', 'number', 'expires_on'])
                 ->map(fn ($p) => ['value' => $p->id, 'clientId' => $p->client_id, 'label' => 'وكالة '.$p->number.($p->expires_on ? ' — تنتهي '.$p->expires_on->toDateString() : '')]),
             'options' => $this->options(),
-            'preset' => ['client_id' => $request->integer('client') ?: null],
+            'preset' => ['client_id' => $request->integer('client') ?: null, 'archived' => $request->boolean('archived')],
         ]);
     }
 
@@ -102,7 +102,10 @@ class CaseController extends Controller
             'claim_amount' => 'nullable|numeric|min:0|max:9999999999999999',
             'currency' => ['nullable', Rule::in(config('office.currencies'))],
             'power_of_attorney_id' => ['nullable', Rule::exists('powers_of_attorney', 'id')->where('client_id', $request->input('client_id'))],
-            'start_point' => 'required|in:draft,reconciliation,filing,court',
+            'start_point' => 'required|in:draft,reconciliation,filing,court,archived',
+            'outcome' => ['nullable', Rule::in(array_keys(LegalCase::OUTCOMES))],
+            'closed_on' => 'nullable|date|before_or_equal:today',
+            'client_summary' => 'nullable|string|max:3000',
             'case_number' => 'nullable|string|max:60',
             'court' => 'nullable|string|max:150',
             'circuit' => 'nullable|string|max:150',
@@ -116,9 +119,14 @@ class CaseController extends Controller
             'client_id' => $data['client_id'], 'title' => $data['title'], 'category_id' => $data['category_id'] ?? null,
             'client_role' => $data['client_role'], 'claim_amount' => $data['claim_amount'] ?? null, 'currency' => $data['currency'] ?? 'SAR',
             'power_of_attorney_id' => $data['power_of_attorney_id'] ?? null,
-            'stage' => match ($data['start_point']) { 'draft' => 'intake', 'reconciliation' => 'reconciliation', 'filing' => 'filing', 'court' => 'court' },
-            'work_status' => $data['start_point'] === 'draft' ? 'draft' : 'active',
+            'stage' => match ($data['start_point']) { 'draft' => 'intake', 'reconciliation' => 'reconciliation', 'filing' => 'filing', 'court' => 'court', 'archived' => 'closed' },
+            'work_status' => match ($data['start_point']) { 'draft' => 'draft', 'archived' => 'completed', default => 'active' },
         ]);
+        if ($data['start_point'] === 'archived') {
+            // قضية منتهية سابقًا: تُسجَّل لحصر أعمال العميل فقط — بلا مهام ولا مواعيد ولا مبالغ تلقائية
+            $case->forceFill(['outcome' => $data['outcome'] ?? null, 'closed_on' => $data['closed_on'] ?? null,
+                'client_summary' => $data['client_summary'] ?? null, 'client_summary_updated_at' => filled($data['client_summary'] ?? null) ? now() : null])->save();
+        }
         foreach ($data['parties'] ?? [] as $p) {
             $case->parties()->create($p + ['party_type' => 'individual']);
         }
@@ -126,16 +134,17 @@ class CaseController extends Controller
             $case->reconciliations()->create(['status' => 'submitted']);
         } elseif ($data['start_point'] === 'filing') {
             $case->filings()->create(['status' => 'draft']);
-        } elseif ($data['start_point'] === 'court') {
+        } elseif (in_array($data['start_point'], ['court', 'archived'], true) && ($data['start_point'] === 'court' || filled($data['case_number'] ?? null) || filled($data['court'] ?? null))) {
             // قضية مقيدة مباشرة — بما في ذلك قضايا المدعى عليه
             $case->filings()->create(['status' => 'registered', 'case_number' => $data['case_number'] ?? null, 'court' => $data['court'] ?? null, 'circuit' => $data['circuit'] ?? null]);
         }
-        if ($case->claim_amount) {
+        if ($case->claim_amount && $data['start_point'] !== 'archived') {
             Collection::create(['client_id' => $case->client_id, 'legal_case_id' => $case->id, 'kind' => 'claimed', 'source' => 'other',
                 'amount' => $case->claim_amount, 'currency' => $case->currency, 'occurred_on' => today_local(), 'entry_key' => (string) \Illuminate\Support\Str::uuid(),
                 'created_by' => $request->user()->id, 'description' => 'المبلغ محل الدعوى']);
         }
-        Timeline::record($case, 'case.created', 'فتح ملف القضية', null, $case, false);
+        Timeline::record($case, 'case.created', $data['start_point'] === 'archived' ? 'إضافة قضية منتهية سابقة' : 'فتح ملف القضية',
+            $data['start_point'] === 'archived' && ! empty($data['closed_on']) ? 'تاريخ الانتهاء: '.$data['closed_on'] : null, $case, false);
         Audit::log('case.created', $case, ['start' => $data['start_point']]);
 
         return redirect()->route('cases.show', $case)->with('success', 'أُنشئت القضية '.$case->reference.'.');
@@ -157,7 +166,7 @@ class CaseController extends Controller
                 'id' => $case->id, 'reference' => $case->reference, 'title' => $case->title, 'clientId' => $case->client_id, 'client' => $case->client->name,
                 'categoryId' => $case->category_id, 'category' => $case->category?->name, 'clientRole' => $case->client_role, 'clientRoleLabel' => LegalCase::CLIENT_ROLES[$case->client_role],
                 'stage' => $case->stage, 'stageLabel' => LegalCase::STAGES[$case->stage], 'status' => $case->work_status, 'statusLabel' => LegalCase::WORK_STATUSES[$case->work_status],
-                'outcome' => $case->outcome, 'outcomeLabel' => $case->outcome ? LegalCase::OUTCOMES[$case->outcome] : null,
+                'outcome' => $case->outcome, 'outcomeLabel' => $case->outcome ? LegalCase::OUTCOMES[$case->outcome] : null, 'closedOn' => $case->closed_on?->toDateString(),
                 'claimAmount' => $case->claim_amount, 'currency' => $case->currency, 'poaId' => $case->power_of_attorney_id,
                 'poa' => $case->powerOfAttorney ? ['number' => $case->powerOfAttorney->number, 'state' => $case->powerOfAttorney->effectiveStatus()] : null,
                 'clientSummary' => $case->client_summary, 'clientSummaryUpdatedAt' => $case->client_summary_updated_at?->toIso8601String(),

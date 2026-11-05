@@ -5,7 +5,7 @@ import { CollectionsPanel, type CollectionRow } from '@/Components/Collections';
 import { DeadlineList, type DeadlineRow } from '@/Components/Deadlines';
 import { ExecutionFields } from '@/Components/ExecutionFields';
 import { emptyTask, TaskFields, type TaskInput } from '@/Components/TaskFields';
-import { Button, cx, DocumentList, EmptyState, FormError, KeyValues, Modal, Money, Num, PageHeader, Panel, Pill, SelectField, Tabs, TextArea, TextField, Timeline, UploadForm, useModal } from '@/Components/ui';
+import { Button, cx, DocumentList, EmptyState, FormError, KeyValues, Modal, Money, Num, PageHeader, Panel, Pill, SelectField, Tabs, TextArea, TextField, Timeline, UploadForm, useModal, DateText } from '@/Components/ui';
 import { useTab } from '@/lib/useTab';
 import type { Doc, Option, Totals } from '@/types';
 
@@ -44,7 +44,7 @@ export default function Show(p: Props) {
         subtitle={<span className="flex flex-wrap items-center gap-2"><Num>{e.reference}</Num> · {label(p.options.executionTypes, e.execution_type)} · {instrument}<Pill tone="info">{label(p.options.statuses, e.status)}</Pill>
           {e.case && <>· <Link href={`/office/cases/${e.case.id}?tab=judgment`} className="text-accent hover:underline">القضية <Num>{e.case.reference}</Num></Link></>}</span>}
         actions={<>
-          {e.weekly_followup && <Button size="sm" onClick={() => router.post(`/office/executions/${e.id}/followup`, {}, { preserveScroll: true })}>تسجيل متابعة أسبوعية{e.weeklyDue && <> (<Num>{e.weeklyDue}</Num>)</>}</Button>}
+          {e.weekly_followup && <Button size="sm" onClick={() => router.post(`/office/executions/${e.id}/followup`, {}, { preserveScroll: true })}>تسجيل متابعة أسبوعية{e.weeklyDue && <> (<DateText value={e.weeklyDue} />)</>}</Button>}
           <Button size="sm" variant="primary" onClick={edit.show}>تحديث الطلب</Button>
         </>} />
       <Tabs label="أقسام طلب التنفيذ" current={tab} onSelect={setTab} tabs={[
@@ -58,16 +58,16 @@ export default function Show(p: Props) {
             <Panel title="بيانات الطلب">
               <KeyValues cols={3} items={[
                 ['نوع التنفيذ', label(p.options.executionTypes, e.execution_type)], ['نوع السند', instrument],
-                ['رقم الصك', e.instrument_type === 'judgment_deed' && e.deed_number && <Num>{e.deed_number}</Num>], ['تاريخ الصك', e.instrument_type === 'judgment_deed' && e.deed_date && <Num>{e.deed_date}</Num>],
+                ['رقم الصك', e.instrument_type === 'judgment_deed' && e.deed_number && <Num>{e.deed_number}</Num>], ['تاريخ الصك', e.instrument_type === 'judgment_deed' && e.deed_date && <DateText value={e.deed_date} />],
                 ['رقم السند', e.instrument_type === 'electronic_promissory_note' && e.note_number && <Num>{e.note_number}</Num>],
                 ['قيمة السند', e.instrument_type === 'electronic_promissory_note' && e.note_amount && <Money value={e.note_amount} currency={e.note_currency} />],
-                ['استحقاق السند', e.note_due_on && <Num>{e.note_due_on}</Num>],
+                ['استحقاق السند', e.note_due_on && <DateText value={e.note_due_on} />],
                 ['محل التنفيذ', e.execution_type === 'direct' && e.subject_location], ['وصف الالتزام', e.execution_type === 'direct' && e.obligation_description],
                 ['المبلغ المطلوب', e.amount_claimed && <Money value={e.amount_claimed} currency={e.currency} />],
-                ['تقديم الطلب', e.submitted_on && <Num>{e.submitted_on}</Num>], ['القبول', e.accepted_on && <Num>{e.accepted_on}</Num>],
-                ['صدور أمر التنفيذ', e.order_issued_on && <Num>{e.order_issued_on}</Num>],
-                [e.notification_method === 'publication' ? 'الإعلان' : 'التبليغ', e.notified_on && <Num>{e.notified_on}</Num>],
-                ['بدء الإجراءات الجبرية', e.enforcement_started_on && <Num>{e.enforcement_started_on}</Num>],
+                ['تقديم الطلب', e.submitted_on && <DateText value={e.submitted_on} />], ['القبول', e.accepted_on && <DateText value={e.accepted_on} />],
+                ['صدور أمر التنفيذ', e.order_issued_on && <DateText value={e.order_issued_on} />],
+                [e.notification_method === 'publication' ? 'الإعلان' : 'التبليغ', e.notified_on && <DateText value={e.notified_on} />],
+                ['بدء الإجراءات الجبرية', e.enforcement_started_on && <DateText value={e.enforcement_started_on} />],
                 ['ملخص للعميل', e.client_summary], ['ملاحظات داخلية', e.internal_notes],
               ]} />
             </Panel>
@@ -87,11 +87,11 @@ export default function Show(p: Props) {
                   <li key={a.id} id={`action-${a.id}`} className="grid gap-1 py-3 sm:grid-cols-[1fr_auto]">
                     <div>
                       <p className="font-medium">{a.type} <Pill tone={a.status === 'rejected' ? 'negative' : a.status === 'completed' ? 'positive' : 'info'}>{a.statusLabel}</Pill></p>
-                      <p className="text-[12.5px] text-muted">{a.submittedOn && <>قُدّم <Num>{a.submittedOn}</Num></>}{a.eligibleOn && <> · يجوز إعادة الطلب من <Num>{a.eligibleOn}</Num> (شرط الخدمة)</>}</p>
+                      <p className="text-[12.5px] text-muted">{a.submittedOn && <>قُدّم <DateText value={a.submittedOn} /></>}{a.eligibleOn && <> · يجوز إعادة الطلب من <DateText value={a.eligibleOn} /> (شرط الخدمة)</>}</p>
                       {a.result && <p className="text-[13px]">{a.result}</p>}
                     </div>
                     <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-                      {a.nextFollowupOn && <span className="text-[13px]">متابعة: <Num>{a.nextFollowupOn}</Num></span>}
+                      {a.nextFollowupOn && <span className="text-[13px]">متابعة: <DateText value={a.nextFollowupOn} /></span>}
                       <button type="button" className="btn btn-ghost btn-sm" onClick={() => setActEdit(a)}>تحديث</button>
                     </div>
                   </li>
@@ -119,7 +119,7 @@ export default function Show(p: Props) {
               {p.decisions.length === 0 ? <EmptyState title="لا قرارات مسجلة" /> : (
                 <ul className="divide-y divide-rule">{p.decisions.map((d) => (
                   <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-                    <span><span className="font-medium">{d.label}</span>{d.number && <> — <Num>{d.number}</Num></>} <span className="text-[12.5px] text-muted">· <Num>{d.decidedOn}</Num>{d.notes && ` · ${d.notes}`}</span></span>
+                    <span><span className="font-medium">{d.label}</span>{d.number && <> — <Num>{d.number}</Num></>} <span className="text-[12.5px] text-muted">· <DateText value={d.decidedOn} />{d.notes && ` · ${d.notes}`}</span></span>
                     {d.document?.url && <a href={d.document.url} className="btn btn-ghost btn-sm">المرفق</a>}
                   </li>
                 ))}</ul>
@@ -147,7 +147,7 @@ export default function Show(p: Props) {
               {p.tasks.length > 0 && <ul className="mb-4 divide-y divide-rule">{p.tasks.map((t) => (
                 <li key={t.id} id={`task-${t.id}`} className="flex items-center gap-3 py-2">
                   <input type="checkbox" className="check" checked={t.status === 'done'} aria-label={'إنجاز ' + t.title} onChange={() => router.post(`/office/tasks/${t.id}/status`, { status: t.status === 'open' ? 'done' : 'open', lock_version: t.lockVersion }, { preserveScroll: true })} />
-                  <span className={cx('flex-1', t.status !== 'open' && 'text-muted line-through')}>{t.title}</span><span className="text-[13px] text-muted"><Num>{t.dueOn ?? 'بلا موعد'}</Num></span>
+                  <span className={cx('flex-1', t.status !== 'open' && 'text-muted line-through')}>{t.title}</span><span className="text-[13px] text-muted"><DateText value={t.dueOn} fallback="بلا موعد" /></span>
                 </li>
               ))}</ul>}
               <form onSubmit={(ev) => { ev.preventDefault(); task.post(`/office/executions/${e.id}/tasks`, { preserveScroll: true, onSuccess: () => task.reset() }); }} className="well space-y-3 p-4">

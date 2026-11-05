@@ -1,7 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
 import { useState } from 'react';
-import { Button, Checkbox, cx, EmptyState, Modal, Num, PageHeader, Pill, SelectField, TextArea, TextField, useModal } from '@/Components/ui';
+import { Button, Checkbox, cx, EmptyState, Modal, Num, PageHeader, Pill, SelectField, TextArea, TextField, useModal, DateText } from '@/Components/ui';
 
 type Rule = { id: number; code: string; version: number; name: string; kind: string; duration: number | null; dayType: string; startEvent: string | null; effectiveFrom: string; effectiveTo: string | null; source: string; status: string; notes: string | null; reviewedAt: string | null };
 type AT = { id: number; name: string; resubmission_interval_days: number | null; interval_day_type: string; interval_from_last_same_type: boolean; condition_note: string | null; is_active: boolean };
@@ -53,7 +53,7 @@ export default function Settings(p: Props) {
           {p.holidays.length === 0 ? <EmptyState title="لا إجازات مسجلة لهذه السنة" /> : (
             <ul className="mb-4 divide-y divide-rule">{p.holidays.map((h) => (
               <li key={h.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-                <span><Num>{h.date}</Num> <span className="text-[12.5px] text-muted">({h.hijri})</span> — {h.name}</span>
+                <span><DateText value={h.date} /> <span className="text-[12.5px] text-muted">({h.hijri})</span> — {h.name}</span>
                 <span className="flex items-center gap-2">
                   {!h.reviewed && <Pill tone="warning">لم يُراجع</Pill>}
                   {!h.reviewed && <button type="button" className="btn btn-ghost btn-sm" onClick={() => router.put(`/office/admin/holidays/${h.id}`, { name: h.name, reviewed: true }, { preserveScroll: true })}>اعتماد</button>}

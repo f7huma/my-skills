@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ButtonLink, claimTone, DocumentList, KeyValues, Money, Num, Pill } from '@/Components/ui';
+import { ButtonLink, claimTone, DocumentList, KeyValues, Money, Num, Pill, DateText } from '@/Components/ui';
 import { dateTime } from '@/lib/format';
 import type { Doc } from '@/types';
 
@@ -17,7 +17,7 @@ export default function Show({ claim }: { claim: Claim }) {
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-3"><h1 className="text-[22px] font-bold">مطالبة ضد {claim.opponentName}</h1><Pill tone={claimTone(claim.statusKey)}>{claim.status}</Pill></div>
-          <p className="mt-1 text-[14px] text-muted">المرجع <Num>{claim.reference}</Num>{claim.submittedAt && <> · أُرسلت <Num>{dateTime(claim.submittedAt)}</Num></>}</p>
+          <p className="mt-1 text-[14px] text-muted">المرجع <Num>{claim.reference}</Num>{claim.submittedAt && <> · أُرسلت <DateText value={claim.submittedAt} time /></>}</p>
         </div>
         {claim.editable && <ButtonLink href={`/portal/claims/${claim.id}/edit`} variant="primary">استكمال البيانات</ButtonLink>}
       </header>
@@ -40,7 +40,7 @@ export default function Show({ claim }: { claim: Claim }) {
               {claim.messages.map((m) => (
                 <li key={m.id} className={m.kind === 'completion_request' ? 'rounded-lg border border-[var(--warning-border)] bg-[var(--pill-warning-bg)] p-3' : 'well p-3'}>
                   <p className="text-[14px]">{m.body}</p>
-                  <p className="mt-1 text-[12px] text-muted"><Num>{dateTime(m.at)}</Num></p>
+                  <p className="mt-1 text-[12px] text-muted"><DateText value={m.at} time /></p>
                 </li>
               ))}
             </ol>

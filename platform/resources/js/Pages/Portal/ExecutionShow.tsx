@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { DocumentList, KeyValues, Money, Num, Pill, Timeline } from '@/Components/ui';
+import { DocumentList, KeyValues, Money, Num, Pill, Timeline, DateText } from '@/Components/ui';
 import { relative } from '@/lib/format';
 import type { Doc } from '@/types';
 
@@ -31,9 +31,9 @@ export default function ExecutionShow({ execution: e }: { execution: E }) {
         <div className="space-y-8">
           <KeyValues items={[
             ['المبلغ المطلوب', e.amountClaimed && <Money value={e.amountClaimed} currency={e.currency} />],
-            ['تاريخ التقديم', e.submittedOn && <Num>{e.submittedOn}</Num>],
-            ['تاريخ القبول', e.acceptedOn && <Num>{e.acceptedOn}</Num>],
-            ['صدور أمر التنفيذ', e.orderIssuedOn && <Num>{e.orderIssuedOn}</Num>],
+            ['تاريخ التقديم', e.submittedOn && <DateText value={e.submittedOn} />],
+            ['تاريخ القبول', e.acceptedOn && <DateText value={e.acceptedOn} />],
+            ['صدور أمر التنفيذ', e.orderIssuedOn && <DateText value={e.orderIssuedOn} />],
           ]} />
           <section aria-labelledby="tl"><h2 id="tl" className="mb-3 text-[16px] font-semibold">المسار</h2><Timeline events={e.timeline} /></section>
         </div>
@@ -42,7 +42,7 @@ export default function ExecutionShow({ execution: e }: { execution: E }) {
             <h2 id="col" className="mb-3 text-[16px] font-semibold">المحصّل</h2>
             {received.length === 0 ? <p className="text-[13.5px] text-muted">لم يُحصّل مبلغ بعد.</p> : (
               <ul className="divide-y divide-rule">{received.map((m, i) => (
-                <li key={i} className="flex items-center justify-between py-2"><span className="text-[13px] text-muted"><Num>{m.on}</Num></span><Money value={m.amount} currency={m.currency} className="font-semibold text-accent" /></li>
+                <li key={i} className="flex items-center justify-between py-2"><span className="text-[13px] text-muted"><DateText value={m.on} /></span><Money value={m.amount} currency={m.currency} className="font-semibold text-accent" /></li>
               ))}</ul>
             )}
           </section>

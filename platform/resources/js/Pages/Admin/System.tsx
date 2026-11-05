@@ -1,7 +1,7 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { RefreshCw } from 'lucide-react';
 import { useState } from 'react';
-import { Button, cx, EmptyState, Num, PageHeader, Panel, Pill } from '@/Components/ui';
+import { Button, cx, EmptyState, Num, PageHeader, Panel, Pill, DateText } from '@/Components/ui';
 import { dateTime, fileSize } from '@/lib/format';
 
 type Check = { key: string; label: string; status: string; message: string; checkedAt: string | null };
@@ -27,7 +27,7 @@ export default function System({ checks, failures, backups, environment, appUrl,
           <div key={c.key} className="bg-surface p-4">
             <div className="flex items-center justify-between gap-2"><h2 className="font-semibold">{c.label}</h2><Pill tone={tone(c.status)}>{word[c.status] ?? c.status}</Pill></div>
             <p className="mt-1.5 text-[13.5px]">{c.message}</p>
-            <p className="mt-1 text-[12px] text-muted">{c.checkedAt ? <Num>{dateTime(c.checkedAt)}</Num> : '—'}</p>
+            <p className="mt-1 text-[12px] text-muted">{c.checkedAt ? <DateText value={c.checkedAt} time /> : '—'}</p>
           </div>
         ))}
       </section>
@@ -38,7 +38,7 @@ export default function System({ checks, failures, backups, environment, appUrl,
               <thead><tr><th>النسخة</th><th>الحالة</th><th className="end">الملفات</th><th className="end">الحجم</th><th>نسخة منفصلة</th></tr></thead>
               <tbody>{backups.map((b) => (
                 <tr key={b.name}>
-                  <td><Num>{dateTime(b.startedAt)}</Num>{b.error && <span className="block text-[12px] text-negative">{b.error}</span>}</td>
+                  <td><DateText value={b.startedAt} time />{b.error && <span className="block text-[12px] text-negative">{b.error}</span>}</td>
                   <td><Pill tone={b.status === 'verified' ? 'positive' : b.status === 'failed' ? 'negative' : b.status === 'pruned' ? 'neutral' : 'info'}>{({ verified: 'متحقق منها', completed: 'مكتملة', failed: 'فشلت', running: 'جارية', pruned: 'حُذفت (احتفاظ)' } as Record<string, string>)[b.status] ?? b.status}</Pill></td>
                   <td className="end"><Num>{b.files ?? '—'}</Num></td>
                   <td className="end"><Num>{b.size ? fileSize(b.size) : '—'}</Num></td>
@@ -59,7 +59,7 @@ export default function System({ checks, failures, backups, environment, appUrl,
           </Panel>
           <Panel title="آخر الإخفاقات">
             {failures.length === 0 ? <p className="text-[13.5px] text-muted">لا إخفاقات مسجلة.</p> : (
-              <ul className="divide-y divide-rule">{failures.map((f, i) => <li key={i} className="py-2 text-[13.5px]"><span className="font-medium">{f.check}</span>: {f.message} <span className="text-[12px] text-muted"><Num>{dateTime(f.at)}</Num></span></li>)}</ul>
+              <ul className="divide-y divide-rule">{failures.map((f, i) => <li key={i} className="py-2 text-[13.5px]"><span className="font-medium">{f.check}</span>: {f.message} <span className="text-[12px] text-muted"><DateText value={f.at} time /></span></li>)}</ul>
             )}
           </Panel>
         </div>

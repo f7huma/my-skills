@@ -4,7 +4,7 @@ import StarterKit from '@tiptap/starter-kit';
 import TextAlign from '@tiptap/extension-text-align';
 import { AlignCenter, AlignJustify, AlignLeft, AlignRight, Bold, History, Italic, List, ListOrdered, Printer, Quote, Save, Underline as UIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { Button, cx, FormError, Modal, Num, PageHeader, Pill, SelectField, TextField, UploadForm, useModal } from '@/Components/ui';
+import { Button, cx, FormError, Modal, Num, PageHeader, Pill, SelectField, TextField, UploadForm, useModal, DateText } from '@/Components/ui';
 import { dateTime } from '@/lib/format';
 import type { Doc, Option } from '@/types';
 
@@ -93,8 +93,8 @@ export default function Edit({ memo, case: c, versions, hearings, statuses, file
               <Button type="submit" size="sm" loading={st.processing}>تحديث الحالة</Button>
             </form>
             <dl className="mt-3 space-y-1 text-[13px]">
-              {memo.approvedAt && <div className="flex justify-between"><dt className="text-muted">اعتُمدت داخليًا</dt><dd><Num>{dateTime(memo.approvedAt)}</Num></dd></div>}
-              {memo.filedOn && <div className="flex justify-between"><dt className="text-muted">أودعت</dt><dd><Num>{memo.filedOn}</Num></dd></div>}
+              {memo.approvedAt && <div className="flex justify-between"><dt className="text-muted">اعتُمدت داخليًا</dt><dd><DateText value={memo.approvedAt} time /></dd></div>}
+              {memo.filedOn && <div className="flex justify-between"><dt className="text-muted">أودعت</dt><dd><DateText value={memo.filedOn} /></dd></div>}
               {memo.filedDocument?.url && <div className="flex justify-between"><dt className="text-muted">النسخة المودعة</dt><dd><a href={memo.filedDocument.url} className="text-accent hover:underline">تنزيل</a></dd></div>}
             </dl>
           </section>

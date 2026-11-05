@@ -1,6 +1,6 @@
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 import { Plus } from 'lucide-react';
-import { Button, Checkbox, cx, EmptyState, Modal, Num, PageHeader, Panel, Pill, SelectField, TextField, useModal } from '@/Components/ui';
+import { Button, Checkbox, cx, EmptyState, Modal, Num, PageHeader, Panel, Pill, SelectField, TextField, useModal, DateText } from '@/Components/ui';
 import { dateTime } from '@/lib/format';
 import type { Option, SharedProps } from '@/types';
 
@@ -25,7 +25,7 @@ export default function Users({ users, invitations, clients }: { users: U[]; inv
                 <Pill tone={u.role === 'lawyer' ? 'accent' : 'neutral'}>{u.role === 'lawyer' ? 'محامٍ' : 'عميل'}</Pill>
                 {!u.active && <Pill tone="negative">معطّل</Pill>}
                 {u.role === 'lawyer' && <Pill tone={u.twoFactor ? 'positive' : 'warning'}>{u.twoFactor ? 'مصادقة ثنائية' : 'بلا مصادقة ثنائية'}</Pill>}
-                آخر دخول {u.lastLogin ? <Num>{dateTime(u.lastLogin)}</Num> : '—'}
+                آخر دخول {u.lastLogin ? <DateText value={u.lastLogin} time /> : '—'}
               </p>
               {u.memberships.length > 0 && <p className="mt-1 text-[13px]">{u.memberships.map((m) => (
                 <span key={m.id} className={cx('me-3 inline-block', m.revoked && 'text-muted line-through')}>{m.client}: {[m.canView && 'متابعة', m.canSubmitClaims && 'مطالبات'].filter(Boolean).join(' + ') || 'بلا صلاحية'}</span>
@@ -47,7 +47,7 @@ export default function Users({ users, invitations, clients }: { users: U[]; inv
           <ul className="divide-y divide-rule">{invitations.map((i) => (
             <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
               <span>{i.name} <span className="text-[12.5px] text-muted"><Num>{i.email}</Num> · {i.role === 'lawyer' ? 'محامٍ' : i.client}</span></span>
-              <span className="flex items-center gap-2 text-[12.5px] text-muted">تنتهي <Num>{dateTime(i.expiresAt)}</Num>
+              <span className="flex items-center gap-2 text-[12.5px] text-muted">تنتهي <DateText value={i.expiresAt} time />
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => router.delete(`/office/admin/invitations/${i.id}`, { preserveScroll: true })}>إلغاء</button></span>
             </li>
           ))}</ul>
