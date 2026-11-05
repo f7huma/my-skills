@@ -5,6 +5,7 @@ namespace App\Services\Auth;
 use App\Mail\InvitationMail;
 use App\Models\Invitation;
 use App\Services\Audit;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
@@ -25,7 +26,12 @@ class InvitationService
             'expires_at' => now()->addHours(config('office.invitation_ttl_hours')), 'invited_by' => $invitedBy,
         ]);
         $url = route('invitation.show', $token);
-        Mail::to($inv->email)->send(new InvitationMail($inv->name, $url, $inv->expires_at));
+        // تعذّر البريد لا يُفشل الدعوة: الرابط يُعرض للمحامي مرة واحدة ليرسله بنفسه
+        try {
+            Mail::to($inv->email)->send(new InvitationMail($inv->name, $url, $inv->expires_at));
+        } catch (\Throwable $e) {
+            Log::warning('invitation.mail_failed', ['invitation' => $inv->id, 'error' => class_basename($e)]);
+        }
         Audit::log('invitation.created', $inv, ['role' => $inv->role, 'client' => $inv->client_id], $invitedBy);
 
         return ['invitation' => $inv, 'url' => $url];

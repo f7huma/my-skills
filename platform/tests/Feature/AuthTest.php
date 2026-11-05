@@ -64,6 +64,16 @@ class AuthTest extends TestCase
         $this->assertNull(User::where('email', 'late@example.test')->first());
     }
 
+    public function test_invitation_survives_mail_failure_and_returns_link(): void
+    {
+        // خادم بريد بكلمة مرور خاطئة أو غير موجود: يجب أن تُنشأ الدعوة ويُعاد رابطها
+        config(['mail.default' => 'smtp', 'mail.mailers.smtp.host' => '127.0.0.1', 'mail.mailers.smtp.port' => 1, 'mail.mailers.smtp.timeout' => 2]);
+        $this->artisan('office:invite-lawyer', ['email' => 'first@lawyer.test', 'name' => 'محامٍ'])
+            ->expectsOutputToContain('/invitation/')
+            ->assertExitCode(0);
+        $this->assertSame(1, Invitation::where('email', 'first@lawyer.test')->whereNull('revoked_at')->count());
+    }
+
     public function test_deactivation_ends_existing_sessions_immediately(): void
     {
         $this->demo();

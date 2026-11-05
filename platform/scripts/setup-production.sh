@@ -113,7 +113,12 @@ $C ps
 
 say "8/8 حساب المحامي الأول"
 if [ -n "${LAWYER_EMAIL:-}" ] && [ ! -f .lawyer-invited ]; then
-  $C exec -T app php artisan office:invite-lawyer "$LAWYER_EMAIL" "$LAWYER_NAME" && touch .lawyer-invited
+  if $C exec -T app php artisan office:invite-lawyer "$LAWYER_EMAIL" "$LAWYER_NAME"; then
+    touch .lawyer-invited
+  else
+    echo "⚠️  لم يُنشأ رابط الدعوة. انسخ ما ظهر أعلاه (بعد حذف أي كلمة مرور) وأرسله للدعم."
+    exit 1
+  fi
 fi
 
 printf '\n\033[1;32m✅ انتهى إعداد المنصة الحقيقية.\033[0m\n'
