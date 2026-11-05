@@ -52,7 +52,7 @@ if [ ! -f .env.production ]; then
   cp .env.example .env.production
   for kv in "APP_ENV=production" "APP_DEBUG=false" "APP_URL=https://$DOMAIN" "APP_KEY=$APPK" \
             "DB_HOST=db" "DB_DATABASE=humaidan" "DB_USERNAME=humaidan" "DB_PASSWORD=$DB_PASS" \
-            "SESSION_SECURE_COOKIE=true" "SESSION_ENCRYPT=true" "MFA_REQUIRED_FOR_LAWYER=true" \
+            "SESSION_SECURE_COOKIE=true" "SESSION_ENCRYPT=true" "MFA_REQUIRED_FOR_LAWYER=false" \
             "SCANNER_DRIVER=clamav" "FILES_ENCRYPTION_KEY=$FK" "BACKUP_ENCRYPTION_KEY=$BK" \
             "LOG_CHANNEL=stderr" "LOG_LEVEL=warning" \
             "ATTACHMENTS_ROOT=/var/lib/humaidan/files" "BACKUP_PATH=/var/lib/humaidan/backups"; do

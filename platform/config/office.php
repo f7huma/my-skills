@@ -11,7 +11,8 @@ return [
     'weekend_days' => [5, 6],
     'poa_expiry_warning_days' => (int) env('POA_EXPIRY_WARNING_DAYS', 30),
     'currencies' => ['SAR', 'USD', 'EUR', 'AED', 'KWD', 'BHD', 'QAR', 'OMR', 'EGP', 'GBP'],
-    'mfa_required' => env('APP_ENV') === 'production' || (bool) env('MFA_REQUIRED_FOR_LAWYER', false),
+    // قرار المكتب: إلزامية افتراضيًا في الإنتاج، ويمكن إيقافها بـ MFA_REQUIRED_FOR_LAWYER=false (تبقى اختيارية لكل مستخدم)
+    'mfa_required' => (bool) env('MFA_REQUIRED_FOR_LAWYER', env('APP_ENV') === 'production'),
     'synthetic_only' => (bool) env('SYNTHETIC_DATA_ONLY', false),
     'noindex' => (bool) env('APP_NOINDEX', false),
     'preview_gate' => [
