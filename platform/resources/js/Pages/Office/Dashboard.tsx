@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Check, CalendarX2, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ButtonLink, certaintyTone, cx, EmptyState, Money, Num, Panel, Pill, poaLabel, poaTone, DateText } from '@/Components/ui';
-import { dayMonth, relative, timeOnly, weekday, dateOnly, count, hijri, hijriParts } from '@/lib/format';
+import { dayMonth, relative, timeOnly, weekday, dateOnly, count, countNoun, hijri, hijriParts } from '@/lib/format';
 import { BarChart, CountUp, Meter, Pipeline } from '@/Components/motion';
 
 type Item = {
@@ -24,6 +24,9 @@ type Props = {
 const typeMark: Record<Item['type'], string> = {
   hearing: 'text-ink', task: 'text-[#9aa4b0]', memo: 'text-[#7d8794]', execution: 'text-[#5f6976]', deadline: 'text-ink',
 };
+
+// أسماء أيام مختصرة مقروءة (الأحد = 0) للشاشات الضيقة
+const SHORT_DAYS = ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
 
 function addDays(d: string, n: number) {
   const [y, m, day] = d.split('-').map(Number);
@@ -58,8 +61,8 @@ function WeekRibbon({ agenda, selected, onSelect }: { agenda: Agenda; selected: 
                   <span className={cx('rounded-[4px] transition-[filter] duration-200 group-hover:brightness-125', today ? 'bg-white' : n ? 'bg-[#aeb7c2]' : 'border border-white/30 bg-transparent', deadline && 'ring-2 ring-[#f0b866] ring-offset-2 ring-offset-[#1b1f25]')}
                     style={{ width: size, height: size, transform: 'rotate(45deg)', animation: `node-in 700ms var(--ease-expo) ${i * 60}ms both` }} />
                 </span>
-                <span className={cx('mt-1 text-[11px] sm:text-[12.5px]', today ? 'font-semibold text-white' : off ? 'text-[#8f99a5]' : 'text-[#c9d0d8]')}>
-                  {today ? 'اليوم' : <><span className="sm:hidden">{weekday(d).replace('ال', '').slice(0, 3)}</span><span className="hidden sm:inline">{weekday(d).replace('ال', '')}</span></>}
+                <span className={cx('mt-1 text-[10.5px] sm:text-[12.5px]', today ? 'font-semibold text-white' : off ? 'text-[#8f99a5]' : 'text-[#c9d0d8]')}>
+                  {today ? 'اليوم' : <><span className="sm:hidden" aria-hidden>{SHORT_DAYS[new Date(d + 'T12:00:00Z').getUTCDay()]}</span><span className="hidden sm:inline">{weekday(d).replace('ال', '')}</span></>}
                 </span>
                 <span className="num text-[11.5px] text-[#c9d0d8]">{hijriParts(d)?.d}<span className="text-[#a9b2bd]">هـ</span></span>
                 <span className="num text-[10.5px] text-[#a9b2bd]">{d.slice(8)}/{d.slice(5, 7)}</span>
@@ -144,11 +147,13 @@ export default function Dashboard(p: Props) {
   }, [agenda.week]);
   const hearingsToday = agenda.today.filter((i) => i.type === 'hearing').length;
   const weekDeadlines = [...agenda.today, ...agenda.week].filter((i) => i.type === 'deadline').length;
+  const reviewing = p.claims.filter((c) => c.status === 'under_review').length;
   const finding = [
-    agenda.overdue.length ? `${agenda.overdue.length} بند متأخر` : null,
-    p.claims.filter((c) => c.status === 'under_review').length ? `${p.claims.filter((c) => c.status === 'under_review').length} مطالبة بانتظار الدراسة` : null,
-    agenda.unscheduled.length ? `${agenda.unscheduled.length} مهمة تنتظر تحديد موعد` : null,
+    agenda.overdue.length ? countNoun(agenda.overdue.length, { one: 'بند متأخر', two: 'بندان متأخران', few: 'بنود متأخرة', many: 'بندًا متأخرًا' }) : null,
+    reviewing ? countNoun(reviewing, { one: 'مطالبة واحدة', two: 'مطالبتان', few: 'مطالبات', many: 'مطالبة' }) + ' بانتظار الدراسة' : null,
+    agenda.unscheduled.length ? countNoun(agenda.unscheduled.length, { one: 'مهمة واحدة', two: 'مهمتان', few: 'مهام', many: 'مهمة' }) + ' بانتظار تحديد موعد' : null,
   ].filter(Boolean).join(' · ');
+  const inDays = (n: number) => (n < 0 ? 'انتهى' : n === 0 ? 'اليوم' : n === 1 ? 'غدًا' : n === 2 ? 'بعد يومين' : `بعد ${n} ${n % 100 >= 3 && n % 100 <= 10 ? 'أيام' : 'يومًا'}`);
   const clients = p.clients.filter((c) => !clientQ || c.name.includes(clientQ) || c.reference.toLowerCase().includes(clientQ.toLowerCase()));
   const nearest = p.deadlines.find((d) => d.end);
   const left = nearest ? daysUntil(agenda.range.from, nearest.end) : null;
@@ -171,9 +176,9 @@ export default function Dashboard(p: Props) {
             <p className="mt-1 text-[14px] text-[#c9d0d8]">{weekday(agenda.range.from)} {dayMonth(agenda.range.from)} · {agenda.range.fromHijri}</p>
             {finding && <p className={cx('mt-1.5 text-[13.5px] font-medium', agenda.overdue.length ? 'text-[#ffb4ac]' : 'text-[#c9d0d8]')}>{finding}</p>}
             {nearest && left !== null && (
-              <Link href={`/office/deadlines#deadline-${nearest.id}`} className="mt-1.5 flex max-w-full items-center gap-2 text-[13.5px] text-white hover:underline underline-offset-4 lg:max-w-[60ch]">
+              <Link href={`/office/deadlines#deadline-${nearest.id}`} className="mt-1.5 flex max-w-full items-start gap-2 text-[13.5px] text-white hover:underline underline-offset-4 lg:max-w-[60ch]">
                 <span className={cx('diamond', left <= 3 ? 'text-[#ff8a80]' : left <= 10 ? 'text-[#f0b866]' : 'text-[#aeb7c2]')} aria-hidden />
-                <span className="truncate">أقرب موعد نظامي: <b>{left < 0 ? 'انتهى' : left === 0 ? 'اليوم' : `بعد ${left} ${left === 1 ? 'يوم' : left === 2 ? 'يومين' : left <= 10 ? 'أيام' : 'يومًا'}`}</b> — {nearest.reason}</span>
+                <span className="line-clamp-2">أقرب موعد نظامي: <b>{inDays(left)}</b> — {nearest.reason}</span>
               </Link>
             )}
           </div>
@@ -238,8 +243,8 @@ export default function Dashboard(p: Props) {
                 </div>
                 {(p.counters.alerted > 0 || p.counters.needsDetermination > 0) && (
                   <p className="mt-2 text-[12.5px] text-muted">
-                    {p.counters.alerted > 0 && <><b className="text-signal"><Num>{p.counters.alerted}</Num></b> عداد انتهى · </>}
-                    {p.counters.needsDetermination > 0 && <><b className="text-amber"><Num>{p.counters.needsDetermination}</Num></b> يحتاج تحديد بدايته</>}
+                    {p.counters.alerted > 0 && <><b className="text-signal">{countNoun(p.counters.alerted, { one: 'عداد واحد', two: 'عدادان', few: 'عدادات', many: 'عدادًا' })}</b> انتهت مهلته · </>}
+                    {p.counters.needsDetermination > 0 && <><b className="text-amber">{countNoun(p.counters.needsDetermination, { one: 'موعد واحد', two: 'موعدان', few: 'مواعيد', many: 'موعدًا' })}</b> بانتظار تحديد البداية</>}
                   </p>
                 )}
                 <div className="mt-3"><Meter value={Math.max(0, 30 - Math.max(0, left))} max={30} tone={left <= 3 ? 'signal' : left <= 10 ? 'amber' : 'ink'} label="قرب الموعد خلال ٣٠ يومًا" /></div>
