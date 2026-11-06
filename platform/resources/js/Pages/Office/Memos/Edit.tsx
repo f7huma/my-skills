@@ -43,7 +43,7 @@ export default function Edit({ memo, case: c, versions, hearings, statuses, file
   return (
     <>
       <Head title={memo.title} />
-      <PageHeader title={memo.title} crumbs={[{ label: 'القضايا', href: '/office/cases' }, { label: c.reference, href: `/office/cases/${c.id}?tab=tasks` }]}
+      <PageHeader title={memo.title} crumbs={[{ label: 'القضايا', href: '/office/cases' }, { label: c.title, href: `/office/cases/${c.id}?tab=tasks` }]}
         subtitle={<span className="flex flex-wrap items-center gap-2">{memo.typeLabel} · {c.client} · إصدار <Num>{memo.version}</Num><Pill tone={statusTone[memo.status]}>{statuses.find((s) => s.value === memo.status)?.label}</Pill>{dirty && <span className="text-[#7a4307]">تغييرات غير محفوظة</span>}</span>}
         actions={<>
           <Button size="sm" onClick={hist.show}><History className="size-4" aria-hidden />الإصدارات</Button>

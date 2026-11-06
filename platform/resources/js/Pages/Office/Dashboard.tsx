@@ -3,7 +3,8 @@ import { Check, CalendarX2, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ButtonLink, certaintyTone, cx, EmptyState, Money, Num, Panel, Pill, poaLabel, poaTone, DateText } from '@/Components/ui';
 import { dayMonth, relative, timeOnly, weekday, dateOnly, count, countNoun, hijri, hijriParts } from '@/lib/format';
-import { BarChart, CountUp, Meter, Pipeline } from '@/Components/motion';
+import { CountUp, Meter, Pipeline } from '@/Components/motion';
+import { GavelScene } from '@/Components/LegalArt';
 
 type Item = {
   key: string; type: 'hearing' | 'task' | 'memo' | 'execution' | 'deadline'; label: string; title: string; date: string | null; time?: string;
@@ -93,7 +94,6 @@ function AgendaRow({ it }: { it: Item }) {
         <Link href={it.href} className="block font-medium text-text hover:underline underline-offset-4">{it.title}</Link>
         <p className="flex flex-wrap gap-x-2 text-[12.5px] text-muted [&>span]:min-w-0 [&>span]:line-clamp-1">
           <span className="text-text/80">{it.label}</span>
-          {it.ref && <span>· <Num>{it.ref}</Num></span>}
           {it.client && <span>· {it.client}</span>}
           {it.type === 'deadline' && it.certainty && <Pill tone={certaintyTone(it.certainty)} className="!h-5">{it.label}</Pill>}
         </p>
@@ -137,7 +137,6 @@ function daysUntil(from: string, to: string | null) {
   const a = Date.parse(from + 'T00:00:00Z'); const b = Date.parse(to + 'T00:00:00Z');
   return Math.round((b - a) / 86400000);
 }
-const monthLabel = (m: string) => new Intl.DateTimeFormat('ar-SA-u-ca-gregory-nu-latn', { month: 'long', timeZone: 'UTC' }).format(new Date(m + '-15T12:00:00Z'));
 
 export default function Dashboard(p: Props) {
   const { agenda, insights } = p;
@@ -165,7 +164,7 @@ export default function Dashboard(p: Props) {
     ['جلسات اليوم', hearingsToday],
     ['مواعيد نظامية هذا الأسبوع', weekDeadlines, weekDeadlines ? 'text-signal' : undefined],
     ['قضايا سارية', p.counters.activeCases],
-    ['المقبوض هذا الشهر · ر.س', insights.collectedThisMonth, undefined, 0],
+    ['بنود متأخرة', agenda.overdue.length, agenda.overdue.length ? 'text-signal' : undefined],
   ];
 
   return (
@@ -173,7 +172,7 @@ export default function Dashboard(p: Props) {
       <Head title="أسبوع المكتب" />
       {/* الشريط الفحمي: الأرقام تعدّ، وشريط الأسبوع تحتها */}
       <div className="stagger">
-      <section className="mist relative overflow-hidden rounded-[22px] px-5 pb-4 pt-6 sm:px-8" aria-labelledby="week-title">
+      <section data-parallax-host className="mist relative overflow-hidden rounded-[22px] px-5 pb-4 pt-6 sm:px-8" aria-labelledby="week-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1 basis-[22rem]">
             <h1 id="week-title" className="text-[26px] font-semibold leading-tight text-ink sm:text-[30px]">أسبوع المكتب</h1>
@@ -185,18 +184,20 @@ export default function Dashboard(p: Props) {
                 <span className="line-clamp-2">أقرب موعد نظامي: <b>{inDays(left)}</b> — {nearest.reason}</span>
               </Link>
             )}
+            <div className="mt-4 flex flex-wrap gap-2">
+              <ButtonLink href="/office/cases/create" variant="primary" size="sm"><Plus className="size-4" aria-hidden />قضية جديدة</ButtonLink>
+              <ButtonLink href="/office/executions/create" variant="ghost" size="sm" className="hidden sm:inline-flex">طلب تنفيذ</ButtonLink>
+              <ButtonLink href="/office/clients/create" variant="ghost" size="sm" className="hidden sm:inline-flex">عميل جديد</ButtonLink>
+            </div>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <ButtonLink href="/office/cases/create" variant="primary" size="sm"><Plus className="size-4" aria-hidden />قضية جديدة</ButtonLink>
-            <ButtonLink href="/office/executions/create" variant="ghost" size="sm" className="hidden sm:inline-flex">طلب تنفيذ</ButtonLink>
-            <ButtonLink href="/office/clients/create" variant="ghost" size="sm" className="hidden sm:inline-flex">عميل جديد</ButtonLink>
-          </div>
+          {/* رسم تفاعلي: مطرقة القاضي تضرب قاعدتها، ويتحرك المشهد مع المؤشر، والضغط يعيد الضربة */}
+          <GavelScene className="-mb-6 -mt-2 hidden h-[260px] w-[347px] shrink-0 lg:block" />
         </div>
-        <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-4">
+        <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-4">
           {stats.map(([label, value, tone, dec], i) => (
-            <div key={label} className={cx('min-w-0 border-s border-ink/15 ps-4', i === 3 && 'col-span-2 lg:col-span-1')}>
+            <div key={label} className={cx('min-w-0 border-s border-ink/15 ps-4', false)}>
               <dt className="text-[12.5px] text-muted">{label}</dt>
-              <dd className={cx('mt-1 font-semibold leading-none text-ink', i === 3 ? 'text-[clamp(26px,7.5vw,40px)]' : 'text-[34px] sm:text-[40px]', tone)}><CountUp value={value} decimals={dec ?? 0} /></dd>
+              <dd className={cx('mt-1 font-semibold leading-none text-ink', 'text-[34px] sm:text-[40px]', tone)}><CountUp value={value} decimals={dec ?? 0} /></dd>
             </div>
           ))}
         </dl>
@@ -242,7 +243,7 @@ export default function Dashboard(p: Props) {
                   </span>
                   <div className="min-w-0">
                     <p className="font-semibold">{left < 0 ? 'انتهى الموعد' : left === 0 ? 'ينتهي اليوم' : left === 1 ? 'يوم واحد متبقٍ' : left === 2 ? 'يومان متبقيان' : left <= 10 ? 'أيام متبقية' : 'يومًا متبقيًا'}</p>
-                    <Link href={`/office/deadlines#deadline-${nearest.id}`} className="block truncate text-[13px] text-muted hover:text-text">{nearest.reason}{nearest.ref && <> · <Num>{nearest.ref}</Num></>}</Link>
+                    <Link href={`/office/deadlines#deadline-${nearest.id}`} className="block truncate text-[13px] text-muted hover:text-text">{nearest.reason}</Link>
                   </div>
                 </div>
                 {(p.counters.alerted > 0 || p.counters.needsDetermination > 0) && (
@@ -267,11 +268,6 @@ export default function Dashboard(p: Props) {
             )}
           </Panel>
 
-          <Panel id="collected" title="المقبوض فعليًا" description="آخر ستة أشهر بالريال — مرّر على الشهر لقراءته">
-            <BarChart label="المقبوض شهريًا" unit="ر.س" data={insights.months.map((m) => ({ key: m.month, label: monthLabel(m.month), value: m.total }))}
-              format={(v) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(v)} />
-          </Panel>
-
           <Panel id="pipeline" title="القضايا حسب المرحلة" description={<>المجموع <Num>{count(insights.stages.reduce((a, s) => a + s.count, 0))}</Num> — اضغط مرحلة لفتح قائمتها</>}>
             <Pipeline stages={insights.stages} />
           </Panel>
@@ -283,7 +279,7 @@ export default function Dashboard(p: Props) {
                   <li key={c.id} className="flex items-start justify-between gap-3 py-2.5">
                     <div className="min-w-0">
                       <Link href={`/office/claims/${c.id}`} className="block truncate font-medium hover:underline underline-offset-4">{c.client}</Link>
-                      <p className="truncate text-[12.5px] text-muted">ضد {c.opponent} · <Num>{c.reference}</Num></p>
+                      <p className="truncate text-[12.5px] text-muted">ضد {c.opponent}</p>
                       <div className="mt-1 flex gap-1.5">
                         <Pill tone={c.status === 'needs_completion' ? 'warning' : 'info'}>{c.statusLabel}</Pill>
                         {c.missing && <Pill tone="negative">ناقص مستند</Pill>}
@@ -317,7 +313,7 @@ export default function Dashboard(p: Props) {
 
           <Panel id="clients" title="العملاء" actions={<Link href="/office/clients" className="text-[13px] text-muted hover:text-text">الكل</Link>}>
             <label htmlFor="client-filter" className="sr-only">بحث سريع في العملاء</label>
-            <input id="client-filter" type="search" className="input mb-2 h-9" placeholder="بحث سريع بالاسم أو المرجع" value={clientQ} onChange={(e) => setClientQ(e.target.value)} />
+            <input id="client-filter" type="search" className="input mb-2 h-9" placeholder="بحث سريع بالاسم" value={clientQ} onChange={(e) => setClientQ(e.target.value)} />
             {clients.length === 0 ? <EmptyState title="لا نتائج" icon={<CalendarX2 className="size-6" strokeWidth={1.5} />} /> : (
               <ul className="divide-y divide-rule">
                 {clients.slice(0, 6).map((c) => (

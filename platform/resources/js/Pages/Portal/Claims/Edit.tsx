@@ -55,7 +55,7 @@ export default function Edit({ claim, submitKey, requiredByType, categories, par
   return (
     <>
       <Head title="إدراج مطالبة" />
-      <nav aria-label="مسار التنقل" className="mb-2 text-[13px] text-muted"><Link href="/portal/claims" className="hover:text-text">المطالبات</Link> / {claim.reference ? <Num>{claim.reference}</Num> : 'مسودة'}</nav>
+      <nav aria-label="مسار التنقل" className="mb-2 text-[13px] text-muted"><Link href="/portal/claims" className="hover:text-text">المطالبات</Link> / {claim.opponentName ?? (claim.reference ? 'مطالبة' : 'مسودة')}</nav>
       <header className="mb-6 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold">{claim.statusKey === 'needs_completion' ? 'استكمال المطالبة' : 'إدراج مطالبة قانونية'}</h1>
@@ -151,7 +151,7 @@ export default function Edit({ claim, submitKey, requiredByType, categories, par
       </section>
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-rule pt-6">
-        <p className="text-[13px] text-muted">بعد الإرسال تحصل المطالبة على مرجع وتظهر بحالة «قيد الدراسة».</p>
+        <p className="text-[13px] text-muted">بعد الإرسال تظهر المطالبة للمكتب بحالة «قيد الدراسة».</p>
         <div className="flex gap-2">
           <Button onClick={() => save()} loading={form.processing && !submitting}>حفظ المسودة</Button>
           <Button variant="primary" onClick={submit} loading={submitting}><Send className="size-4" aria-hidden />إرسال المطالبة</Button>

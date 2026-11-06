@@ -57,7 +57,7 @@ export function DeadlineList({ rows, kinds, certainties, showRef }: { rows: Dead
                 {d.status === 'closed' && <Pill>مغلق</Pill>}
               </div>
               <p className="mt-0.5 text-[12.5px] text-muted">
-                {d.kindLabel}{showRef && d.ref && <> · <Num>{d.ref}</Num></>}{showRef && d.client && <> · {d.client}</>}
+                {d.kindLabel}{showRef && d.client && <> · {d.client}</>}
                 {d.startOn && <> · البداية <DateText value={d.startOn} /></>}
                 {d.updatedAt && <> · آخر تعديل <Num>{d.updatedAt.slice(0, 10)}</Num>{d.updatedBy ? ` (${d.updatedBy})` : ''}</>}
               </p>

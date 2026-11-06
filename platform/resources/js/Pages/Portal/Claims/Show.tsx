@@ -12,12 +12,12 @@ type Claim = {
 export default function Show({ claim }: { claim: Claim }) {
   return (
     <>
-      <Head title={'مطالبة ' + (claim.reference ?? '')} />
-      <nav aria-label="مسار التنقل" className="mb-2 text-[13px] text-muted"><Link href="/portal/claims" className="hover:text-text">المطالبات</Link> / <Num>{claim.reference}</Num></nav>
+      <Head title={'مطالبة ' + (claim.opponentName ?? '')} />
+      <nav aria-label="مسار التنقل" className="mb-2 text-[13px] text-muted"><Link href="/portal/claims" className="hover:text-text">المطالبات</Link> / {claim.opponentName ?? 'مطالبة'}</nav>
       <header className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-3"><h1 className="text-[22px] font-bold">مطالبة ضد {claim.opponentName}</h1><Pill tone={claimTone(claim.statusKey)}>{claim.status}</Pill></div>
-          <p className="mt-1 text-[14px] text-muted">المرجع <Num>{claim.reference}</Num>{claim.submittedAt && <> · أُرسلت <DateText value={claim.submittedAt} time /></>}</p>
+          <p className="mt-1 text-[14px] text-muted">{claim.submittedAt && <>أُرسلت <DateText value={claim.submittedAt} time /></>}</p>
         </div>
         {claim.editable && <ButtonLink href={`/portal/claims/${claim.id}/edit`} variant="primary">استكمال البيانات</ButtonLink>}
       </header>

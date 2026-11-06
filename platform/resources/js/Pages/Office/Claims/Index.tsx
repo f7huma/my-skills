@@ -21,7 +21,7 @@ export default function Index({ claims, status }: { claims: Paginated<Row>; stat
             <Link href={`/office/claims/${c.id}`} className="grid gap-1 px-4 py-3 hover:bg-raised sm:grid-cols-[1fr_auto] sm:px-5">
               <span className="min-w-0">
                 <span className="block font-medium">{c.client} <span className="font-normal text-muted">ضد {c.opponent}</span></span>
-                <span className="text-[12.5px] text-muted"><Num>{c.reference}</Num> · أُرسلت {relative(c.submittedAt)}</span>
+                <span className="text-[12.5px] text-muted">أُرسلت {relative(c.submittedAt)}</span>
               </span>
               <span className="flex flex-wrap items-center gap-2 sm:justify-end"><Money value={c.amount} currency={c.currency} className="font-semibold" />
                 {c.missing && <Pill tone="negative">ناقص مستند</Pill>}<Pill tone={claimTone(c.status)}>{c.statusLabel}</Pill></span>

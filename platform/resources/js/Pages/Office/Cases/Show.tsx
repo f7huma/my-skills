@@ -508,7 +508,7 @@ function JudgmentTab({ p }: { p: Props }) {
               </form>
               {p.executions.length > 0 && (
                 <ul className="mt-4 divide-y divide-rule border-t border-rule">{p.executions.map((e) => (
-                  <li key={e.id} className="flex items-center justify-between py-2"><Link href={`/office/executions/${e.id}`} className="font-medium text-accent hover:underline">{e.type} — <Num>{e.requestNumber ?? e.reference}</Num></Link><Pill tone="info">{e.status}</Pill></li>
+                  <li key={e.id} className="flex items-center justify-between py-2"><Link href={`/office/executions/${e.id}`} className="font-medium text-accent hover:underline">{e.type}{e.requestNumber && <> — <Num>{e.requestNumber}</Num></>}</Link><Pill tone="info">{e.status}</Pill></li>
                 ))}</ul>
               )}
             </Panel>
@@ -558,7 +558,7 @@ export default function Show(p: Props) {
     <>
       <Head title={c.title} />
       <PageHeader crumbs={[{ label: 'القضايا', href: '/office/cases' }, { label: c.client, href: `/office/clients/${c.clientId}` }]} title={c.title}
-        subtitle={<span className="flex flex-wrap items-center gap-2"><Num>{c.reference}</Num><span>· {c.clientRoleLabel} · {c.stageLabel}</span><Pill tone={caseTone(c.status)}>{c.statusLabel}</Pill>{c.outcomeLabel && <Pill>{c.outcomeLabel}</Pill>}</span>}
+        subtitle={<span className="flex flex-wrap items-center gap-2"><span>{c.clientRoleLabel} · {c.stageLabel}</span><Pill tone={caseTone(c.status)}>{c.statusLabel}</Pill>{c.outcomeLabel && <Pill>{c.outcomeLabel}</Pill>}</span>}
         actions={<>
           <Button size="sm" onClick={status.show}><RotateCcw className="size-4" aria-hidden />حالة العمل</Button>
           <ButtonLink size="sm" href={`/office/reports?type=case&case=${c.id}`}><Printer className="size-4" aria-hidden />تقرير</ButtonLink>
@@ -571,7 +571,7 @@ export default function Show(p: Props) {
         if (k === 'filing') return p.filings.length ? <><ul className="space-y-1">{p.filings.map((f) => <li key={f.id}>{f.statusLabel}{f.requestNumber && <> · طلب <Num>{f.requestNumber}</Num></>}{f.caseNumber && <> · رقم القضية <Num>{f.caseNumber}</Num></>}{f.court && <> · {f.court}</>}</li>)}</ul>{go('court', 'القضاء')}</> : none;
         if (k === 'court') { const next = p.hearings.find((h) => h.status === 'scheduled'); return <><p>{countNoun(p.hearings.length, { one: 'جلسة واحدة', two: 'جلستان', few: 'جلسات', many: 'جلسة' })} مسجلة{next?.at ? <> · القادمة <DateText value={next.at} time /> {next.authority && <>· {next.authority}</>}</> : ' · لا جلسة قادمة'}.</p>{go('hearings', 'الجلسات')}</>; }
         if (k === 'judgment' || k === 'objection') return p.judgment ? <><p>{p.judgment.outcomeLabel}{p.judgment.pronouncedOn && <> · نُطق به <DateText value={p.judgment.pronouncedOn} /></>}{k === 'objection' && <> · الاعتراض: {p.judgment.objectionStatus ?? 'لم يُسجّل'}{p.judgment.objectionFiledOn && <> (<DateText value={p.judgment.objectionFiledOn} />)</>}</>}</p>{go('judgment', 'الحكم والتنفيذ')}</> : none;
-        if (k === 'execution') return p.executions.length ? <><ul className="space-y-1">{p.executions.map((e) => <li key={e.id}><Link href={`/office/executions/${e.id}`} className="font-medium underline underline-offset-4">{e.type} — <Num>{e.requestNumber ?? e.reference}</Num></Link> · {e.status}</li>)}</ul></> : none;
+        if (k === 'execution') return p.executions.length ? <><ul className="space-y-1">{p.executions.map((e) => <li key={e.id}><Link href={`/office/executions/${e.id}`} className="font-medium underline underline-offset-4">{e.type}{e.requestNumber && <> — <Num>{e.requestNumber}</Num></>}</Link> · {e.status}</li>)}</ul></> : none;
         if (k === 'closed') return c.status === 'completed' || c.stage === 'closed' ? <p>{c.outcomeLabel ?? 'انتهت القضية'}{c.closedOn && <> · <DateText value={c.closedOn} /></>}</p> : none;
         return none;
       }} />

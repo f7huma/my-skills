@@ -57,7 +57,7 @@ export default function Index({ cases, filters, savedFilters, options }: { cases
               <thead><tr><th>القضية</th><th>العميل</th><th>رقم القضية</th><th>المرحلة</th><th>الحالة</th><th className="end">الجلسة القادمة</th></tr></thead>
               <tbody>{cases.data.map((c) => (
                 <tr key={c.id}>
-                  <td className="min-w-[220px] max-w-[320px]"><Link href={`/office/cases/${c.id}`} title={c.title} className="block truncate font-medium hover:underline underline-offset-4">{c.title}</Link><span className="text-[12.5px] text-muted"><Num>{c.reference}</Num> · {c.role}{c.category ? ' · ' + c.category : ''}</span></td>
+                  <td className="min-w-[220px] max-w-[320px]"><Link href={`/office/cases/${c.id}`} title={c.title} className="block truncate font-medium hover:underline underline-offset-4">{c.title}</Link><span className="text-[12.5px] text-muted">{c.role}{c.category ? ' · ' + c.category : ''}</span></td>
                   <td className="text-muted"><Link href={`/office/clients/${c.clientId}`} className="hover:text-text">{c.client}</Link></td>
                   <td>{c.caseNumber ? <Num>{c.caseNumber}</Num> : <span className="text-faint">—</span>}</td>
                   <td className="text-muted">{c.stage}</td>
@@ -72,7 +72,7 @@ export default function Index({ cases, filters, savedFilters, options }: { cases
               <Link href={`/office/cases/${c.id}`} className="block">
                 <span className="flex items-start justify-between gap-2"><span className="font-medium">{c.title}</span><Pill tone={caseTone(c.status)}>{c.statusLabel}</Pill></span>
                 <span className="block text-[13px] text-muted">{c.client} · {c.stage}</span>
-                <span className="block text-[12.5px] text-muted"><Num>{c.caseNumber ?? c.reference}</Num>{c.nextHearing && <> · الجلسة <DateText value={c.nextHearing} time /></>}</span>
+                <span className="block text-[12.5px] text-muted">{c.caseNumber && <Num>{c.caseNumber}</Num>}{c.nextHearing && <> · الجلسة <DateText value={c.nextHearing} time /></>}</span>
               </Link>
             </li>
           ))}</ul>

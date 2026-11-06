@@ -15,7 +15,7 @@ export default function Index({ executions, filters, statuses }: { executions: P
       <PageHeader title="التنفيذ" subtitle={countNoun(executions.total, { one: 'طلب تنفيذ واحد', two: 'طلبا تنفيذ', few: 'طلبات تنفيذ', many: 'طلب تنفيذ' })} actions={<ButtonLink href="/office/executions/create" variant="primary">طلب تنفيذ مستقل</ButtonLink>} />
       <form onSubmit={(e) => { e.preventDefault(); apply({}); }} className="mb-4 flex flex-wrap gap-2">
         <label htmlFor="eq" className="sr-only">بحث</label>
-        <input id="eq" type="search" className="input h-9 max-w-[300px]" placeholder="رقم الطلب، المرجع، العميل، الطرف" value={q} onChange={(e) => setQ(e.target.value)} />
+        <input id="eq" type="search" className="input h-9 max-w-[300px]" placeholder="رقم الطلب، العميل، الطرف" value={q} onChange={(e) => setQ(e.target.value)} />
         <label htmlFor="et" className="sr-only">النوع</label>
         <select id="et" className="input h-9 w-auto" value={filters.type ?? ''} onChange={(e) => apply({ type: e.target.value || undefined })}><option value="">كل الأنواع</option><option value="financial">مالي</option><option value="direct">مباشر</option></select>
         <label htmlFor="es" className="sr-only">الحالة</label>
@@ -26,7 +26,7 @@ export default function Index({ executions, filters, statuses }: { executions: P
           <thead><tr><th>الطلب</th><th>العميل</th><th>النوع والسند</th><th>الحالة</th><th className="end">المطلوب</th><th className="end">المقبوض</th></tr></thead>
           <tbody>{executions.data.map((e) => (
             <tr key={e.id}>
-              <td><Link href={`/office/executions/${e.id}`} className="font-medium hover:underline underline-offset-4"><Num>{e.requestNumber ?? e.reference}</Num></Link><span className="block text-[12.5px] text-muted"><Num>{e.reference}</Num>{e.case && <> · القضية <Num>{e.case}</Num></>}</span></td>
+              <td><Link href={`/office/executions/${e.id}`} className="font-medium hover:underline underline-offset-4">{e.requestNumber ? <Num>{e.requestNumber}</Num> : 'طلب تنفيذ بلا رقم بعد'}</Link>{e.case && <span className="block text-[12.5px] text-muted">مرتبط بقضية</span>}</td>
               <td className="text-muted">{e.client}</td>
               <td className="text-muted">{e.type} · {e.instrument}</td>
               <td><Pill tone="info">{e.statusLabel}</Pill></td>

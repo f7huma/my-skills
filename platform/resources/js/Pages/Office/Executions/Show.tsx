@@ -38,11 +38,11 @@ export default function Show(p: Props) {
 
   return (
     <>
-      <Head title={'تنفيذ ' + (e.request_number ?? e.reference)} />
+      <Head title={'تنفيذ ' + (e.request_number ?? e.client)} />
       <PageHeader title={<>طلب تنفيذ {e.request_number ? <Num>{e.request_number}</Num> : <span className="text-muted">بلا رقم بعد</span>}</>}
         crumbs={[{ label: 'التنفيذ', href: '/office/executions' }, { label: e.client, href: `/office/clients/${e.clientId}` }]}
-        subtitle={<span className="flex flex-wrap items-center gap-2"><Num>{e.reference}</Num> · {label(p.options.executionTypes, e.execution_type)} · {instrument}<Pill tone="info">{label(p.options.statuses, e.status)}</Pill>
-          {e.case && <>· <Link href={`/office/cases/${e.case.id}?tab=judgment`} className="text-accent hover:underline">القضية <Num>{e.case.reference}</Num></Link></>}</span>}
+        subtitle={<span className="flex flex-wrap items-center gap-2">{label(p.options.executionTypes, e.execution_type)} · {instrument}<Pill tone="info">{label(p.options.statuses, e.status)}</Pill>
+          {e.case && <>· <Link href={`/office/cases/${e.case.id}?tab=judgment`} className="text-accent hover:underline">القضية: {e.case.title}</Link></>}</span>}
         actions={<>
           {e.weekly_followup && <Button size="sm" onClick={() => router.post(`/office/executions/${e.id}/followup`, {}, { preserveScroll: true })}>تسجيل متابعة أسبوعية{e.weeklyDue && <> (<DateText value={e.weeklyDue} />)</>}</Button>}
           <Button size="sm" variant="primary" onClick={edit.show}>تحديث الطلب</Button>

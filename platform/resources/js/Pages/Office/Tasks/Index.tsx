@@ -27,8 +27,8 @@ export default function Index({ tasks, status, kinds, dueModes }: { tasks: T[]; 
                 <div className="min-w-0 flex-1">
                   <p className={cx('font-medium', t.status !== 'open' && 'text-muted line-through')}>{t.title}</p>
                   <p className="line-clamp-2 text-[12.5px] text-muted">{t.kindLabel}
-                    {t.case && <> · <Link href={`/office/cases/${t.case.id}?tab=tasks`} className="hover:text-text"><Num>{t.case.reference}</Num> {t.case.title}</Link></>}
-                    {t.execution && <> · <Link href={`/office/executions/${t.execution.id}`} className="hover:text-text"><Num>{t.execution.reference}</Num></Link></>}</p>
+                    {t.case && <> · <Link href={`/office/cases/${t.case.id}?tab=tasks`} className="hover:text-text">{t.case.title}</Link></>}
+                    {t.execution && <> · <Link href={`/office/executions/${t.execution.id}`} className="hover:text-text">طلب التنفيذ</Link></>}</p>
                 </div>
                 <span className={cx('w-full ps-[30px] text-[13px] sm:w-auto sm:max-w-[9.5rem] sm:shrink-0 sm:ps-0 sm:text-end', t.dueOn && t.dueOn < today && t.status === 'open' ? 'font-semibold text-negative' : 'text-muted')}>{t.dueOn ? <DateText value={t.dueOn} /> : 'بلا موعد'}</span>
               </li>

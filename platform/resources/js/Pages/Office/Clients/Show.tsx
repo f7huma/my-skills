@@ -73,7 +73,7 @@ export default function Show(p: Props) {
     <>
       <Head title={c.name} />
       <PageHeader title={c.name} crumbs={[{ label: 'العملاء', href: '/office/clients' }]}
-        subtitle={<>{c.typeLabel} · <Num>{c.reference}</Num>{c.archived && <> · <Pill>مؤرشف</Pill></>}</>}
+        subtitle={<>{c.typeLabel}{c.archived && <> · <Pill>مؤرشف</Pill></>}</>}
         actions={<>
           <ButtonLink href={`/office/cases/create?client=${c.id}`} variant="primary" size="sm"><Plus className="size-4" aria-hidden />قضية</ButtonLink>
           <ButtonLink href={`/office/executions/create?client=${c.id}`} size="sm">طلب تنفيذ</ButtonLink>
@@ -161,10 +161,10 @@ export default function Show(p: Props) {
           <Panel title="القضايا" actions={<><ButtonLink href={`/office/cases/create?client=${c.id}&archived=1`} size="sm">إضافة قضية منتهية</ButtonLink><ButtonLink href={`/office/cases/create?client=${c.id}`} size="sm" variant="primary">قضية جديدة</ButtonLink></>}>
             {p.cases.length === 0 ? <EmptyState title="لا قضايا لهذا العميل" /> : (
               <div className="overflow-x-auto"><table className="table">
-                <thead><tr><th>القضية</th><th>المرجع</th><th>الصفة</th><th>المرحلة</th><th>الحالة</th><th>النتيجة / الانتهاء</th></tr></thead>
+                <thead><tr><th>القضية</th><th>الصفة</th><th>المرحلة</th><th>الحالة</th><th>النتيجة / الانتهاء</th></tr></thead>
                 <tbody>{p.cases.map((x) => (
                   <tr key={x.id}><td className="min-w-[240px] max-w-[420px] font-medium"><Link href={`/office/cases/${x.id}`} title={x.title} className="line-clamp-2 hover:underline underline-offset-4">{x.title}</Link></td>
-                    <td><Num>{x.reference}</Num></td><td className="text-muted">{x.role}</td><td className="text-muted">{x.stage}</td><td><Pill tone={caseTone(x.status)}>{x.statusLabel}</Pill></td>
+                    <td className="text-muted">{x.role}</td><td className="text-muted">{x.stage}</td><td><Pill tone={caseTone(x.status)}>{x.statusLabel}</Pill></td>
                     <td className="text-[13px] text-muted">{x.outcome && <span className="block">{x.outcome}</span>}{x.closedOn && <DateText value={x.closedOn} />}{!x.outcome && !x.closedOn && '—'}</td></tr>
                 ))}</tbody>
               </table></div>
@@ -176,7 +176,7 @@ export default function Show(p: Props) {
           <Panel title="التنفيذ" actions={<><ButtonLink href={`/office/executions/create?client=${c.id}&status=completed`} size="sm">إضافة تنفيذ منتهٍ</ButtonLink><ButtonLink href={`/office/executions/create?client=${c.id}`} size="sm" variant="primary">طلب تنفيذ</ButtonLink></>}>
             {p.executions.length === 0 ? <EmptyState title="لا طلبات تنفيذ" /> : (
               <ul className="divide-y divide-rule">{p.executions.map((e) => (
-                <li key={e.id} className="flex items-center justify-between py-2.5"><Link href={`/office/executions/${e.id}`} className="font-medium hover:underline underline-offset-4">{e.type} — <Num>{e.requestNumber ?? e.reference}</Num></Link><Pill tone="info">{e.status}</Pill></li>
+                <li key={e.id} className="flex items-center justify-between py-2.5"><Link href={`/office/executions/${e.id}`} className="font-medium hover:underline underline-offset-4">{e.type}{e.requestNumber && <> — <Num>{e.requestNumber}</Num></>}</Link><Pill tone="info">{e.status}</Pill></li>
               ))}</ul>
             )}
           </Panel>
@@ -186,7 +186,7 @@ export default function Show(p: Props) {
           <Panel title="المطالبات المرتبطة">
             {p.claims.length === 0 ? <EmptyState title="لا مطالبات مرسلة" /> : (
               <ul className="divide-y divide-rule">{p.claims.map((x) => (
-                <li key={x.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5"><Link href={`/office/claims/${x.id}`} className="font-medium hover:underline underline-offset-4"><Num>{x.reference}</Num> — {x.opponent}</Link>
+                <li key={x.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5"><Link href={`/office/claims/${x.id}`} className="font-medium hover:underline underline-offset-4">مطالبة ضد {x.opponent}</Link>
                   <span className="flex items-center gap-3"><Money value={x.amount} currency={x.currency} /><Pill tone={claimTone(x.status)}>{x.statusLabel}</Pill></span></li>
               ))}</ul>
             )}

@@ -309,6 +309,23 @@ dialog.modal[open] { animation: dialog-in 180ms var(--ease-out); }
   .art-rise, .art-beam, .art-pan-a, .art-pan-b, .meter-grow [role="meter"] > div, .pulse-dot { animation: none; }
 }
 
+
+/* ----- مطرقة القاضي: ترتفع ثم تضرب القاعدة وترتد قليلًا، وتنطلق تموجات معيّنة لحظة الضربة */
+@keyframes gavel-strike {
+  0% { transform: rotate(26deg); } 52% { transform: rotate(-1.5deg); } 62% { transform: rotate(7deg); }
+  76% { transform: rotate(0deg); } 100% { transform: rotate(5deg); }
+}
+@keyframes ripple-out { 0% { opacity: 0; transform: scale(0.5); } 10% { opacity: 1; } 100% { opacity: 0; transform: scale(2.2); } }
+.gavel-arm { transform-box: view-box; transform-origin: 322px 123px; animation: gavel-strike 1300ms var(--ease-in-out) 350ms both; }
+.gavel-ripples .ripple { opacity: 0; transform-box: fill-box; transform-origin: center; animation: ripple-out 900ms var(--ease-out) 1030ms both; }
+.gavel-ripples .ripple.r2 { animation-delay: 1180ms; }
+.art-beam-sm { transform-box: view-box; transform-origin: 330px 70px; animation: beam-swing 1800ms var(--ease-in-out) 500ms both; }
+[data-depth] { will-change: transform; }
+@media (prefers-reduced-motion: reduce) {
+  .gavel-arm { animation: none; transform: rotate(5deg); }
+  .gavel-ripples .ripple, .art-beam-sm { animation: none; }
+}
+
 /* الطباعة: إخفاء الإطار */
 @media print { .no-print { display: none !important; } body { background: #fff; } .sheet { border: 0; } }
 

@@ -20,8 +20,8 @@ export default function Show({ claim, messages, documents, categories, instrumen
   const m1 = useModal(); const m2 = useModal(); const m3 = useModal();
   return (
     <>
-      <Head title={'مطالبة ' + claim.reference} />
-      <PageHeader title={<>مطالبة <Num>{claim.reference}</Num></>} crumbs={[{ label: 'المطالبات الواردة', href: '/office/claims' }]}
+      <Head title={'مطالبة ضد ' + claim.opponentName} />
+      <PageHeader title={<>مطالبة ضد {claim.opponentName}</>} crumbs={[{ label: 'المطالبات الواردة', href: '/office/claims' }]}
         subtitle={<span className="flex flex-wrap items-center gap-2">{claim.client} ضد {claim.opponentName} · أرسلها {claim.submitter} <DateText value={claim.submittedAt} time /><Pill tone={claimTone(claim.status)}>{claim.statusLabel}</Pill>{claim.missingDocuments && <Pill tone="negative">ناقص مستند</Pill>}</span>}
         actions={open ? <>
           <Button size="sm" variant="primary" onClick={m1.show}>تحويل إلى قضية</Button>

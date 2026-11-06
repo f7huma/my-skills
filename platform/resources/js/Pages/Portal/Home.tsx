@@ -32,7 +32,7 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
     <div className="stagger">
       <Head title="ملفاتي" />
       {/* الواجهة: ترحيب وأرقام تعدّ، وبجانبها مشهد محكمة وميزان يستقر */}
-      <section className="mist relative mb-6 overflow-hidden rounded-[22px] px-5 pb-6 pt-6 sm:px-8" aria-labelledby="portal-title">
+      <section data-parallax-host className="mist relative mb-6 overflow-hidden rounded-[22px] px-5 pb-6 pt-6 sm:px-8" aria-labelledby="portal-title">
         <CourtScene className="pointer-events-none absolute -bottom-4 end-[-20px] hidden h-[340px] w-[453px] md:block" />
         <div className="relative max-w-[640px]">
           <h1 id="portal-title" className="text-[26px] font-semibold leading-tight text-ink sm:text-[32px]">ملفاتك بين أيدٍ أمينة</h1>
@@ -161,7 +161,7 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
                   <Link href={`/portal/claims/${c.id}`} className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 transition-colors duration-150 hover:bg-raised active:bg-active sm:px-5">
                     <span className="min-w-0">
                       <span className="block font-medium">{c.opponentName || 'مسودة بلا طرف بعد'}</span>
-                      <span className="text-[12.5px] text-muted">{c.reference ? <Num>{c.reference}</Num> : 'لم تُرسل'}</span>
+                      <span className="text-[12.5px] text-muted">{c.reference ? 'مُرسلة للمكتب' : 'لم تُرسل بعد'}</span>
                     </span>
                     <span className="flex items-center gap-3"><Money value={c.amount} currency={c.currency} /><Pill tone={claimTone(c.statusKey)}>{c.status}</Pill></span>
                   </Link>
