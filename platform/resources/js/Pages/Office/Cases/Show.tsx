@@ -9,6 +9,8 @@ import {
   Tabs, TextArea, TextField, Timeline, UploadForm, useModal, DateText } from '@/Components/ui';
 import { dateTime, relative, weekday, countNoun } from '@/lib/format';
 import { useTab } from '@/lib/useTab';
+import { StagePath } from '@/Components/StagePath';
+import { IconAttachment, IconHearing, IconJudgment, IconSettlement, IconFiling, IconCase, IconTasks } from '@/Components/Icons';
 import type { Doc, Option, Totals } from '@/types';
 
 type CaseT = {
@@ -561,14 +563,26 @@ export default function Show(p: Props) {
           <Button size="sm" onClick={status.show}><RotateCcw className="size-4" aria-hidden />حالة العمل</Button>
           <ButtonLink size="sm" href={`/office/reports?type=case&case=${c.id}`}><Printer className="size-4" aria-hidden />تقرير</ButtonLink>
         </>} />
+      <StagePath current={c.stage} details={(k) => {
+        const go = (t: string, l: string) => <button type="button" className="mt-2 text-[13px] font-medium text-ink underline underline-offset-4" onClick={() => openTab(t)}>عرض {l}</button>;
+        const none = <p className="text-muted">لا توجد بيانات مسجلة لهذه المرحلة.</p>;
+        if (k === 'intake') return <><p>فُتح الملف <DateText value={c.createdAt} /> للعميل {c.client}{c.poa ? <> · الوكالة <Num>{c.poa.number}</Num></> : ' · بلا وكالة مرتبطة'}.</p>{go('summary', 'الملخص')}</>;
+        if (k === 'reconciliation') return p.reconciliations.length ? <><ul className="space-y-1">{p.reconciliations.map((r) => <li key={r.id}>طلب صلح {r.number ? <Num>{r.number}</Num> : 'بلا رقم'} — {r.statusLabel}{r.submittedOn && <> · قُدّم <DateText value={r.submittedOn} /></>}{r.agreedAmount && <> · المتفق عليه <Money value={r.agreedAmount} currency={r.currency} /></>}</li>)}</ul>{go('reconciliation', 'الصلح')}</> : none;
+        if (k === 'filing') return p.filings.length ? <><ul className="space-y-1">{p.filings.map((f) => <li key={f.id}>{f.statusLabel}{f.requestNumber && <> · طلب <Num>{f.requestNumber}</Num></>}{f.caseNumber && <> · رقم القضية <Num>{f.caseNumber}</Num></>}{f.court && <> · {f.court}</>}</li>)}</ul>{go('court', 'القضاء')}</> : none;
+        if (k === 'court') { const next = p.hearings.find((h) => h.status === 'scheduled'); return <><p>{countNoun(p.hearings.length, { one: 'جلسة واحدة', two: 'جلستان', few: 'جلسات', many: 'جلسة' })} مسجلة{next?.at ? <> · القادمة <DateText value={next.at} time /> {next.authority && <>· {next.authority}</>}</> : ' · لا جلسة قادمة'}.</p>{go('hearings', 'الجلسات')}</>; }
+        if (k === 'judgment' || k === 'objection') return p.judgment ? <><p>{p.judgment.outcomeLabel}{p.judgment.pronouncedOn && <> · نُطق به <DateText value={p.judgment.pronouncedOn} /></>}{k === 'objection' && <> · الاعتراض: {p.judgment.objectionStatus ?? 'لم يُسجّل'}{p.judgment.objectionFiledOn && <> (<DateText value={p.judgment.objectionFiledOn} />)</>}</>}</p>{go('judgment', 'الحكم والتنفيذ')}</> : none;
+        if (k === 'execution') return p.executions.length ? <><ul className="space-y-1">{p.executions.map((e) => <li key={e.id}><Link href={`/office/executions/${e.id}`} className="font-medium underline underline-offset-4">{e.type} — <Num>{e.requestNumber ?? e.reference}</Num></Link> · {e.status}</li>)}</ul></> : none;
+        if (k === 'closed') return c.status === 'completed' || c.stage === 'closed' ? <p>{c.outcomeLabel ?? 'انتهت القضية'}{c.closedOn && <> · <DateText value={c.closedOn} /></>}</p> : none;
+        return none;
+      }} />
       <Tabs label="أقسام القضية" current={tab} onSelect={setTab} tabs={[
-        { key: 'summary', label: 'الملخص' }, { key: 'timeline', label: 'الخط الزمني' },
-        { key: 'reconciliation', label: 'الصلح', count: p.reconciliations.length, hidden: !isShown('reconciliation') },
-        { key: 'court', label: 'القضاء', count: p.filings.length, hidden: !isShown('court') },
-        { key: 'hearings', label: 'الجلسات', count: p.hearings.filter((h) => h.status === 'scheduled').length },
-        { key: 'tasks', label: 'المهام والمذكرات', count: p.tasks.filter((t) => t.status === 'open').length },
-        { key: 'files', label: 'المرفقات', count: p.documents.length },
-        { key: 'judgment', label: 'الحكم والتنفيذ', hidden: !isShown('judgment') },
+        { key: 'summary', label: 'الملخص', icon: <IconCase size={17} /> }, { key: 'timeline', label: 'الخط الزمني' },
+        { key: 'reconciliation', label: 'الصلح', icon: <IconSettlement size={17} />, count: p.reconciliations.length, hidden: !isShown('reconciliation') },
+        { key: 'court', label: 'القضاء', icon: <IconFiling size={17} />, count: p.filings.length, hidden: !isShown('court') },
+        { key: 'hearings', label: 'الجلسات', icon: <IconHearing size={17} />, count: p.hearings.filter((h) => h.status === 'scheduled').length },
+        { key: 'tasks', label: 'المهام والمذكرات', icon: <IconTasks size={17} />, count: p.tasks.filter((t) => t.status === 'open').length },
+        { key: 'files', label: 'المرفقات', icon: <IconAttachment size={17} />, count: p.documents.length },
+        { key: 'judgment', label: 'الحكم والتنفيذ', icon: <IconJudgment size={17} />, hidden: !isShown('judgment') },
       ]} />
       {missing.filter((m) => !isShown(m.tab)).length > 0 && (
         <div className="-mt-3 mb-4 flex flex-wrap items-center gap-2 text-[13px] text-muted">

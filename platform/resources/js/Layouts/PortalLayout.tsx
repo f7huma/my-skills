@@ -33,7 +33,7 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
           </div>
         </div>
       </header>
-      <main id="main" tabIndex={-1} className="mx-auto max-w-[1120px] px-0 pb-8 pt-5 outline-none sm:px-6">
+      <main id="main" tabIndex={-1} className="page-enter mx-auto max-w-[1120px] px-0 pb-8 pt-5 outline-none sm:px-6">
         {page.component === 'Portal/Home' ? <div className="px-4 sm:px-0">{children}</div>
           : <div className="sheet min-h-[60vh] rounded-none border-x-0 px-4 py-6 sm:rounded-[18px] sm:border-x sm:px-8">{children}</div>}
         <p className="px-4 pt-4 text-center text-[12px] text-muted">{page.props.office.name} — ترخيص رقم <bdi className="num">{page.props.office.license}</bdi></p>

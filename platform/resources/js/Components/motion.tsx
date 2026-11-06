@@ -1,12 +1,59 @@
 import { Link } from '@inertiajs/react';
-import { useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cx } from '@/Components/ui';
 
 const fmt = (n: number, decimals = 0) => new Intl.NumberFormat('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
 
-/** رقم بتنسيق جدولي. الحركة محصورة في القسم التعريفي؛ أرقام الصفحات العملية تظهر بقيمتها فورًا */
+const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * رقم يعدّ من الصفر عند ظهوره أول مرة (900ms)، وعند تغيّر قيمته فعليًا يتحرك من القيمة السابقة إلى الجديدة (500ms).
+ * يكتب النص مباشرة في العنصر كل إطار فلا يُعاد رسم المكوّن، ويظهر بقيمته النهائية عند تقليل الحركة.
+ */
 export function CountUp({ value, decimals = 0, className }: { value: number; decimals?: number; duration?: number; className?: string }) {
-  return <span className={cx('num', className)}>{fmt(value, decimals)}</span>;
+  const host = useRef<HTMLSpanElement>(null);
+  const out = useRef<HTMLSpanElement>(null);
+  const shown = useRef<number | null>(null);
+  const raf = useRef(0);
+  const animate = (from: number, to: number, ms: number) => {
+    const node = out.current;
+    if (!node) return;
+    cancelAnimationFrame(raf.current);
+    let start = 0;
+    const tick = (t: number) => {
+      if (!start) start = t;
+      const p = Math.min(1, (t - start) / ms);
+      const v = p < 1 ? from + (to - from) * (1 - Math.pow(2, -10 * p)) : to;
+      shown.current = v;
+      node.textContent = fmt(v, decimals);
+      if (p < 1) raf.current = requestAnimationFrame(tick);
+    };
+    raf.current = requestAnimationFrame(tick);
+  };
+  useLayoutEffect(() => {
+    const node = out.current;
+    if (!node) return;
+    if (reduced()) { shown.current = value; node.textContent = fmt(value, decimals); return; }
+    if (shown.current === null) {
+      // أول ظهور: يبدأ من الصفر ويعدّ حين يدخل مجال الرؤية
+      node.textContent = fmt(0, decimals);
+      shown.current = 0;
+      const el = host.current;
+      if (!el || !('IntersectionObserver' in window)) { animate(0, value, 900); return; }
+      const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { animate(0, value, 900); io.disconnect(); } }, { threshold: 0.3 });
+      io.observe(el);
+      return () => io.disconnect();
+    }
+    if (shown.current !== value) animate(shown.current, value, 500);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value, decimals]);
+  useEffect(() => () => cancelAnimationFrame(raf.current), []);
+  return (
+    <span ref={host} className={cx('num', className)}>
+      <span ref={out} aria-hidden>{fmt(value, decimals)}</span>
+      <span className="sr-only">{fmt(value, decimals)}</span>
+    </span>
+  );
 }
 
 /** أعمدة تفاعلية: تنمو عند التحميل، وتعرض قيمتها عند المرور أو التركيز */

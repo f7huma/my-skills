@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { caseTone, DocumentList, KeyValues, Money, Num, Pill, Timeline, DateText } from '@/Components/ui';
 import { dateTime, relative } from '@/lib/format';
 import type { Doc } from '@/types';
+import { StagePath, stageKeyFromLabel } from '@/Components/StagePath';
 
 type C = {
   id: number; reference: string; title: string; stage: string | null; status: string | null; statusKey: string; clientRole: string | null; caseNumber: string | null;
@@ -24,7 +25,17 @@ export default function CaseShow({ case: c }: { case: C }) {
         <p className="mt-1 text-[14px] text-muted">{c.stage} · مرجع المكتب <Num>{c.reference}</Num></p>
       </header>
 
-      <section aria-labelledby="update" className="mb-7 rounded-xl bg-accent-soft px-5 py-4">
+      {stageKeyFromLabel(c.stage) && (
+        <StagePath current={stageKeyFromLabel(c.stage)!} label="مراحل قضيتك" details={(k) => {
+          const cur = stageKeyFromLabel(c.stage)!;
+          if (k === 'court' && c.nextHearing) return <p>الجلسة القادمة <DateText value={c.nextHearing.at} time /> · {c.nextHearing.kind}{c.court && <> · {c.court}</>}</p>;
+          if (k === 'filing' && (c.filingStatus || c.caseNumber)) return <p>{c.filingStatus}{c.caseNumber && <> · رقم القضية <Num>{c.caseNumber}</Num></>}</p>;
+          if ((k === 'judgment' || k === 'objection') && c.judgment) return <p>{c.judgment.outcome ?? 'صدر الحكم'}{c.judgment.pronouncedOn && <> · <DateText value={c.judgment.pronouncedOn} /></>} · {c.judgment.final ? 'الحكم نهائي' : 'لم يكتسب القطعية بعد'}</p>;
+          if (k === 'closed' && c.outcome) return <p>{c.outcome}</p>;
+          return <p className="text-muted">{k === cur ? 'قضيتك في هذه المرحلة الآن، وسيحدّثك المكتب بأي جديد.' : 'لا تفاصيل منشورة لهذه المرحلة.'}</p>;
+        }} />
+      )}
+      <section aria-labelledby="update" className="mb-7 rounded-[14px] border-s-0 bg-mist px-5 py-4">
         <h2 id="update" className="text-[13.5px] font-semibold text-ink">آخر تحديث من المكتب{c.lastUpdate && <span className="font-normal"> · {relative(c.lastUpdate)}</span>}</h2>
         <p className="mt-1 text-[15px] leading-8 text-text">{c.clientSummary || 'لا يوجد تحديث منشور بعد.'}</p>
       </section>

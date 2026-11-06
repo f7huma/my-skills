@@ -1,3 +1,4 @@
+import { IconAttachment, IconCase, IconClaims, IconExecution, IconPoa } from '@/Components/Icons';
 import { useState } from 'react';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { Archive, Pencil, Plus } from 'lucide-react';
@@ -81,9 +82,9 @@ export default function Show(p: Props) {
         </>} />
 
       <Tabs label="أقسام ملف العميل" current={tab} onSelect={setTab} tabs={[
-        { key: 'overview', label: 'الملخص' }, { key: 'poa', label: 'الوكالات', count: p.poas.length }, { key: 'files', label: 'الملفات', count: p.documents.length },
-        { key: 'cases', label: 'القضايا', count: p.cases.length }, { key: 'executions', label: 'التنفيذ', count: p.executions.length },
-        { key: 'claims', label: 'المطالبات', count: p.claims.length }, { key: 'access', label: 'حسابات البوابة', count: p.members.length },
+        { key: 'overview', label: 'الملخص' }, { key: 'poa', label: 'الوكالات', icon: <IconPoa size={17} />, count: p.poas.length }, { key: 'files', label: 'الملفات', icon: <IconAttachment size={17} />, count: p.documents.length },
+        { key: 'cases', label: 'القضايا', icon: <IconCase size={17} />, count: p.cases.length }, { key: 'executions', label: 'التنفيذ', icon: <IconExecution size={17} />, count: p.executions.length },
+        { key: 'claims', label: 'المطالبات', icon: <IconClaims size={17} />, count: p.claims.length }, { key: 'access', label: 'حسابات البوابة', count: p.members.length },
       ]} />
 
       <div role="tabpanel" id={'panel-' + tab} aria-labelledby={'tab-' + tab}>

@@ -46,6 +46,9 @@ function WeekRibbon({ agenda, selected, onSelect }: { agenda: Agenda; selected: 
   return (
     <div className="relative mt-7">
       <span aria-hidden className="absolute inset-x-[7%] top-[26px] h-px bg-ink/15" />
+      {/* مؤشر اليوم: سطح أبيض ينزلق إلى اليوم المختار (اليوم افتراضيًا) */}
+      <span aria-hidden className="day-indicator pointer-events-none absolute inset-y-0 start-0 w-[calc(100%/7)] rounded-xl bg-white shadow-[0_1px_3px_rgba(48,55,65,.12)]"
+        style={{ transform: `translateX(${-100 * Math.max(0, days.indexOf(selected ?? days[0]))}%)` }} />
       <ol className="relative grid grid-cols-7" aria-label="أيام الأسبوع — اختر يومًا لعرض بنوده">
         {load.map(({ d, n, hearings, deadline }, i) => {
           const today = i === 0;
@@ -56,10 +59,10 @@ function WeekRibbon({ agenda, selected, onSelect }: { agenda: Agenda; selected: 
             <li key={d} className="flex justify-center">
               <button type="button" onClick={() => onSelect(on ? null : d)} aria-pressed={on}
                 aria-label={`${weekday(d)} ${d} (${hijri(d)}هـ): ${n} بند${hearings ? `، منها ${hearings} جلسة` : ''}${deadline ? '، وفيه موعد نظامي' : ''}`}
-                className={cx('group flex w-full flex-col items-center rounded-xl pb-2 pt-1 transition-colors duration-200', on ? 'bg-white' : 'hover:bg-white/70')}>
+                className="group flex w-full flex-col items-center rounded-xl pb-2 pt-1">
                 <span className="grid h-[44px] place-items-center">
-                  <span className={cx('rounded-[4px] transition-[filter] duration-200 group-hover:brightness-125', today ? 'bg-ink' : n ? 'bg-[#6b7480]' : 'border border-ink/30 bg-transparent', deadline && 'ring-2 ring-amber ring-offset-2 ring-offset-[#e1e5e6]')}
-                    style={{ width: size, height: size, transform: 'rotate(45deg)' }} />
+                  <span className={cx('ribbon-node rounded-[4px] transition-[filter] duration-200 group-hover:brightness-125', today ? 'bg-ink' : n ? 'bg-[#6b7480]' : 'border border-ink/30 bg-transparent', deadline && 'ring-2 ring-amber ring-offset-2 ring-offset-[#e1e5e6]')}
+                    style={{ width: size, height: size, transform: 'rotate(45deg)', animationDelay: `${120 + i * 50}ms` }} />
                 </span>
                 <span className={cx('mt-1 text-[10.5px] sm:text-[12.5px]', today ? 'font-semibold text-ink' : off ? 'text-faint' : 'text-muted')}>
                   {today ? 'اليوم' : <><span className="sm:hidden" aria-hidden>{SHORT_DAYS[new Date(d + 'T12:00:00Z').getUTCDay()]}</span><span className="hidden sm:inline">{weekday(d).replace('ال', '')}</span></>}
@@ -169,6 +172,7 @@ export default function Dashboard(p: Props) {
     <>
       <Head title="أسبوع المكتب" />
       {/* الشريط الفحمي: الأرقام تعدّ، وشريط الأسبوع تحتها */}
+      <div className="stagger">
       <section className="mist relative overflow-hidden rounded-[22px] px-5 pb-4 pt-6 sm:px-8" aria-labelledby="week-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1 basis-[22rem]">
@@ -228,7 +232,7 @@ export default function Dashboard(p: Props) {
           )}
         </section>
 
-        <div className="grid grid-cols-1 content-start gap-4">
+        <div className="stagger grid grid-cols-1 content-start gap-4">
           <Panel id="nearest" title="الموعد النظامي الأقرب" actions={<Link href="/office/deadlines" className="text-[13px] text-muted hover:text-text">كل المواعيد</Link>}>
             {!nearest || left === null ? <p className="text-[13.5px] text-muted">لا مواعيد نظامية مفتوحة.</p> : (
               <>
@@ -326,6 +330,7 @@ export default function Dashboard(p: Props) {
             )}
           </Panel>
         </div>
+      </div>
       </div>
     </>
   );

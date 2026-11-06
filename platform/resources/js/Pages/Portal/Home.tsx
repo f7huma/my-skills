@@ -2,6 +2,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 import { FilePlus2 } from 'lucide-react';
 import { Button, caseTone, claimTone, EmptyState, Money, Num, Pill } from '@/Components/ui';
 import { CountUp, Meter } from '@/Components/motion';
+import { StageDots, stageKeyFromLabel } from '@/Components/StagePath';
 import { relative } from '@/lib/format';
 import type { SharedProps } from '@/types';
 
@@ -21,7 +22,7 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
     <>
       <Head title="ملفاتي" />
       {/* الشريط الفحمي: ملفات العميل ومبالغه تعدّ أمامه */}
-      <section className="mist mb-6 overflow-hidden rounded-[22px] px-5 pb-6 pt-6 sm:px-8" aria-labelledby="portal-title">
+      <section className="mist stagger-self mb-6 overflow-hidden rounded-[22px] px-5 pb-6 pt-6 sm:px-8" aria-labelledby="portal-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 id="portal-title" className="text-[26px] font-semibold leading-tight text-ink sm:text-[30px]">ملفاتك لدى المكتب</h1>
@@ -66,13 +67,14 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
             <ul className="card divide-y divide-rule overflow-hidden">
               {cases.map((c) => (
                 <li key={c.id}>
-                  <Link href={`/portal/cases/${c.id}`} className="block px-4 py-4 transition-colors hover:bg-raised sm:px-6">
+                  <Link href={`/portal/cases/${c.id}`} className="row-link block px-4 py-4 transition-colors duration-150 hover:bg-raised active:bg-active sm:px-6">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="font-semibold text-text">{c.title}</p>
                       <Pill tone={caseTone(c.statusKey)}>{c.status}</Pill>
                     </div>
-                    <p className="mt-0.5 text-[13px] text-muted">
-                      {c.stage}{c.caseNumber && <> · رقم القضية <Num>{c.caseNumber}</Num></>} · مرجع المكتب <Num>{c.reference}</Num>
+                    <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muted">
+                      <StageDots current={stageKeyFromLabel(c.stage)} />
+                      <span>{c.stage}{c.caseNumber && <> · رقم القضية <Num>{c.caseNumber}</Num></>} · مرجع المكتب <Num>{c.reference}</Num></span>
                     </p>
                     {c.clientSummary && <p className="mt-2 line-clamp-3 text-[14px] leading-7 text-text">{c.clientSummary}</p>}
                     {c.lastUpdate && <p className="mt-1 text-[12.5px] text-muted">آخر تحديث {relative(c.lastUpdate)}</p>}
@@ -91,7 +93,7 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
             <ul className="card divide-y divide-rule overflow-hidden">
               {executions.map((e) => (
                 <li key={e.id}>
-                  <Link href={`/portal/executions/${e.id}`} className="block px-4 py-4 transition-colors hover:bg-raised sm:px-6">
+                  <Link href={`/portal/executions/${e.id}`} className="row-link block px-4 py-4 transition-colors duration-150 hover:bg-raised active:bg-active sm:px-6">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="font-semibold">{e.type} — {e.instrument}</p>
                       <Pill tone="info">{e.status}</Pill>

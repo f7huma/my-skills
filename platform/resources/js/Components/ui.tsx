@@ -1,7 +1,8 @@
 import { Link, router, useForm } from '@inertiajs/react';
-import { X, FileText, Download, ShieldAlert, ShieldCheck, Loader2, Eye, EyeOff, Trash2, Upload, Inbox } from 'lucide-react';
+import { X, Download, ShieldAlert, ShieldCheck, Loader2, Eye, EyeOff, Trash2, Upload, Inbox } from 'lucide-react';
 import { ReactNode, useEffect, useId, useRef, useState, forwardRef, InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import type { Doc, Option, Paginated } from '@/types';
+import { IconAttachment } from '@/Components/Icons';
 import { dateTime, fileSize, fromHijri, G_MONTHS, hijri, HIJRI_MONTHS, hijriParts, localDate, money, countNoun } from '@/lib/format';
 
 export function cx(...c: (string | false | null | undefined)[]) {
@@ -279,7 +280,7 @@ export function EmptyState({ title, children, action, icon }: { title: string; c
   );
 }
 
-export function Tabs({ tabs, current, onSelect, label }: { tabs: { key: string; label: string; count?: number; hidden?: boolean }[]; current: string; onSelect: (k: string) => void; label: string }) {
+export function Tabs({ tabs, current, onSelect, label }: { tabs: { key: string; label: string; count?: number; hidden?: boolean; icon?: ReactNode }[]; current: string; onSelect: (k: string) => void; label: string }) {
   const refs = useRef<Record<string, HTMLButtonElement | null>>({});
   const visible = tabs.filter((t) => !t.hidden);
   const onKey = (e: React.KeyboardEvent, i: number) => {
@@ -296,7 +297,7 @@ export function Tabs({ tabs, current, onSelect, label }: { tabs: { key: string; 
       {visible.map((t, i) => (
         <button key={t.key} ref={(el) => { refs.current[t.key] = el; }} role="tab" type="button" id={'tab-' + t.key} aria-controls={'panel-' + t.key}
           aria-selected={current === t.key} tabIndex={current === t.key ? 0 : -1} className="tab" onClick={() => onSelect(t.key)} onKeyDown={(e) => onKey(e, i)}>
-          {t.label}
+          {t.icon && <span className="me-1.5 inline-flex align-[-4px] opacity-80">{t.icon}</span>}{t.label}
           {t.count !== undefined && t.count > 0 && <span className="ms-1.5 text-[12px] font-normal text-muted"><Num>{t.count}</Num></span>}
         </button>
       ))}
@@ -364,7 +365,7 @@ export function ScanBadge({ scan }: { scan: string }) {
 
 export function DocumentList({ docs, manage, empty = 'لا توجد مستندات.', onDelete }: { docs: Doc[]; manage?: boolean; empty?: string; onDelete?: (d: Doc) => void }) {
   const [busy, setBusy] = useState<string | null>(null);
-  if (!docs.length) return <EmptyState title={empty} icon={<FileText className="size-6" strokeWidth={1.5} />} />;
+  if (!docs.length) return <EmptyState title={empty} icon={<IconAttachment size={24} />} />;
   const share = (d: Doc) => {
     setBusy(d.id);
     router.post(`/office/documents/${d.id}/share`, { shared: !d.shared }, { preserveScroll: true, onFinish: () => setBusy(null) });
@@ -379,7 +380,7 @@ export function DocumentList({ docs, manage, empty = 'لا توجد مستندا
     <ul className="divide-y divide-rule">
       {docs.map((d) => (
         <li key={d.id} className="flex flex-wrap items-center gap-x-4 gap-y-1.5 py-3">
-          <FileText className="size-5 shrink-0 text-faint" strokeWidth={1.5} aria-hidden />
+          <IconAttachment size={20} className="shrink-0 text-faint" />
           <div className="min-w-0 flex-1">
             <p className="truncate font-medium text-text" title={d.name}>{d.label || d.name}</p>
             <p className="flex flex-wrap gap-x-2 text-[12.5px] text-muted">
