@@ -22,7 +22,7 @@ export default function CaseShow({ case: c }: { case: C }) {
           <h1 className="text-[22px] font-bold">{c.title}</h1>
           <Pill tone={caseTone(c.statusKey)}>{c.status}</Pill>
         </div>
-        <p className="mt-1 text-[14px] text-muted">{c.stage} · مرجع المكتب <Num>{c.reference}</Num></p>
+        <p className="mt-1 text-[14px] text-muted">{c.stage}{c.caseNumber && <> · رقم القضية <Num>{c.caseNumber}</Num></>}</p>
       </header>
 
       {stageKeyFromLabel(c.stage) && (

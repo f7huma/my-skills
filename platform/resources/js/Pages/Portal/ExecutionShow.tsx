@@ -14,14 +14,14 @@ export default function ExecutionShow({ execution: e }: { execution: E }) {
   const received = e.collections.filter((c) => c.kindKey === 'received');
   return (
     <>
-      <Head title={'طلب تنفيذ ' + (e.requestNumber ?? e.reference)} />
+      <Head title={'طلب تنفيذ ' + (e.requestNumber ?? '')} />
       <nav aria-label="مسار التنقل" className="mb-2 text-[13px] text-muted"><Link href="/portal" className="hover:text-text">ملفاتي</Link> / طلب تنفيذ</nav>
       <header className="mb-6">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-[22px] font-bold">{e.type} — {e.instrument}</h1>
           <Pill tone="info">{e.status}</Pill>
         </div>
-        <p className="mt-1 text-[14px] text-muted">{e.requestNumber && <>رقم الطلب <Num>{e.requestNumber}</Num> · </>}مرجع المكتب <Num>{e.reference}</Num></p>
+        {e.requestNumber && <p className="mt-1 text-[14px] text-muted">رقم الطلب <Num>{e.requestNumber}</Num></p>}
       </header>
       <section className="mb-7 rounded-xl bg-accent-soft px-5 py-4" aria-labelledby="upd">
         <h2 id="upd" className="text-[13.5px] font-semibold text-ink">آخر تحديث من المكتب{e.lastUpdate && <span className="font-normal"> · {relative(e.lastUpdate)}</span>}</h2>

@@ -286,6 +286,29 @@ dialog.modal[open] { animation: dialog-in 180ms var(--ease-out); }
   .day-indicator { transition: opacity 150ms ease-out; }
 }
 
+
+/* ----- بوابة العميل: بطاقات ترتفع قليلًا عند المرور، وتستجيب للمس بضغطة خفيفة */
+.lift { transition: transform 200ms var(--ease-out), box-shadow 200ms var(--ease-out), border-color 200ms var(--ease-out); }
+@media (hover: hover) and (pointer: fine) {
+  .lift:hover { transform: translateY(-2px); border-color: var(--control); box-shadow: 0 14px 28px -18px rgba(35,42,51,.45); }
+}
+.lift:active { transform: scale(0.99); }
+/* مشهد المحكمة: الواجهة تظهر ثم الميزان يتأرجح ويستقر */
+.art-rise { animation: rise 700ms var(--ease-out) 100ms both; }
+.art-beam { transform-box: view-box; transform-origin: 200px 128px; animation: beam-swing 1800ms var(--ease-in-out) 450ms both; }
+.art-pan-a { animation: pan-drop 1800ms var(--ease-in-out) 450ms both; }
+.art-pan-b { animation: pan-rise 1800ms var(--ease-in-out) 450ms both; }
+/* شريط المحصّل يمتلئ عند الظهور */
+@keyframes fill-x { from { transform: scaleX(0); } }
+.meter-grow [role="meter"] > div { transform-origin: right; animation: fill-x 1100ms var(--ease-out) 250ms both; }
+/* نقطة «جديد» تنبض مرتين ثم تهدأ */
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgba(19,106,67,.45); } 100% { box-shadow: 0 0 0 9px rgba(19,106,67,0); } }
+.pulse-dot { animation: pulse-ring 1.4s var(--ease-out) 600ms 3; }
+@media (prefers-reduced-motion: reduce) {
+  .lift, .lift:hover, .lift:active { transform: none; }
+  .art-rise, .art-beam, .art-pan-a, .art-pan-b, .meter-grow [role="meter"] > div, .pulse-dot { animation: none; }
+}
+
 /* الطباعة: إخفاء الإطار */
 @media print { .no-print { display: none !important; } body { background: #fff; } .sheet { border: 0; } }
 
