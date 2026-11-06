@@ -1,32 +1,24 @@
 ---
 name: مكتب فيصل حميضان الحميضان للمحاماة
-description: Private case-lifecycle workspace and client portal, framed in the logo's charcoal and its square-Kufic diamond.
+description: Private case-lifecycle workspace and client portal, set in the office logo's charcoal ink on its cool-grey ground.
 colors:
-  kufic-charcoal: "#323943"
-  night: "#1b1f25"
-  night-raised: "#232830"
-  silver-mist: "#eef0f3"
+  logo-charcoal: "#303741"
+  charcoal-deep: "#232a33"
+  logo-grey: "#e1e5e6"
+  cool-off-white: "#f4f5f4"
   surface: "#ffffff"
-  raised: "#f5f6f8"
-  active: "#e3e6eb"
   accent-soft: "#e6e9ee"
-  border: "#e1e4e9"
-  rule: "#eceef2"
+  border: "#dde1e2"
+  rule: "#e9ecec"
   control: "#c3c9d1"
-  silver: "#aeb7c2"
   text: "#181c22"
+  nav-ink: "#3f4650"
   muted: "#545c67"
-  faint: "#616975"
-  on-night: "#e8ebef"
-  on-night-soft: "#c9d0d8"
-  on-night-muted: "#a9b2bd"
-  signal-red: "#c0352d"
+  faint: "#5a626d"
+  signal-red: "#a82a22"
   negative: "#b4232a"
-  amber: "#a8640c"
-  positive: "#17784c"
-  signal-on-night: "#ffb4ac"
-  amber-on-night: "#f0b866"
-  positive-on-night: "#9be3bf"
+  amber: "#8a5009"
+  positive: "#136a43"
   pill-positive-bg: "#e1f3ea"
   pill-positive-ink: "#0e4a2f"
   pill-negative-bg: "#fbe8e6"
@@ -94,13 +86,13 @@ spacing:
   3xl: "28px"
 components:
   button-primary:
-    backgroundColor: "{colors.kufic-charcoal}"
+    backgroundColor: "{colors.logo-charcoal}"
     textColor: "{colors.surface}"
     rounded: "{rounded.control}"
     padding: "0 16px"
     height: "38px"
   button-primary-hover:
-    backgroundColor: "{colors.night-raised}"
+    backgroundColor: "{colors.charcoal-deep}"
   button-secondary:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.text}"
@@ -108,21 +100,15 @@ components:
     padding: "0 16px"
     height: "38px"
   button-secondary-hover:
-    backgroundColor: "{colors.raised}"
+    backgroundColor: "{colors.cool-off-white}"
   button-ghost:
     backgroundColor: "transparent"
-    textColor: "{colors.kufic-charcoal}"
+    textColor: "{colors.logo-charcoal}"
     rounded: "{rounded.control}"
     padding: "0 16px"
     height: "38px"
   button-ghost-hover:
-    backgroundColor: "{colors.active}"
-  button-light:
-    backgroundColor: "{colors.surface}"
-    textColor: "{colors.kufic-charcoal}"
-    rounded: "{rounded.control}"
-    padding: "0 16px"
-    height: "38px"
+    backgroundColor: "{colors.logo-grey}"
   button-danger:
     backgroundColor: "{colors.surface}"
     textColor: "{colors.negative}"
@@ -148,19 +134,22 @@ components:
     backgroundColor: "{colors.surface}"
     rounded: "{rounded.sheet}"
     padding: "24px 28px"
-  night-band:
-    backgroundColor: "{colors.night}"
-    textColor: "{colors.on-night}"
+  well:
+    backgroundColor: "{colors.cool-off-white}"
+    rounded: "{rounded.card}"
+  mist-band:
+    backgroundColor: "{colors.logo-grey}"
+    textColor: "{colors.logo-charcoal}"
     rounded: "{rounded.band}"
     padding: "24px 32px 16px"
   pill-neutral:
     backgroundColor: "{colors.pill-neutral-bg}"
-    textColor: "{colors.kufic-charcoal}"
+    textColor: "{colors.logo-charcoal}"
     rounded: "{rounded.chip}"
     padding: "0 9px"
     height: "23px"
   pill-accent:
-    backgroundColor: "{colors.kufic-charcoal}"
+    backgroundColor: "{colors.logo-charcoal}"
     textColor: "{colors.surface}"
     rounded: "{rounded.chip}"
     padding: "0 9px"
@@ -186,10 +175,13 @@ components:
     rounded: "{rounded.chip}"
     height: "23px"
   nav-item:
-    textColor: "{colors.on-night-soft}"
+    textColor: "{colors.nav-ink}"
     rounded: "{rounded.control}"
     padding: "0 12px"
     height: "40px"
+  nav-item-active:
+    backgroundColor: "{colors.surface}"
+    textColor: "{colors.logo-charcoal}"
   tab:
     textColor: "{colors.muted}"
     padding: "10px"
@@ -199,54 +191,52 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Kufic Charcoal Frame"**
+**Creative North Star: "The Logo Sheet"**
 
-The whole product sits inside a frame cut from the office logo. The logo's dark slate charcoal, deepened to night, owns the frame: the office side rail, the portal header, the sign-in panel, and the two hero bands (office dashboard, client home). Everything inside the frame is a cool silver-mist ground holding white work surfaces. The logo's square-Kufic geometry comes through as one ornament only, the diamond (a square turned 45°). It appears as a faint lattice tiled across every charcoal surface, as the markers in the nav, agenda and pipeline legend, and as the nodes of the dashboard's week ribbon.
+The product is laid out like the office logo printed on its own paper. The logo's charcoal ink is used for type, primary actions and focus. The logo's cool-grey ground (mist) forms the frame: the office side rail, the portal header, the hero bands on the dashboard and client home, and the sign-in panel. Wide areas sit on a cool off-white, and work happens on white sheets and cards. The logo's corner geometry comes through as the only ornament. On mist surfaces it appears as a faint charcoal lattice (diamond outline, short bar and small filled diamond). As markers, a 7px diamond is used in the nav, the agenda and the pipeline legend, and diamond nodes make up the dashboard's week ribbon. The original charcoal logo mark appears everywhere; the sign-in panel shows the full lockup at its original proportions.
 
-Density is office-grade. The body is 14px Readex Pro at a light 350 weight. Lists are separated by hairline rules, never by zebra striping or header bars. Numbers are always isolated LTR, tabular figures inside Arabic text, and dates are always shown as Gregorian with the Hijri date next to them. Colour does no decorating. Charcoal and its silver ramp carry all structure and data, and red, amber and green appear only when they mean overdue, soon or collected.
+Density is office-grade. The body is 14px Readex Pro at a light 350 weight. Lists are separated by hairline rules, never by zebra striping or header bars. Numbers are always isolated LTR, tabular figures inside Arabic text, and dates are always shown as Gregorian with the Hijri date next to them. Colour does no decorating. Charcoal and its grey ramp carry structure and data, and red, amber and green appear only when they mean overdue, soon or collected. These state colours are dark enough to sit directly on the mist bands at 4.5:1 or better.
 
-Motion is a single authored moment per landing view. The hero band rises, the counting figures count up from zero with an exponential ease, the week-ribbon diamonds pop in with a 60ms stagger, and bars grow from their base. After that everything rests. With reduced motion, all spatial movement drops out and only fades remain.
+The workspace is still. Nothing animates in on load: figures appear at their final value and bars and nodes render in place. Motion is limited to touch and state feedback: a press scale, colour changes on hover (fine pointers only), and the dialog and drawer opening. The system is light-only.
 
 **Key Characteristics:**
-- Charcoal/night frame with a 6%-opacity diamond lattice; silver-mist ground; white sheets and cards.
+- Logo-grey (mist) frame with a 7% charcoal lattice; cool off-white ground; white sheets and cards.
+- Charcoal ink for text, primary buttons, focus and selection.
 - The diamond is the only ornament.
 - One sans family (Readex Pro, self-hosted), weights 350/500/600, tabular isolated numerals.
-- State colour is reserved for meaning; data visualisation is drawn in the charcoal-to-silver ramp.
-- Soft, low ambient depth; corner radii step down from band (22px) to sheet, card, control and chip.
-- One load-time motion moment, then stillness.
+- State colour is reserved for meaning; data is drawn in charcoal and grey.
+- No entrance motion; feedback motion only. Light theme only.
 
 ## Colors
 
-A monochrome cool-slate system built from the logo's charcoal, with three semantic state hues held in reserve.
+A cool, near-monochrome system taken directly from the logo file: its charcoal ink and grey ground, plus three dark state hues held in reserve.
 
 ### Primary
-- **Kufic Charcoal** (kufic-charcoal): The logo ink. It is the primary button fill, the text and focus-ring colour on light surfaces, the active tab underline, the selected bar in charts, `pill-accent` (active case), the text-selection fill, and the darkest working step of the data ramp. The tokens `--primary`, `--accent`, `--ink` and `--focus` all resolve to it.
-- **Night** (night): The frame itself: side rail, portal header, sign-in panel and hero bands. It always carries the diamond lattice.
-- **Night Raised** (night-raised): Primary-button hover, and the second step of the frame.
+- **Logo Charcoal** (logo-charcoal): The logo ink. It is the primary button fill, the text and focus-ring colour, the active tab underline, the selected chart bar, today's week-ribbon node, `pill-accent` (active case) and the text-selection fill. `--primary`, `--accent`, `--ink` and `--focus` all resolve to it.
+- **Charcoal Deep** (charcoal-deep): Primary-button hover only.
 
 ### Neutral
-- **Silver Mist** (silver-mist): The app ground behind every sheet and card, and the sticky top bar (at 90% with backdrop blur).
-- **Surface** (surface): White working sheets, cards, inputs and secondary buttons.
-- **Raised** (raised): Wells, empty states, row hover, secondary-button hover.
-- **Active** (active): Ghost-button hover and pressed fills.
-- **Accent Soft** (accent-soft): A quiet charcoal-tinted fill for selected or highlighted rows.
-- **Border / Rule / Control** (border, rule, control): Three stroke weights. Border outlines sheets and cards, rule separates list rows and table rows, and control strokes inputs and secondary buttons.
-- **Silver** (silver): Loaded (non-today) week-ribbon nodes and the mid steps of the data ramp.
-- **Text / Muted / Faint** (text, muted, faint): Primary copy, secondary metadata, and placeholders or empty values. All three clear 4.5:1 on white.
-- **On-night trio** (on-night, on-night-soft, on-night-muted): Text on the charcoal frame, from primary copy to secondary lines (dates, findings) to labels and captions.
+- **Logo Grey** (logo-grey): The frame. It fills the side rail, the portal header, the two hero bands and the sign-in panel, always with the lattice. It is also the ghost-button hover fill on white.
+- **Cool Off-White** (cool-off-white): The app ground behind sheets and cards, the sticky top bar (at 90% with blur), wells and empty states, and secondary-button hover.
+- **Surface** (surface): White sheets, cards, inputs, secondary buttons, and the active nav item on the mist rail.
+- **Accent Soft** (accent-soft): A quiet charcoal-tinted fill for highlighted rows.
+- **Border / Rule / Control** (border, rule, control): Three stroke weights. Border outlines sheets and cards, rule separates list and table rows, and control strokes inputs and secondary buttons.
+- **Text / Muted / Faint** (text, muted, faint): Primary copy, secondary metadata, and placeholders, empty values and weekend days. Faint holds 4.86:1 on mist and 6.17:1 on white.
+- **Nav Ink** (nav-ink): Inactive rail items and sign-out on mist (7.5:1).
 
 ### Tertiary (state, meaning only)
-- **Signal Red** (signal-red): Overdue and expired. It fills the claims badge in the nav, colours the nearest-deadline countdown and meter when 3 or fewer days remain, and marks alerted counters.
+- **Signal Red** (signal-red): Overdue and expired. It colours the overdue finding line and the deadlines-this-week figure in the hero, the nearest-deadline countdown and meter when 3 or fewer days remain, alerted counters, and the claims count badge.
 - **Negative** (negative): Field errors, required asterisks, danger buttons, and the overdue agenda group heading.
-- **Amber** (amber): Soon: a deadline 10 or fewer days away, items needing determination, and the non-production environment strip.
-- **Positive** (positive): Collected money and the "clean" scan state.
-- **State on night** (signal-on-night, amber-on-night, positive-on-night): Lightened versions of the three state hues for legibility on charcoal. They are used for the overdue finding line, the deadline diamond and ring, and the client's collected figure.
+- **Amber** (amber): Soon: a deadline 10 or fewer days away, the deadline ring on week-ribbon nodes, items needing determination, and the non-production environment strip.
+- **Positive** (positive): Collected money (including the client's collected figure on the portal band) and the "clean" scan state.
 - **Pill pairs** (pill-*-bg / pill-*-ink): Tinted chip fills, each paired with a darkened ink of the same hue. Warning adds a 1px inset border (warning-border).
 
 ### Named Rules
-**The Meaning-Only Rule.** Red, amber and green appear only to say overdue, soon or collected. Charts, pipelines and type markers use the charcoal-to-silver ramp (`#1b1f25 → #323943 → #4a5361 → #5f6976 → #7d8794 → #9aa4b0 → #aeb7c2 → #c9cfd7`), never a state hue.
+**The Meaning-Only Rule.** Red, amber and green appear only to say overdue, soon or collected. Charts, pipelines and agenda type markers use charcoal and greys, never a state hue.
 
-**The Logo Owns the Frame Rule.** Charcoal/night with the lattice belongs to the frame and the two hero bands. Inner working pages sit on a single white sheet with no band.
+**The Logo Ground Frames the Work Rule.** Logo grey with the lattice belongs to the frame (rail, portal header, sign-in panel) and the two hero bands. Inner working pages sit on a single white sheet over the off-white ground, with no band.
+
+**The One Palette for Every Surface Rule.** The state colours are used as-is on white, off-white and mist alike. There are no lightened or "on-dark" variants.
 
 ## Typography
 
@@ -256,13 +246,13 @@ A monochrome cool-slate system built from the logo's charcoal, with three semant
 **Character:** A single modern Arabic sans throughout. Hierarchy comes from size and a narrow weight band (350 body, 500 controls and labels, 600 headings and figures), not from a second family.
 
 ### Hierarchy
-- **Hero figure** (600, 34px mobile / 40px desktop, line-height 1, tabular): Counting figures in the hero bands. Money figures use `clamp(26px, 7.5vw, 40px)` (36px cap on the portal). A one-off 64px variant shows the nearest-deadline day count.
-- **Display** (600, 26px mobile / 30px desktop, tight): Hero-band titles. The sign-in panel's office name is set at 34px with line-height 1.35.
-- **Headline** (600, 24px mobile / 28px desktop, line-height 1.375, balanced): Page titles in the page header. Titles over 90 characters drop to 20/22px.
+- **Hero figure** (600, 34px mobile / 40px desktop, line-height 1, tabular, charcoal): Static figures in the hero bands. Money figures use `clamp(26px, 7.5vw, 40px)` (36px cap on the portal). A one-off 64px variant shows the nearest-deadline day count.
+- **Display** (600, 26px mobile / 30px desktop, tight): Hero-band titles.
+- **Headline** (600, 24px mobile / 28px desktop, line-height 1.375, balanced): Page titles. Titles over 90 characters drop to 20/22px.
 - **Title** (600, 16px): Panel and dialog titles. Portal section headings use 17px.
 - **Body** (350, 14px, line-height 1.65): All working text, table cells, inputs and buttons (buttons at 500).
 - **Reading** (350, 16px, line-height 2, max 820px): The memo editor and memo preview. h2 is 19/700 and h3 is 17/600.
-- **Meta** (350, 12.5px, muted): Secondary lines, table headers (at 500), field hints and errors, dates under titles.
+- **Meta** (350, 12.5px, muted): Secondary lines, table headers (at 500), field hints and errors, labels for the hero figures.
 - **Label** (500, 12px): Pills, counts and small units.
 
 ### Named Rules
@@ -274,92 +264,92 @@ A monochrome cool-slate system built from the logo's charcoal, with three semant
 
 ## Layout
 
-- **Office shell:** a fixed 256px night side rail at `lg` and above, with a slide-in drawer of up to 300px (86vw) below `lg`. The top bar is sticky, 56px tall (64px at `lg`), in silver mist at 90% with blur, and holds global search centred. The main column carries a 16px gutter.
+- **Office shell:** a fixed 256px mist side rail at `lg` and above, with a slide-in mist drawer of up to 300px (86vw) below `lg`. The top bar is sticky, 56px tall (64px at `lg`), in off-white at 90% with blur, and holds global search centred.
 - **Working pages:** one white sheet (18px radius, 28px inline and 24px block padding) that fills the viewport height. Below `sm` the sheet runs edge to edge with square corners and no side borders.
-- **Dashboard:** a full-width night band with the title and dual-calendar date on the start side and actions on the end. Below it sits a 2-column (mobile) / 4-column (`lg`) figure row, each figure separated by a 1px white/15% inline-start rule, then the 7-column week ribbon. The content below is a `1.6fr / 1fr` grid at `xl` with 16px gaps: the agenda on the start side and a stack of panels on the end.
-- **Portal:** a night header over a centred column with a 1120px maximum, the hero band, then stacked full-width cards of linked rows.
-- **Sign-in:** a split layout at `lg` (`1fr / 1.1fr`), with a night brand panel and a 420px form sheet on silver mist. Below `lg` only the form shows, under the full logo.
+- **Dashboard:** a full-width mist band with the title, dual-calendar date, finding line and nearest-deadline link on the start side, and a small primary button plus ghost buttons on the end. Below that is a 2-column (mobile) / 4-column (`lg`) figure row, each figure separated by a 1px charcoal/15% inline-start rule, then the 7-column week ribbon. The content below is a `1.6fr / 1fr` grid at `xl` with 16px gaps: the agenda on the start side and a stack of panels on the end.
+- **Portal:** a mist header over a centred column with a 1120px maximum, the mist hero band, then stacked full-width cards of linked rows.
+- **Sign-in:** a split layout at `lg` (`1fr / 1.1fr`). One side is a mist panel showing the full logo lockup centred at `min(380px, 70%)`, with three large outlined rotated squares (charcoal/10%) bleeding off its corners. The other side is a 420px form sheet on off-white. Below `lg` only the form shows, under the full logo.
 - **Rhythm:** a 4px base. 8, 12, 16 and 20px are the working steps: 20px card padding, 16px grid gaps, 12px table cell inline padding, and 10–12px list-row block padding.
 - **Breakpoints:** Tailwind defaults (sm 640, lg 1024, xl 1280). Mobile must work at 390px, and coarse pointers get 16px inputs.
 
 ## Elevation & Depth
 
-Mostly flat tonal layering (night frame, silver-mist ground, white surface), with a very soft ambient shadow to lift cards off the ground. Sheets have no shadow; only a 1px border separates them.
+Mostly flat tonal layering (logo-grey frame, off-white ground, white surface), with a very soft ambient shadow to lift cards off the ground. Sheets and mist bands have no shadow.
 
 ### Shadow Vocabulary
 - **Card ambient** (`box-shadow: 0 1px 2px rgba(27,31,37,.04), 0 12px 28px -22px rgba(27,31,37,.35)`): Dashboard panels and portal list cards.
 - **Primary lift** (`box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 6px 14px -8px rgba(27,31,37,.7)`): Primary buttons only.
+- **Nav lift** (`box-shadow: 0 1px 2px rgba(48,55,65,.08)`): The white active item on the mist rail and portal nav.
 - **Dialog** (`box-shadow: 0 24px 64px rgba(20,24,30,0.22)`, backdrop `rgba(20,24,30,0.38)`): Modal dialogs and the drawer scrim.
-- **Input focus halo** (`box-shadow: 0 0 0 4px rgba(50,57,67,0.12)`): Input focus, together with a border that turns charcoal.
+- **Input focus halo** (`box-shadow: 0 0 0 4px rgba(48,55,65,0.12)`): Input focus, together with a border that turns charcoal.
 
 ### Named Rules
 **The Sheet Is Flat Rule.** Full-page sheets carry only a border. Shadow belongs to cards that sit directly on the ground, and depth is never stacked inside a sheet.
 
 ## Shapes
 
-Gently rounded rectangles that step down in radius as they get smaller: band 22px, sheet 18px, card 14px, control 10px, chip 7px. Bars in charts take a 6px top radius. Progress tracks (meter, pipeline) are full pills. The diamond is a 7px square rotated 45° with a 1.5px corner. Week-ribbon nodes are 4px-rounded rotated squares, 14–32px in size depending on the day's load. The sign-in panel adds two large outlined rotated squares (white at 10%) bleeding off its corner. The 1px border, rule and control strokes do the dividing; nothing uses dashed or double rules.
+Gently rounded rectangles that step down in radius as they get smaller: band 22px, sheet 18px, card 14px, control 10px, chip 7px. Bars in charts take a 6px top radius. Progress tracks (meter, pipeline) are full pills. The diamond is a 7px square rotated 45° with a 1.5px corner. Week-ribbon nodes are 4px-rounded rotated squares, 14–32px in size depending on the day's load. The lattice tile is 56px: a diamond outline, a short bar and a small filled diamond, with strokes in charcoal at 7% and the fill at 5%. 1px strokes do all the dividing.
 
 ## Components
 
 ### Buttons
 Quiet and solid. They respond to touch, not to hovering for show.
 - **Shape:** control radius (10px), 38px tall (32px small), 7px gap between icon and label, weight 500.
-- **Primary:** charcoal fill, white text, primary-lift shadow. Hover goes to night-raised.
-- **Secondary (default variant):** white with a control-colour stroke. Hover fills with raised.
-- **Ghost:** transparent with charcoal text, hover fills with active. On night it uses on-night text with a white/8% hover.
-- **Light:** white on night bands only (the hero's main action).
+- **Primary:** charcoal fill, white text, primary-lift shadow. Hover goes to charcoal-deep. It is also the main action inside the mist hero bands.
+- **Secondary (default variant):** white with a control-colour stroke. Hover fills with off-white.
+- **Ghost:** transparent with charcoal text. Hover fills with logo grey on white, and with white at 70% on mist.
 - **Danger:** white with negative text and a `#e7b7b5` stroke. Hover fills with the negative pill tint.
-- **States:** press scales to 0.97 (disabled under reduced motion). Disabled is 60% opacity. Hover applies only under `(hover: hover) and (pointer: fine)`. Loading shows a spinning Lucide loader.
+- **States:** press scales to 0.97 over 120ms (disabled under reduced motion). Disabled is 60% opacity. Hover applies only under `(hover: hover) and (pointer: fine)`. Loading shows a spinning Lucide loader.
 
 ### Chips (Pills)
 - **Style:** 23px tall, 7px radius, 12px/500, 9px padding. Tinted fill with a same-hue darkened ink. Accent is solid charcoal with white text, used for the "active" case status.
-- **Tones:** neutral, positive, negative, warning (with inset border), info, accent. Status mappings live in the code (`caseTone`, `claimTone`, `certaintyTone`, `poaTone`).
+- **Tones:** neutral, positive, negative, warning (with inset border), info, accent.
 
 ### Cards / Containers
-- **Card:** white, 1px border, 14px radius, card-ambient shadow. Panel headers are 16px/600 titles with an optional muted 13px description and end-aligned text links. The body has 20px padding.
+- **Card:** white, 1px border, 14px radius, card-ambient shadow. Panel headers are 16px/600 titles with an optional muted 13px description and end-aligned muted text links. The body has 20px padding.
 - **Sheet:** white, 1px border, 18px radius, no shadow. It holds every inner working page and the sign-in form.
-- **Well:** raised fill, 14px radius, no border. Used for empty states (centred, 1.5-stroke Lucide icon in faint).
-- **Totals grid:** cells separated by 1px gaps over a border-colour background, with 17px/600 money figures.
+- **Well:** off-white fill, 14px radius, no border. Used for empty states (centred, 1.5-stroke Lucide icon in faint).
 
 ### Inputs / Fields
-- **Style:** 42px tall, 10px radius, control-colour stroke, white fill. The label sits above at 14px/500 with a 6px gap. Hints and errors are 12.5px below. Selects use a custom chevron on the inline-end side.
+- **Style:** 42px tall, 10px radius, control-colour stroke, white fill. The label sits above at 14px/500 with a 6px gap. Hints and errors are 12.5px below.
 - **Focus:** the border turns charcoal plus a 4px charcoal halo at 12%. Hover darkens the stroke to `#aab2bb`.
 - **Error:** the border goes negative, the error message gets `role="alert"`, and required fields show a negative asterisk.
-- **Date input:** three selects/inputs (day, month, year) with a Gregorian/Hijri segmented switch in the label row. The active segment is solid charcoal. The stored value is always Gregorian, and the opposite calendar is shown as a hint.
+- **Date input:** day/month/year fields with a Gregorian/Hijri segmented switch in the label row. The active segment is solid charcoal. The stored value is always Gregorian, and the other calendar is shown as a hint.
 
 ### Navigation
-- **Office rail:** 40px items, 10px radius, 14px text in on-night-soft with 18px 1.5-stroke Lucide icons. Hover fills with white/5%. The active item has a white/9% fill, white 500 text, and a white diamond sitting on its inline-start edge. Group labels are 12px in on-night-muted. The claims count is a signal-red badge.
-- **Portal header:** pill links, 10px radius, white/12% fill when active.
-- **Tabs:** muted 14px. The selected tab is 600 text with a 3px charcoal underline that scales in over 260ms. Arrow keys follow RTL.
-- **Tables:** 12.5px/500 muted headers with no header bar. Rows are separated by rule lines, with a raised hover.
+- **Office rail (mist):** the charcoal logo mark plus the office name and licence, then 40px items with a 10px radius, 14px nav-ink text and 18px 1.5-stroke Lucide icons. Hover fills with white at 70%. The active item is white with the nav-lift shadow, 500 charcoal text, and a charcoal diamond on its inline-start edge. Group labels are 12px muted. The claims count is a signal-red badge.
+- **Portal header (mist):** muted links with a 10px radius. The active link is white with the nav lift.
+- **Tabs:** muted 14px. The selected tab is 600 text with a static 3px charcoal underline. Arrow keys follow RTL.
+- **Tables:** 12.5px/500 muted headers with no header bar. Rows are separated by rule lines, with a light hover.
 
 ### Hero Band (signature)
-Night with lattice, 22px radius. Contains the title, the dual-calendar date, a one-line finding (signal-on-night when something is overdue), counting figures separated by inline-start rules, and light/ghost actions. It rises in on load.
+Mist with lattice, 22px radius, no shadow. Charcoal title, muted dual-calendar date, a finding line (signal red when something is overdue), static charcoal figures separated by inline-start rules, and primary and ghost actions. It renders in place.
 
 ### Week Ribbon (signature)
-Seven diamond nodes on a white/15% hairline. Each node's size reflects the day's load. Today is solid white; days with load are silver; empty days are white/30% outlines. A day with a deadline gets an amber-on-night ring. Under each node are the weekday, Hijri day, Gregorian day/month and the count. Clicking a day filters the agenda.
+Seven diamond nodes on a charcoal/15% hairline. Each node's size reflects the day's load. Today is solid charcoal; days with load are mid-grey; empty days are charcoal/30% outlines. A day with a deadline gets an amber ring. Under each node are the weekday, Hijri day, Gregorian day/month and the count. Clicking a day filters the agenda, and the selected day gets a white fill.
 
 ### Data Marks
-- **CountUp:** counts from 0 with an exponential ease-out over 1300ms, once, when 30% of it is visible. The real value is exposed to screen readers.
-- **BarChart:** silver bars (`#c9cfd7`), with the active bar in charcoal. Hover or focus reads the value into the caption. Bars have a 6px top radius.
-- **Pipeline:** one 16px track split into stages using the charcoal-to-silver ramp. Each legend entry is a diamond plus a link, and hovering it dims the other segments to 25% opacity.
+- **BarChart:** grey bars (`#c9cfd7`), with the active bar in charcoal. Hover or focus reads the value into the caption, with a 200ms colour transition.
+- **Pipeline:** one 16px track split into stages using a charcoal-to-grey ramp. Each legend entry is a diamond plus a link, and hovering it dims the other segments to 25% opacity.
 - **Meter:** an 8px track in rule colour, filled with ink, positive, signal or amber.
 
 ## Do's and Don'ts
 
 ### Do:
-- **Do** put night plus the diamond lattice on the frame and the two hero bands only. Inner pages get one white sheet.
+- **Do** put logo grey plus the lattice on the frame and the two hero bands only. Inner pages get one white sheet on the off-white ground.
+- **Do** use the original charcoal logo files as shipped. On the sign-in panel the full lockup keeps its original proportions.
 - **Do** use the diamond (7px rotated square) as the list, legend and active-nav marker.
-- **Do** draw charts and pipelines in the charcoal-to-silver ramp. Use signal red, amber or green only for overdue, soon or collected.
+- **Do** keep charts and pipelines in charcoal and grey. Use signal red, amber or green only for overdue, soon or collected, and use them directly on mist.
 - **Do** wrap every number, reference and date LTR-isolated with tabular figures, and pair every Gregorian date with its Hijri date.
-- **Do** keep motion to the single load moment (rise, count-up, node-in, grow) using the expo ease, and drop spatial motion under `prefers-reduced-motion`.
-- **Do** gate hover styles behind `(hover: hover) and (pointer: fine)`, and keep the 2px charcoal focus outline (white on night).
-- **Do** use the radius step band 22 > sheet 18 > card 14 > control 10 > chip 7.
+- **Do** limit motion to feedback: press scale, colour transitions on fine-pointer hover, and the dialog and drawer opening. Respect `prefers-reduced-motion`.
+- **Do** keep the 2px charcoal focus outline and the radius steps band 22 > sheet 18 > card 14 > control 10 > chip 7.
 
 ### Don't:
+- **Don't** add entrance motion, count-ups or load-time reveals to working pages. By the owner's rule, motion belongs only to a public intro section, and there isn't one.
+- **Don't** reintroduce a dark charcoal frame, lightened "on-dark" state variants, or a dark theme. The system is light-only.
 - **Don't** use a state hue as a chart or category colour.
 - **Don't** add a second typeface, uppercase, letter-spacing, or small labels above headings.
 - **Don't** add zebra striping or filled header bars to tables. Rows are divided by rules alone.
-- **Don't** add a decorative motif other than the diamond (no gradients, glows, illustrations or pattern fills on light surfaces).
+- **Don't** add a decorative motif other than the diamond and the logo-corner lattice (no gradients, glows or illustrations).
 - **Don't** load fonts, scripts or images from external hosts. Every asset is self-hosted under the strict CSP.
 - **Don't** put a shadow on a full-page sheet or stack elevated cards inside a sheet.

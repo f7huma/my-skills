@@ -44,7 +44,7 @@ export function BarChart({ data, label, unit, height = 150, format = (v: number)
 }
 
 // مراحل القضية بتدرّج من الفحمي إلى الفضي — ألوان الحالة (أحمر/كهرماني/أخضر) محجوزة للمعنى
-const stageShades = ['#c9cfd7', '#aeb7c2', '#9aa4b0', '#7d8794', '#5f6976', '#4a5361', '#323943', '#1b1f25'];
+const stageShades = ['#c3c9d1', '#a9b2bc', '#8f99a5', '#77818d', '#5f6976', '#4a5361', '#303741', '#232a33'];
 
 /** مسار القضايا: شريط واحد مقسّم على المراحل، كل مقطع رابط لقائمته وتضيء مرحلته عند المرور */
 export function Pipeline({ stages }: { stages: { key: string; label: string; count: number }[] }) {

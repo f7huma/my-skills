@@ -1,62 +1,296 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-06T00:00:00Z",
+  "generatedAt": "2026-11-06T21:00:00Z",
   "title": "Design System: مكتب فيصل حميضان الحميضان للمحاماة",
   "extensions": {
     "colorMeta": {
-      "kufic-charcoal": { "role": "primary", "displayName": "Kufic Charcoal", "canonical": "#323943", "tonalRamp": ["#1b1f25", "#323943", "#4a5361", "#5f6976", "#7d8794", "#9aa4b0", "#c9cfd7", "#eef0f3"] },
-      "night": { "role": "primary", "displayName": "Night", "canonical": "#1b1f25", "tonalRamp": ["#1b1f25", "#232830", "#323943", "#4a5361", "#5f6976", "#7d8794", "#aeb7c2", "#e8ebef"] },
-      "night-raised": { "role": "primary", "displayName": "Night Raised", "canonical": "#232830" },
-      "silver-mist": { "role": "neutral", "displayName": "Silver Mist", "canonical": "#eef0f3" },
-      "surface": { "role": "neutral", "displayName": "Surface White", "canonical": "#ffffff" },
-      "raised": { "role": "neutral", "displayName": "Raised", "canonical": "#f5f6f8" },
-      "active": { "role": "neutral", "displayName": "Active Fill", "canonical": "#e3e6eb" },
-      "accent-soft": { "role": "neutral", "displayName": "Charcoal Tint", "canonical": "#e6e9ee" },
-      "border": { "role": "neutral", "displayName": "Border", "canonical": "#e1e4e9" },
-      "rule": { "role": "neutral", "displayName": "Rule", "canonical": "#eceef2" },
-      "control": { "role": "neutral", "displayName": "Control Stroke", "canonical": "#c3c9d1" },
-      "silver": { "role": "neutral", "displayName": "Silver", "canonical": "#aeb7c2" },
-      "text": { "role": "neutral", "displayName": "Text", "canonical": "#181c22" },
-      "muted": { "role": "neutral", "displayName": "Muted", "canonical": "#545c67" },
-      "faint": { "role": "neutral", "displayName": "Faint", "canonical": "#616975" },
-      "on-night": { "role": "neutral", "displayName": "On Night", "canonical": "#e8ebef" },
-      "on-night-soft": { "role": "neutral", "displayName": "On Night Soft", "canonical": "#c9d0d8" },
-      "on-night-muted": { "role": "neutral", "displayName": "On Night Muted", "canonical": "#a9b2bd" },
-      "signal-red": { "role": "tertiary", "displayName": "Signal Red (overdue)", "canonical": "#c0352d", "tonalRamp": ["#4a110e", "#8a1f1a", "#b4232a", "#c0352d", "#e0675f", "#ff8a80", "#ffb4ac", "#fbe8e6"] },
-      "negative": { "role": "tertiary", "displayName": "Negative (error)", "canonical": "#b4232a" },
-      "amber": { "role": "tertiary", "displayName": "Amber (soon)", "canonical": "#a8640c", "tonalRamp": ["#3d2404", "#6f4106", "#8a5209", "#a8640c", "#cf8a2a", "#f0b866", "#efd08a", "#fdf3dc"] },
-      "positive": { "role": "tertiary", "displayName": "Positive (collected)", "canonical": "#17784c", "tonalRamp": ["#082a1b", "#0e4a2f", "#125f3d", "#17784c", "#3a9a6c", "#6cc597", "#9be3bf", "#e1f3ea"] },
-      "signal-on-night": { "role": "tertiary", "displayName": "Signal on Night", "canonical": "#ffb4ac" },
-      "amber-on-night": { "role": "tertiary", "displayName": "Amber on Night", "canonical": "#f0b866" },
-      "positive-on-night": { "role": "tertiary", "displayName": "Positive on Night", "canonical": "#9be3bf" }
+      "logo-charcoal": {
+        "role": "primary",
+        "displayName": "Logo Charcoal",
+        "canonical": "#303741",
+        "tonalRamp": [
+          "#181c22",
+          "#232a33",
+          "#303741",
+          "#4a5361",
+          "#5f6976",
+          "#9aa4b0",
+          "#e1e5e6",
+          "#f4f5f4"
+        ]
+      },
+      "charcoal-deep": {
+        "role": "primary",
+        "displayName": "Charcoal Deep",
+        "canonical": "#232a33"
+      },
+      "logo-grey": {
+        "role": "neutral",
+        "displayName": "Logo Grey (mist)",
+        "canonical": "#e1e5e6",
+        "tonalRamp": [
+          "#181c22",
+          "#232a33",
+          "#303741",
+          "#4a5361",
+          "#5f6976",
+          "#9aa4b0",
+          "#e1e5e6",
+          "#f4f5f4"
+        ]
+      },
+      "cool-off-white": {
+        "role": "neutral",
+        "displayName": "Cool Off-White",
+        "canonical": "#f4f5f4"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Surface White",
+        "canonical": "#ffffff"
+      },
+      "accent-soft": {
+        "role": "neutral",
+        "displayName": "Charcoal Tint",
+        "canonical": "#e6e9ee"
+      },
+      "border": {
+        "role": "neutral",
+        "displayName": "Border",
+        "canonical": "#dde1e2"
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#e9ecec"
+      },
+      "control": {
+        "role": "neutral",
+        "displayName": "Control Stroke",
+        "canonical": "#c3c9d1"
+      },
+      "text": {
+        "role": "neutral",
+        "displayName": "Text",
+        "canonical": "#181c22"
+      },
+      "nav-ink": {
+        "role": "neutral",
+        "displayName": "Nav Ink",
+        "canonical": "#3f4650"
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Muted",
+        "canonical": "#545c67"
+      },
+      "faint": {
+        "role": "neutral",
+        "displayName": "Faint",
+        "canonical": "#5a626d"
+      },
+      "signal-red": {
+        "role": "tertiary",
+        "displayName": "Signal Red (overdue)",
+        "canonical": "#a82a22",
+        "tonalRamp": [
+          "#3f0f0c",
+          "#6e1b16",
+          "#8a1f1a",
+          "#a82a22",
+          "#c9564e",
+          "#e58f88",
+          "#f5c9c5",
+          "#fbe8e6"
+        ]
+      },
+      "negative": {
+        "role": "tertiary",
+        "displayName": "Negative (error)",
+        "canonical": "#b4232a"
+      },
+      "amber": {
+        "role": "tertiary",
+        "displayName": "Amber (soon)",
+        "canonical": "#8a5009",
+        "tonalRamp": [
+          "#2e1b03",
+          "#4f2f05",
+          "#6f4106",
+          "#8a5009",
+          "#b0731f",
+          "#d9a453",
+          "#efd08a",
+          "#fdf3dc"
+        ]
+      },
+      "positive": {
+        "role": "tertiary",
+        "displayName": "Positive (collected)",
+        "canonical": "#136a43",
+        "tonalRamp": [
+          "#06251a",
+          "#0b3d27",
+          "#0e4a2f",
+          "#136a43",
+          "#2f8a5e",
+          "#62b58b",
+          "#a9dcc1",
+          "#e1f3ea"
+        ]
+      },
+      "pill-positive-bg": {
+        "role": "tertiary",
+        "displayName": "Pill Positive Bg",
+        "canonical": "#e1f3ea"
+      },
+      "pill-positive-ink": {
+        "role": "tertiary",
+        "displayName": "Pill Positive Ink",
+        "canonical": "#0e4a2f"
+      },
+      "pill-negative-bg": {
+        "role": "tertiary",
+        "displayName": "Pill Negative Bg",
+        "canonical": "#fbe8e6"
+      },
+      "pill-negative-ink": {
+        "role": "tertiary",
+        "displayName": "Pill Negative Ink",
+        "canonical": "#8a1f1a"
+      },
+      "pill-warning-bg": {
+        "role": "tertiary",
+        "displayName": "Pill Warning Bg",
+        "canonical": "#fdf3dc"
+      },
+      "pill-warning-ink": {
+        "role": "tertiary",
+        "displayName": "Pill Warning Ink",
+        "canonical": "#6f4106"
+      },
+      "warning-border": {
+        "role": "tertiary",
+        "displayName": "Warning Border",
+        "canonical": "#efd08a"
+      },
+      "pill-info-bg": {
+        "role": "tertiary",
+        "displayName": "Pill Info Bg",
+        "canonical": "#e7ecf3"
+      },
+      "pill-info-ink": {
+        "role": "tertiary",
+        "displayName": "Pill Info Ink",
+        "canonical": "#263a55"
+      },
+      "pill-neutral-bg": {
+        "role": "neutral",
+        "displayName": "Pill Neutral Bg",
+        "canonical": "#eceef2"
+      }
     },
     "typographyMeta": {
-      "hero-figure": { "displayName": "Hero Figure", "purpose": "Counting figures in the night hero bands; 34px mobile / 40px desktop; money uses clamp(26px, 7.5vw, 40px)." },
-      "display": { "displayName": "Display", "purpose": "Hero band titles; 26px mobile / 30px desktop." },
-      "headline": { "displayName": "Headline", "purpose": "Page titles in PageHeader; 24px mobile / 28px desktop, balanced." },
-      "title": { "displayName": "Title", "purpose": "Panel and dialog titles." },
-      "body": { "displayName": "Body", "purpose": "All working text, tables, inputs; buttons at 500." },
-      "reading": { "displayName": "Reading", "purpose": "Memo editor and preview, max 820px." },
-      "meta": { "displayName": "Meta", "purpose": "Secondary lines, table headers, hints, errors, Hijri companions." },
-      "label": { "displayName": "Label", "purpose": "Pills, counts, units." }
+      "hero-figure": {
+        "displayName": "Hero Figure",
+        "purpose": "Static figures in the mist hero bands; 34px mobile / 40px desktop; money uses clamp(26px, 7.5vw, 40px)."
+      },
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero band titles; 26px mobile / 30px desktop."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Page titles in PageHeader; 24px mobile / 28px desktop, balanced."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Panel and dialog titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All working text, tables, inputs; buttons at 500."
+      },
+      "reading": {
+        "displayName": "Reading",
+        "purpose": "Memo editor and preview, max 820px."
+      },
+      "meta": {
+        "displayName": "Meta",
+        "purpose": "Secondary lines, table headers, hints, errors, figure labels, Hijri companions."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Pills, counts, units."
+      }
     },
     "shadows": [
-      { "name": "card-ambient", "value": "0 1px 2px rgba(27,31,37,.04), 0 12px 28px -22px rgba(27,31,37,.35)", "purpose": "Cards and panels sitting on the silver-mist ground." },
-      { "name": "primary-lift", "value": "0 1px 0 rgba(255,255,255,.08) inset, 0 6px 14px -8px rgba(27,31,37,.7)", "purpose": "Primary buttons only." },
-      { "name": "dialog", "value": "0 24px 64px rgba(20,24,30,0.22)", "purpose": "Modal dialogs; backdrop rgba(20,24,30,0.38)." },
-      { "name": "input-focus", "value": "0 0 0 4px rgba(50,57,67,0.12)", "purpose": "Input focus halo with charcoal border." }
+      {
+        "name": "card-ambient",
+        "value": "0 1px 2px rgba(27,31,37,.04), 0 12px 28px -22px rgba(27,31,37,.35)",
+        "purpose": "Cards and panels on the off-white ground."
+      },
+      {
+        "name": "primary-lift",
+        "value": "0 1px 0 rgba(255,255,255,.08) inset, 0 6px 14px -8px rgba(27,31,37,.7)",
+        "purpose": "Primary buttons only."
+      },
+      {
+        "name": "nav-lift",
+        "value": "0 1px 2px rgba(48,55,65,.08)",
+        "purpose": "White active nav item on the mist rail and portal header."
+      },
+      {
+        "name": "dialog",
+        "value": "0 24px 64px rgba(20,24,30,0.22)",
+        "purpose": "Modal dialogs; backdrop rgba(20,24,30,0.38)."
+      },
+      {
+        "name": "input-focus",
+        "value": "0 0 0 4px rgba(48,55,65,0.12)",
+        "purpose": "Input focus halo with charcoal border."
+      }
     ],
     "motion": [
-      { "name": "ease-out", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "State transitions: button 150ms, press scale 0.97 at 120ms, dialog-in 180ms." },
-      { "name": "ease-expo", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "The load moment: rise 600ms, grow-y 900ms, grow-x 1000ms, node-in 700ms with 60ms stagger, tab underline 260ms." },
-      { "name": "ease-drawer", "value": "cubic-bezier(0.32, 0.72, 0, 1)", "purpose": "Mobile nav drawer slide-in, 260ms." },
-      { "name": "count-up", "value": "1300ms, 1 - 2^(-10p)", "purpose": "CountUp figures, once on 30% visibility; static under reduced motion." },
-      { "name": "reduced-motion", "value": "fade-in 150ms ease-out", "purpose": "Replaces all spatial motion under prefers-reduced-motion." }
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Feedback transitions: button colours 150ms, press scale 0.97 at 120ms, input border/halo 150ms, dialog-in 180ms."
+      },
+      {
+        "name": "ease-drawer",
+        "value": "cubic-bezier(0.32, 0.72, 0, 1)",
+        "purpose": "Mobile nav drawer slide-in, 260ms; scrim fade 200ms."
+      },
+      {
+        "name": "hover-colour",
+        "value": "150-200ms",
+        "purpose": "Colour/opacity changes on nav, rows, chart bars and pipeline legend; fine pointers only."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "fade-in 150ms ease-out",
+        "purpose": "Replaces press scale, dialog and drawer spatial motion under prefers-reduced-motion."
+      },
+      {
+        "name": "no-entrance",
+        "value": "none",
+        "purpose": "Owner rule: working pages have no entrance motion; motion belongs only to a public intro section, which does not exist."
+      }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "lg", "value": "1024px" },
-      { "name": "xl", "value": "1280px" }
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      },
+      {
+        "name": "xl",
+        "value": "1280px"
+      }
     ]
   },
   "components": [
@@ -64,25 +298,25 @@
       "name": "Primary Button",
       "kind": "button",
       "refersTo": "button-primary",
-      "description": "Main action on light surfaces: charcoal fill, soft lift.",
+      "description": "Main action on any surface, including the mist hero bands: charcoal fill, white text, soft lift.",
       "html": "<button class=\"ds-btn ds-btn-primary\">حفظ</button>",
-      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 16px; border-radius: 10px; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; font-weight: 500; font-size: 14px; border: 1px solid transparent; cursor: pointer; transition: background-color 150ms cubic-bezier(0.23,1,0.32,1), border-color 150ms cubic-bezier(0.23,1,0.32,1), transform 120ms cubic-bezier(0.23,1,0.32,1); } .ds-btn:active { transform: scale(0.97); } .ds-btn:focus-visible { outline: 2px solid #323943; outline-offset: 2px; } .ds-btn-primary { background: #323943; color: #fff; box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 6px 14px -8px rgba(27,31,37,.7); } .ds-btn-primary:hover { background: #232830; }"
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 16px; border-radius: 10px; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; font-weight: 500; font-size: 14px; border: 1px solid transparent; cursor: pointer; transition: background-color 150ms cubic-bezier(0.23,1,0.32,1), border-color 150ms cubic-bezier(0.23,1,0.32,1), transform 120ms cubic-bezier(0.23,1,0.32,1); } .ds-btn:active { transform: scale(0.97); } .ds-btn:focus-visible { outline: 2px solid #303741; outline-offset: 2px; } .ds-btn-primary { background: #303741; color: #fff; box-shadow: 0 1px 0 rgba(255,255,255,.08) inset, 0 6px 14px -8px rgba(27,31,37,.7); } .ds-btn-primary:hover { background: #232a33; }"
     },
     {
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
       "description": "Default button variant: white with control stroke.",
-      "html": "<button class=\"ds-btn2\">إلغاء</button>",
-      "css": ".ds-btn2 { display: inline-flex; align-items: center; gap: 7px; height: 38px; padding: 0 16px; border-radius: 10px; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; font-weight: 500; font-size: 14px; background: #fff; color: #181c22; border: 1px solid #c3c9d1; cursor: pointer; transition: background-color 150ms cubic-bezier(0.23,1,0.32,1); } .ds-btn2:hover { background: #f5f6f8; } .ds-btn2:active { transform: scale(0.97); } .ds-btn2:focus-visible { outline: 2px solid #323943; outline-offset: 2px; }"
+      "html": "<button class=\"ds-btn ds-btn-secondary\">إلغاء</button>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 16px; border-radius: 10px; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; font-weight: 500; font-size: 14px; border: 1px solid transparent; cursor: pointer; transition: background-color 150ms cubic-bezier(0.23,1,0.32,1), border-color 150ms cubic-bezier(0.23,1,0.32,1), transform 120ms cubic-bezier(0.23,1,0.32,1); } .ds-btn:active { transform: scale(0.97); } .ds-btn:focus-visible { outline: 2px solid #303741; outline-offset: 2px; } .ds-btn-secondary { background: #fff; color: #181c22; border-color: #c3c9d1; } .ds-btn-secondary:hover { background: #f4f5f4; }"
     },
     {
-      "name": "Ghost and Light Buttons on Night",
+      "name": "Ghost Button",
       "kind": "button",
-      "refersTo": "button-light",
-      "description": "Hero-band actions: one light button plus ghost buttons on the lattice.",
-      "html": "<div class=\"ds-night-row\"><button class=\"ds-btn-light\">قضية جديدة</button><button class=\"ds-btn-ghost-n\">طلب تنفيذ</button></div>",
-      "css": ".ds-night-row { display: flex; gap: 8px; padding: 16px; background: #1b1f25; border-radius: 14px; } .ds-btn-light, .ds-btn-ghost-n { height: 32px; padding: 0 12px; border-radius: 10px; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; font-weight: 500; font-size: 13px; border: 0; cursor: pointer; transition: background-color 150ms cubic-bezier(0.23,1,0.32,1); } .ds-btn-light { background: #fff; color: #323943; } .ds-btn-light:hover { background: #e9ecf0; } .ds-btn-ghost-n { background: transparent; color: #e8ebef; } .ds-btn-ghost-n:hover { background: rgba(255,255,255,.08); } .ds-btn-light:focus-visible, .ds-btn-ghost-n:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }"
+      "refersTo": "button-ghost",
+      "description": "Tertiary actions; logo-grey hover on white, translucent white hover on mist.",
+      "html": "<div class=\"ds-ghost-demo\"><button class=\"ds-btn ds-btn-ghost\">عرض الكل</button><div class=\"ds-on-mist\"><button class=\"ds-btn ds-btn-ghost\">طلب تنفيذ</button></div></div>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 38px; padding: 0 16px; border-radius: 10px; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; font-weight: 500; font-size: 14px; border: 1px solid transparent; cursor: pointer; transition: background-color 150ms cubic-bezier(0.23,1,0.32,1), border-color 150ms cubic-bezier(0.23,1,0.32,1), transform 120ms cubic-bezier(0.23,1,0.32,1); } .ds-btn:active { transform: scale(0.97); } .ds-btn:focus-visible { outline: 2px solid #303741; outline-offset: 2px; } .ds-ghost-demo { display: flex; gap: 12px; align-items: center; } .ds-on-mist { background: #e1e5e6; padding: 12px; border-radius: 14px; } .ds-btn-ghost { background: transparent; color: #303741; } .ds-btn-ghost:hover { background: #e1e5e6; } .ds-on-mist .ds-btn-ghost:hover { background: rgba(255,255,255,.7); }"
     },
     {
       "name": "Text Field",
@@ -90,7 +324,7 @@
       "refersTo": "input",
       "description": "Labelled input with hint; charcoal border and halo on focus.",
       "html": "<label class=\"ds-label\">اسم العميل<input class=\"ds-input\" placeholder=\"الاسم الكامل\"></label><p class=\"ds-hint\">كما في الهوية</p>",
-      "css": ".ds-label { display: block; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; font-weight: 500; font-size: 14px; color: #181c22; } .ds-input { display: block; margin-top: 6px; width: 100%; height: 42px; padding: 0 12px; border-radius: 10px; border: 1px solid #c3c9d1; background: #fff; color: #181c22; font: inherit; font-weight: 350; transition: border-color 150ms cubic-bezier(0.23,1,0.32,1), box-shadow 150ms cubic-bezier(0.23,1,0.32,1); } .ds-input:hover { border-color: #aab2bb; } .ds-input:focus { outline: none; border-color: #323943; box-shadow: 0 0 0 4px rgba(50,57,67,0.12); } .ds-input::placeholder { color: #616975; } .ds-hint { font-family: 'Readex Pro Variable', system-ui, sans-serif; font-size: 12.5px; color: #545c67; margin-top: 4px; }"
+      "css": ".ds-label { display: block; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; font-weight: 500; font-size: 14px; color: #181c22; } .ds-input { display: block; margin-top: 6px; width: 100%; height: 42px; padding: 0 12px; border-radius: 10px; border: 1px solid #c3c9d1; background: #fff; color: #181c22; font: inherit; font-weight: 350; transition: border-color 150ms cubic-bezier(0.23,1,0.32,1), box-shadow 150ms cubic-bezier(0.23,1,0.32,1); } .ds-input:hover { border-color: #aab2bb; } .ds-input:focus { outline: none; border-color: #303741; box-shadow: 0 0 0 4px rgba(48,55,65,0.12); } .ds-input::placeholder { color: #5a626d; } .ds-hint { font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; font-size: 12.5px; color: #545c67; margin-top: 4px; }"
     },
     {
       "name": "Status Pills",
@@ -98,74 +332,105 @@
       "refersTo": "pill-neutral",
       "description": "Tinted status chips; accent is solid charcoal for active.",
       "html": "<span class=\"ds-pill ds-pill-accent\">سارية</span> <span class=\"ds-pill ds-pill-warn\">قريبة الانتهاء</span> <span class=\"ds-pill ds-pill-neg\">منتهية</span> <span class=\"ds-pill ds-pill-info\">قيد الدراسة</span> <span class=\"ds-pill ds-pill-pos\">محوّلة</span>",
-      "css": ".ds-pill { display: inline-flex; align-items: center; height: 23px; padding: 0 9px; border-radius: 7px; font-family: 'Readex Pro Variable', system-ui, sans-serif; font-size: 12px; font-weight: 500; white-space: nowrap; } .ds-pill-accent { background: #323943; color: #fff; } .ds-pill-warn { background: #fdf3dc; color: #6f4106; box-shadow: inset 0 0 0 1px #efd08a; } .ds-pill-neg { background: #fbe8e6; color: #8a1f1a; } .ds-pill-info { background: #e7ecf3; color: #263a55; } .ds-pill-pos { background: #e1f3ea; color: #0e4a2f; }"
+      "css": ".ds-pill { display: inline-flex; align-items: center; height: 23px; padding: 0 9px; border-radius: 7px; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; font-size: 12px; font-weight: 500; white-space: nowrap; } .ds-pill-accent { background: #303741; color: #fff; } .ds-pill-warn { background: #fdf3dc; color: #6f4106; box-shadow: inset 0 0 0 1px #efd08a; } .ds-pill-neg { background: #fbe8e6; color: #8a1f1a; } .ds-pill-info { background: #e7ecf3; color: #263a55; } .ds-pill-pos { background: #e1f3ea; color: #0e4a2f; }"
     },
     {
       "name": "Panel Card",
       "kind": "card",
       "refersTo": "card",
-      "description": "White card on silver mist with ambient shadow and ruled list.",
+      "description": "White card on the off-white ground with ambient shadow and ruled, diamond-marked list.",
       "html": "<section class=\"ds-card\"><div class=\"ds-card-h\"><h2>المطالبات الواردة</h2><a href=\"#\">عرض الكل</a></div><ul class=\"ds-list\"><li><span class=\"ds-diamond\"></span>شركة الأمثلة التجارية</li><li><span class=\"ds-diamond\"></span>سالم عبدالله</li></ul></section>",
-      "css": ".ds-card { direction: rtl; background: #fff; border: 1px solid #e1e4e9; border-radius: 14px; box-shadow: 0 1px 2px rgba(27,31,37,.04), 0 12px 28px -22px rgba(27,31,37,.35); padding: 16px 20px 20px; font-family: 'Readex Pro Variable', system-ui, sans-serif; font-size: 14px; font-weight: 350; color: #181c22; } .ds-card-h { display: flex; justify-content: space-between; align-items: center; } .ds-card-h h2 { margin: 0; font-size: 16px; font-weight: 600; } .ds-card-h a { font-size: 13px; color: #545c67; text-decoration: none; } .ds-card-h a:hover { color: #181c22; } .ds-list { list-style: none; margin: 8px 0 0; padding: 0; } .ds-list li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #eceef2; font-weight: 500; } .ds-list li:first-child { border-top: 0; } .ds-diamond { width: 7px; height: 7px; transform: rotate(45deg); border-radius: 1.5px; background: #323943; flex: none; }"
+      "css": ".ds-card { direction: rtl; background: #fff; border: 1px solid #dde1e2; border-radius: 14px; box-shadow: 0 1px 2px rgba(27,31,37,.04), 0 12px 28px -22px rgba(27,31,37,.35); padding: 16px 20px 20px; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; font-size: 14px; font-weight: 350; color: #181c22; } .ds-card-h { display: flex; justify-content: space-between; align-items: center; } .ds-card-h h2 { margin: 0; font-size: 16px; font-weight: 600; } .ds-card-h a { font-size: 13px; color: #545c67; text-decoration: none; } .ds-card-h a:hover { color: #181c22; } .ds-list { list-style: none; margin: 8px 0 0; padding: 0; } .ds-list li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #e9ecec; font-weight: 500; } .ds-list li:first-child { border-top: 0; } .ds-diamond { width: 7px; height: 7px; transform: rotate(45deg); border-radius: 1.5px; background: #303741; flex: none; }"
     },
     {
       "name": "Office Rail Navigation",
       "kind": "nav",
       "refersTo": "nav-item",
-      "description": "Night rail with lattice; active item lit with a diamond on its start edge.",
+      "description": "Mist rail with lattice; active item is a white lifted pill with a charcoal diamond on its start edge.",
       "html": "<nav class=\"ds-rail\"><a class=\"ds-nav ds-nav-on\" href=\"#\"><span class=\"ds-nav-d\"></span>الرئيسية</a><a class=\"ds-nav\" href=\"#\">القضايا</a><a class=\"ds-nav\" href=\"#\">المطالبات الواردة<span class=\"ds-badge\">1</span></a></nav>",
-      "css": ".ds-rail { direction: rtl; width: 240px; padding: 12px; background-color: #1b1f25; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cpath d='M22 4 40 22 22 40 4 22Z' fill='none' stroke='%23ffffff' stroke-opacity='.06'/%3E%3Cpath d='M22 17 27 22 22 27 17 22Z' fill='%23ffffff' fill-opacity='.05'/%3E%3C/svg%3E\"); font-family: 'Readex Pro Variable', system-ui, sans-serif; } .ds-nav { position: relative; display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 10px; font-size: 14px; color: #b9c1cb; text-decoration: none; transition: background-color 150ms, color 150ms; } .ds-nav:hover { background: rgba(255,255,255,.05); color: #fff; } .ds-nav:focus-visible { outline: 2px solid #fff; outline-offset: 2px; } .ds-nav-on { background: rgba(255,255,255,.09); color: #fff; font-weight: 500; } .ds-nav-d { position: absolute; inset-inline-start: -3px; width: 7px; height: 7px; transform: rotate(45deg); border-radius: 1.5px; background: #fff; } .ds-badge { margin-inline-start: auto; background: #c0352d; color: #fff; border-radius: 6px; padding: 0 6px; font-size: 11.5px; font-weight: 600; line-height: 20px; }"
+      "css": ".ds-rail { direction: rtl; width: 240px; padding: 12px; background-color: #e1e5e6; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23303741' stroke-opacity='.07'%3E%3Cpath d='M28 6 50 28 28 50 6 28Z'/%3E%3Cpath d='M18 10h20'/%3E%3C/g%3E%3Cpath d='M28 23 33 28 28 33 23 28Z' fill='%23303741' fill-opacity='.05'/%3E%3C/svg%3E\"); font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; } .ds-nav { position: relative; display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 10px; font-size: 14px; color: #3f4650; text-decoration: none; transition: background-color 150ms, color 150ms; } .ds-nav:hover { background: rgba(255,255,255,.7); color: #181c22; } .ds-nav:focus-visible { outline: 2px solid #303741; outline-offset: 2px; } .ds-nav-on { background: #fff; color: #303741; font-weight: 500; box-shadow: 0 1px 2px rgba(48,55,65,.08); } .ds-nav-d { position: absolute; inset-inline-start: -3px; width: 7px; height: 7px; transform: rotate(45deg); border-radius: 1.5px; background: #303741; } .ds-badge { margin-inline-start: auto; background: #a82a22; color: #fff; border-radius: 6px; padding: 0 6px; font-size: 11.5px; font-weight: 600; line-height: 20px; }"
     },
     {
       "name": "Tabs",
       "kind": "nav",
       "refersTo": "tab",
-      "description": "Underline tabs; selected tab gets a 3px charcoal bar that scales in.",
+      "description": "Underline tabs; selected tab gets a static 3px charcoal bar.",
       "html": "<div class=\"ds-tabs\"><button class=\"ds-tab\" aria-selected=\"true\">الملخص</button><button class=\"ds-tab\">المستندات</button><button class=\"ds-tab\">الجلسات</button></div>",
-      "css": ".ds-tabs { direction: rtl; display: flex; gap: 4px; border-bottom: 1px solid #e1e4e9; font-family: 'Readex Pro Variable', system-ui, sans-serif; } .ds-tab { position: relative; padding: 10px; font: inherit; font-size: 14px; color: #545c67; background: none; border: 0; cursor: pointer; } .ds-tab:hover { color: #181c22; } .ds-tab:focus-visible { outline: 2px solid #323943; outline-offset: 2px; } .ds-tab[aria-selected='true'] { color: #181c22; font-weight: 600; } .ds-tab[aria-selected='true']::after { content: ''; position: absolute; inset-inline: 2px; bottom: -1px; height: 3px; background: #323943; border-radius: 3px 3px 0 0; animation: ds-tab-in 260ms cubic-bezier(0.16,1,0.3,1); } @keyframes ds-tab-in { from { transform: scaleX(.3); opacity: 0; } }"
+      "css": ".ds-tabs { direction: rtl; display: flex; gap: 4px; border-bottom: 1px solid #dde1e2; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; } .ds-tab { position: relative; padding: 10px; font: inherit; font-size: 14px; color: #545c67; background: none; border: 0; cursor: pointer; } .ds-tab:hover { color: #181c22; } .ds-tab:focus-visible { outline: 2px solid #303741; outline-offset: 2px; } .ds-tab[aria-selected='true'] { color: #181c22; font-weight: 600; } .ds-tab[aria-selected='true']::after { content: ''; position: absolute; inset-inline: 2px; bottom: -1px; height: 3px; background: #303741; border-radius: 3px 3px 0 0; }"
     },
     {
       "name": "Hero Band Figures",
       "kind": "custom",
-      "refersTo": "night-band",
-      "description": "Signature night band: title, dual-calendar date, rule-separated counting figures.",
-      "html": "<section class=\"ds-band\"><h1>أسبوع المكتب</h1><p class=\"ds-band-d\">الجمعة 6 نوفمبر · 26 جمادى الأولى 1448 هـ</p><dl class=\"ds-figs\"><div><dt>جلسات اليوم</dt><dd>1</dd></div><div><dt>قضايا سارية</dt><dd>4</dd></div><div><dt>المقبوض هذا الشهر · ر.س</dt><dd>25,000</dd></div></dl></section>",
-      "css": ".ds-band { direction: rtl; padding: 24px 32px; border-radius: 22px; color: #e8ebef; background-color: #1b1f25; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44' viewBox='0 0 44 44'%3E%3Cpath d='M22 4 40 22 22 40 4 22Z' fill='none' stroke='%23ffffff' stroke-opacity='.06'/%3E%3Cpath d='M22 17 27 22 22 27 17 22Z' fill='%23ffffff' fill-opacity='.05'/%3E%3C/svg%3E\"); font-family: 'Readex Pro Variable', system-ui, sans-serif; animation: ds-rise 600ms cubic-bezier(0.16,1,0.3,1) both; } .ds-band h1 { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.25; color: #fff; } .ds-band-d { margin: 4px 0 0; font-size: 14px; color: #c9d0d8; } .ds-figs { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 24px; margin: 24px 0 0; } .ds-figs div { border-inline-start: 1px solid rgba(255,255,255,.15); padding-inline-start: 16px; } .ds-figs dt { font-size: 12.5px; color: #a9b2bd; } .ds-figs dd { margin: 4px 0 0; font-size: 40px; font-weight: 600; line-height: 1; color: #fff; font-variant-numeric: tabular-nums; direction: ltr; text-align: right; } @keyframes ds-rise { from { opacity: 0; transform: translateY(8px); } } @media (prefers-reduced-motion: reduce) { .ds-band { animation: none; } }"
+      "refersTo": "mist-band",
+      "description": "Signature mist band: charcoal title, dual-calendar date, rule-separated static figures; state colour only for meaning.",
+      "html": "<section class=\"ds-band\"><h1>أسبوع المكتب</h1><p class=\"ds-band-d\">الجمعة 6 نوفمبر · 26 جمادى الأولى 1448 هـ</p><p class=\"ds-band-f\">بندان متأخران</p><dl class=\"ds-figs\"><div><dt>جلسات اليوم</dt><dd>1</dd></div><div><dt>قضايا سارية</dt><dd>4</dd></div><div><dt>المقبوض هذا الشهر · ر.س</dt><dd>25,000</dd></div></dl></section>",
+      "css": ".ds-band { direction: rtl; padding: 24px 32px; border-radius: 22px; color: #303741; background-color: #e1e5e6; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23303741' stroke-opacity='.07'%3E%3Cpath d='M28 6 50 28 28 50 6 28Z'/%3E%3Cpath d='M18 10h20'/%3E%3C/g%3E%3Cpath d='M28 23 33 28 28 33 23 28Z' fill='%23303741' fill-opacity='.05'/%3E%3C/svg%3E\"); font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; } .ds-band h1 { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.25; } .ds-band-d { margin: 4px 0 0; font-size: 14px; color: #545c67; } .ds-band-f { margin: 6px 0 0; font-size: 13.5px; font-weight: 500; color: #a82a22; } .ds-figs { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 24px; margin: 24px 0 0; } .ds-figs div { border-inline-start: 1px solid rgba(48,55,65,.15); padding-inline-start: 16px; } .ds-figs dt { font-size: 12.5px; color: #545c67; } .ds-figs dd { margin: 4px 0 0; font-size: 40px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; direction: ltr; text-align: right; }"
     }
   ],
   "narrative": {
-    "northStar": "The Kufic Charcoal Frame",
-    "overview": "The whole product sits inside a frame cut from the office logo. The logo's dark slate charcoal, deepened to night, owns the frame: the office side rail, the portal header, the sign-in panel, and the two hero bands (office dashboard, client home). Everything inside the frame is a cool silver-mist ground holding white work surfaces. The logo's square-Kufic geometry comes through as one ornament only, the diamond (a square turned 45°). It appears as a faint lattice tiled across every charcoal surface, as the markers in the nav, agenda and pipeline legend, and as the nodes of the dashboard's week ribbon.\n\nDensity is office-grade. The body is 14px Readex Pro at a light 350 weight. Lists are separated by hairline rules, never by zebra striping or header bars. Numbers are always isolated LTR, tabular figures inside Arabic text, and dates are always shown as Gregorian with the Hijri date next to them. Colour does no decorating. Charcoal and its silver ramp carry all structure and data, and red, amber and green appear only when they mean overdue, soon or collected.\n\nMotion is a single authored moment per landing view. The hero band rises, the counting figures count up from zero with an exponential ease, the week-ribbon diamonds pop in with a 60ms stagger, and bars grow from their base. After that everything rests. With reduced motion, all spatial movement drops out and only fades remain.",
+    "northStar": "The Logo Sheet",
+    "overview": "The product is laid out like the office logo printed on its own paper. The logo's charcoal ink is used for type, primary actions and focus. The logo's cool-grey ground (mist) forms the frame: the office side rail, the portal header, the hero bands on the dashboard and client home, and the sign-in panel. Wide areas sit on a cool off-white, and work happens on white sheets and cards. The logo's corner geometry comes through as the only ornament. On mist surfaces it appears as a faint charcoal lattice (diamond outline, short bar and small filled diamond). As markers, a 7px diamond is used in the nav, the agenda and the pipeline legend, and diamond nodes make up the dashboard's week ribbon. The original charcoal logo mark appears everywhere; the sign-in panel shows the full lockup at its original proportions.\n\nDensity is office-grade. The body is 14px Readex Pro at a light 350 weight. Lists are separated by hairline rules, never by zebra striping or header bars. Numbers are always isolated LTR, tabular figures inside Arabic text, and dates are always shown as Gregorian with the Hijri date next to them. Colour does no decorating. Charcoal and its grey ramp carry structure and data, and red, amber and green appear only when they mean overdue, soon or collected. These state colours are dark enough to sit directly on the mist bands at 4.5:1 or better.\n\nThe workspace is still. Nothing animates in on load: figures appear at their final value and bars and nodes render in place. Motion is limited to touch and state feedback: a press scale, colour changes on hover (fine pointers only), and the dialog and drawer opening. The system is light-only.",
     "keyCharacteristics": [
-      "Charcoal/night frame with a 6%-opacity diamond lattice; silver-mist ground; white sheets and cards.",
+      "Logo-grey (mist) frame with a 7% charcoal lattice; cool off-white ground; white sheets and cards.",
+      "Charcoal ink for text, primary buttons, focus and selection.",
       "The diamond is the only ornament.",
       "One sans family (Readex Pro, self-hosted), weights 350/500/600, tabular isolated numerals.",
-      "State colour is reserved for meaning; data visualisation is drawn in the charcoal-to-silver ramp.",
-      "Soft, low ambient depth; corner radii step down from band (22px) to sheet, card, control and chip.",
-      "One load-time motion moment, then stillness."
+      "State colour is reserved for meaning; data is drawn in charcoal and grey.",
+      "No entrance motion; feedback motion only. Light theme only."
     ],
     "rules": [
-      { "name": "The Meaning-Only Rule", "body": "Red, amber and green appear only to say overdue, soon or collected. Charts, pipelines and type markers use the charcoal-to-silver ramp (#1b1f25 → #323943 → #4a5361 → #5f6976 → #7d8794 → #9aa4b0 → #aeb7c2 → #c9cfd7), never a state hue.", "section": "colors" },
-      { "name": "The Logo Owns the Frame Rule", "body": "Charcoal/night with the lattice belongs to the frame and the two hero bands. Inner working pages sit on a single white sheet with no band.", "section": "colors" },
-      { "name": "The Isolated Numeral Rule", "body": "Every number, reference, date and amount is wrapped LTR-isolated with tabular figures (.num, <bdi dir=\"ltr\">), so it never reorders inside Arabic text.", "section": "typography" },
-      { "name": "The Dual Calendar Rule", "body": "A date is never shown alone. Gregorian comes first, with the Umm al-Qura Hijri date beside it at 0.88em in muted, suffixed with هـ.", "section": "typography" },
-      { "name": "The No-Case-Tricks Rule", "body": "No uppercase, no tracking and no small labels above headings. Hierarchy comes from size and weight alone.", "section": "typography" },
-      { "name": "The Sheet Is Flat Rule", "body": "Full-page sheets carry only a border. Shadow belongs to cards that sit directly on the ground, and depth is never stacked inside a sheet.", "section": "elevation" }
+      {
+        "name": "The Meaning-Only Rule",
+        "body": "Red, amber and green appear only to say overdue, soon or collected. Charts, pipelines and agenda type markers use charcoal and greys, never a state hue.",
+        "section": "colors"
+      },
+      {
+        "name": "The Logo Ground Frames the Work Rule",
+        "body": "Logo grey with the lattice belongs to the frame (rail, portal header, sign-in panel) and the two hero bands. Inner working pages sit on a single white sheet over the off-white ground, with no band.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Palette for Every Surface Rule",
+        "body": "The state colours are used as-is on white, off-white and mist alike. There are no lightened or \"on-dark\" variants.",
+        "section": "colors"
+      },
+      {
+        "name": "The Isolated Numeral Rule",
+        "body": "Every number, reference, date and amount is wrapped LTR-isolated with tabular figures (`.num`, `<bdi dir=\"ltr\">`), so it never reorders inside Arabic text.",
+        "section": "typography"
+      },
+      {
+        "name": "The Dual Calendar Rule",
+        "body": "A date is never shown alone. Gregorian comes first, with the Umm al-Qura Hijri date beside it at 0.88em in muted, suffixed with هـ.",
+        "section": "typography"
+      },
+      {
+        "name": "The No-Case-Tricks Rule",
+        "body": "No uppercase, no tracking and no small labels above headings. Hierarchy comes from size and weight alone.",
+        "section": "typography"
+      },
+      {
+        "name": "The Sheet Is Flat Rule",
+        "body": "Full-page sheets carry only a border. Shadow belongs to cards that sit directly on the ground, and depth is never stacked inside a sheet.",
+        "section": "elevation"
+      }
     ],
     "dos": [
-      "Do put night plus the diamond lattice on the frame and the two hero bands only. Inner pages get one white sheet.",
+      "Do put logo grey plus the lattice on the frame and the two hero bands only. Inner pages get one white sheet on the off-white ground.",
+      "Do use the original charcoal logo files as shipped. On the sign-in panel the full lockup keeps its original proportions.",
       "Do use the diamond (7px rotated square) as the list, legend and active-nav marker.",
-      "Do draw charts and pipelines in the charcoal-to-silver ramp. Use signal red, amber or green only for overdue, soon or collected.",
+      "Do keep charts and pipelines in charcoal and grey. Use signal red, amber or green only for overdue, soon or collected, and use them directly on mist.",
       "Do wrap every number, reference and date LTR-isolated with tabular figures, and pair every Gregorian date with its Hijri date.",
-      "Do keep motion to the single load moment (rise, count-up, node-in, grow) using the expo ease, and drop spatial motion under prefers-reduced-motion.",
-      "Do gate hover styles behind (hover: hover) and (pointer: fine), and keep the 2px charcoal focus outline (white on night).",
-      "Do use the radius step band 22 > sheet 18 > card 14 > control 10 > chip 7."
+      "Do limit motion to feedback: press scale, colour transitions on fine-pointer hover, and the dialog and drawer opening. Respect `prefers-reduced-motion`.",
+      "Do keep the 2px charcoal focus outline and the radius steps band 22 > sheet 18 > card 14 > control 10 > chip 7."
     ],
     "donts": [
+      "Don't add entrance motion, count-ups or load-time reveals to working pages. By the owner's rule, motion belongs only to a public intro section, and there isn't one.",
+      "Don't reintroduce a dark charcoal frame, lightened \"on-dark\" state variants, or a dark theme. The system is light-only.",
       "Don't use a state hue as a chart or category colour.",
       "Don't add a second typeface, uppercase, letter-spacing, or small labels above headings.",
       "Don't add zebra striping or filled header bars to tables. Rows are divided by rules alone.",
-      "Don't add a decorative motif other than the diamond (no gradients, glows, illustrations or pattern fills on light surfaces).",
+      "Don't add a decorative motif other than the diamond and the logo-corner lattice (no gradients, glows or illustrations).",
       "Don't load fonts, scripts or images from external hosts. Every asset is self-hosted under the strict CSP.",
       "Don't put a shadow on a full-page sheet or stack elevated cards inside a sheet."
     ]

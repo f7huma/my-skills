@@ -26,8 +26,6 @@
   --muted: #545c67;
   --faint: #5a626d;
   --silver: #aeb7c2;
-  --on-night: #e8ebef;
-  --on-night-muted: #a9b2bd;
   --primary: #303741;
   --primary-hover: #232a33;
   --accent: #303741;
@@ -46,7 +44,7 @@
   --radius-sheet: 18px; --radius-card: 14px; --radius-control: 10px; --radius-chip: 7px;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  /* شبكة الماس من الشعار — تُستخدم على الأسطح الفحمية */
+  /* خطوط هندسية خفيفة من زوايا الشعار — تُستخدم على الأسطح الرمادية */
   --lattice: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23303741' stroke-opacity='.07'%3E%3Cpath d='M28 6 50 28 28 50 6 28Z'/%3E%3Cpath d='M18 10h20'/%3E%3C/g%3E%3Cpath d='M28 23 33 28 28 33 23 28Z' fill='%23303741' fill-opacity='.05'/%3E%3C/svg%3E");
 }
 
@@ -130,8 +128,6 @@ dialog.modal { overscroll-behavior: contain; }
 .btn-ghost { background: transparent; color: var(--ink); }
 .mist .btn-ghost { color: var(--ink); }
 @media (hover: hover) and (pointer: fine) { .mist .btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,.7); } }
-.btn-light { background: #fff; color: var(--ink); }
-@media (hover: hover) and (pointer: fine) { .btn-light:hover:not(:disabled) { background: #e9ecf0; } }
 @media (hover: hover) and (pointer: fine) { .btn-ghost:hover:not(:disabled) { background: var(--active); } }
 .btn-danger { background: var(--surface); color: var(--negative); border-color: #e7b7b5; }
 @media (hover: hover) and (pointer: fine) { .btn-danger:hover:not(:disabled) { background: var(--pill-negative-bg); } }
@@ -172,7 +168,7 @@ input[type="checkbox"].check { width: 18px; height: 18px; accent-color: var(--pr
 .table th { font-weight: 500; font-size: 12.5px; color: var(--muted); text-align: start; padding: 8px 12px; height: 38px; }
 .table td { padding: 10px 12px; border-top: 1px solid var(--rule); vertical-align: middle; }
 .table tbody tr { transition: background-color 120ms var(--ease-out); }
-@media (hover: hover) and (pointer: fine) { .table tbody tr:hover { background: #f5f6f8; } }
+@media (hover: hover) and (pointer: fine) { .table tbody tr:hover { background: var(--raised); } }
 .table .end { text-align: end; }
 
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
@@ -180,7 +176,7 @@ input[type="checkbox"].check { width: 18px; height: 18px; accent-color: var(--pr
 @media (hover: hover) and (pointer: fine) { .tab:hover { color: var(--text); } }
 .tab[aria-selected="true"] { color: var(--text); font-weight: 600; }
 .tab[aria-selected="true"]::after { content: ""; position: absolute; inset-inline: 2px; bottom: -1px; height: 3px; background: var(--ink); border-radius: 3px 3px 0 0; }
-@keyframes tab-in { from { transform: scaleX(.3); opacity: 0; } }
+
 
 .skeleton { background: #eceef1; animation: pulse 1.4s ease-in-out infinite; border-radius: 6px; }
 @keyframes pulse { 50% { opacity: 0.55; } }
@@ -209,14 +205,8 @@ dialog.modal[open] { animation: dialog-in 180ms var(--ease-out); }
 }
 
 /* لحظة الدخول الوحيدة: العناصر مرئية افتراضيًا وتنمو من قاعدتها عند التحميل */
-@keyframes grow-y { from { transform: scaleY(0); } }
-@keyframes grow-x { from { transform: scaleX(0); } }
-@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
-@keyframes node-in { from { opacity: 0; transform: rotate(45deg) scale(.4); } }
 /* الصفحات العملية بلا حركة دخول: المحتوى ظاهر فورًا وثابت */
 @media (prefers-reduced-motion: reduce) {
-  .grow-y, .grow-x, .rise { animation: none; }
-  [style*="node-in"] { animation: none !important; }
 }
 
 /* الطباعة: إخفاء الإطار */

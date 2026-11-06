@@ -39,7 +39,7 @@ export function Money({ value, currency, className }: { value: string | number |
 }
 
 // ------------------------------------------------------------------ الأزرار
-type BtnProps = { variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'light'; size?: 'sm' | 'md'; loading?: boolean; className?: string; children: ReactNode };
+type BtnProps = { variant?: 'primary' | 'secondary' | 'ghost' | 'danger'; size?: 'sm' | 'md'; loading?: boolean; className?: string; children: ReactNode };
 
 export function Button({ variant = 'secondary', size = 'md', loading, className, children, ...rest }: BtnProps & React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (

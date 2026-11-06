@@ -10,7 +10,7 @@ export function Brand({ compact = false, light = false }: { compact?: boolean; l
       <img src={light ? '/brand/logo-mark.webp' : '/brand/logo-mark.webp'} alt="" width={30} height={38} className="h-[40px] w-auto shrink-0" />
       {!compact && (
         <div className="min-w-0 leading-tight">
-          <p className={cx('text-[15px] font-semibold', light ? 'text-ink' : 'truncate text-ink')}>{office.shortName}</p>
+          <p className="text-[15px] font-semibold leading-snug text-ink">{office.shortName}</p>
           <p className={cx('truncate text-[11.5px]', light ? 'text-muted' : 'text-muted')}>للمحاماة · ترخيص <bdi className="num">{office.license}</bdi></p>
         </div>
       )}

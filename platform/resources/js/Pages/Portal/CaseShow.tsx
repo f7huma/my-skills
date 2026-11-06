@@ -25,7 +25,7 @@ export default function CaseShow({ case: c }: { case: C }) {
       </header>
 
       <section aria-labelledby="update" className="mb-7 rounded-xl bg-accent-soft px-5 py-4">
-        <h2 id="update" className="text-[13.5px] font-semibold text-[#0f4640]">آخر تحديث من المكتب{c.lastUpdate && <span className="font-normal"> · {relative(c.lastUpdate)}</span>}</h2>
+        <h2 id="update" className="text-[13.5px] font-semibold text-ink">آخر تحديث من المكتب{c.lastUpdate && <span className="font-normal"> · {relative(c.lastUpdate)}</span>}</h2>
         <p className="mt-1 text-[15px] leading-8 text-text">{c.clientSummary || 'لا يوجد تحديث منشور بعد.'}</p>
       </section>
 

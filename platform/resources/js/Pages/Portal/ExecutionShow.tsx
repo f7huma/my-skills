@@ -24,7 +24,7 @@ export default function ExecutionShow({ execution: e }: { execution: E }) {
         <p className="mt-1 text-[14px] text-muted">{e.requestNumber && <>رقم الطلب <Num>{e.requestNumber}</Num> · </>}مرجع المكتب <Num>{e.reference}</Num></p>
       </header>
       <section className="mb-7 rounded-xl bg-accent-soft px-5 py-4" aria-labelledby="upd">
-        <h2 id="upd" className="text-[13.5px] font-semibold text-[#0f4640]">آخر تحديث من المكتب{e.lastUpdate && <span className="font-normal"> · {relative(e.lastUpdate)}</span>}</h2>
+        <h2 id="upd" className="text-[13.5px] font-semibold text-ink">آخر تحديث من المكتب{e.lastUpdate && <span className="font-normal"> · {relative(e.lastUpdate)}</span>}</h2>
         <p className="mt-1 text-[15px] leading-8">{e.clientSummary || 'لا يوجد تحديث منشور بعد.'}</p>
       </section>
       <div className="grid gap-8 lg:grid-cols-[1fr_340px]">

@@ -58,7 +58,7 @@ function WeekRibbon({ agenda, selected, onSelect }: { agenda: Agenda; selected: 
                 aria-label={`${weekday(d)} ${d} (${hijri(d)}هـ): ${n} بند${hearings ? `، منها ${hearings} جلسة` : ''}${deadline ? '، وفيه موعد نظامي' : ''}`}
                 className={cx('group flex w-full flex-col items-center rounded-xl pb-2 pt-1 transition-colors duration-200', on ? 'bg-white' : 'hover:bg-white/70')}>
                 <span className="grid h-[44px] place-items-center">
-                  <span className={cx('rounded-[4px] transition-[filter] duration-200 group-hover:brightness-125', today ? 'bg-ink' : n ? 'bg-[#8b95a1]' : 'border border-ink/30 bg-transparent', deadline && 'ring-2 ring-amber ring-offset-2 ring-offset-[#e1e5e6]')}
+                  <span className={cx('rounded-[4px] transition-[filter] duration-200 group-hover:brightness-125', today ? 'bg-ink' : n ? 'bg-[#6b7480]' : 'border border-ink/30 bg-transparent', deadline && 'ring-2 ring-amber ring-offset-2 ring-offset-[#e1e5e6]')}
                     style={{ width: size, height: size, transform: 'rotate(45deg)' }} />
                 </span>
                 <span className={cx('mt-1 text-[10.5px] sm:text-[12.5px]', today ? 'font-semibold text-ink' : off ? 'text-faint' : 'text-muted')}>
@@ -177,7 +177,7 @@ export default function Dashboard(p: Props) {
             {finding && <p className={cx('mt-1.5 text-[13.5px] font-medium', agenda.overdue.length ? 'text-signal' : 'text-muted')}>{finding}</p>}
             {nearest && left !== null && (
               <Link href={`/office/deadlines#deadline-${nearest.id}`} className="mt-1.5 flex max-w-full items-start gap-2 text-[13.5px] text-ink hover:underline underline-offset-4 lg:max-w-[60ch]">
-                <span className={cx('diamond', left <= 3 ? 'text-signal' : left <= 10 ? 'text-amber' : 'text-[#8b95a1]')} aria-hidden />
+                <span className={cx('diamond', left <= 3 ? 'text-signal' : left <= 10 ? 'text-amber' : 'text-[#6b7480]')} aria-hidden />
                 <span className="line-clamp-2">أقرب موعد نظامي: <b>{inDays(left)}</b> — {nearest.reason}</span>
               </Link>
             )}
