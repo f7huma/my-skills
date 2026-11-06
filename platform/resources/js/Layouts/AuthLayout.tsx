@@ -17,8 +17,8 @@ export default function AuthLayout({ children, title }: { children: ReactNode; t
           <p className="max-w-[18ch] text-[34px] font-semibold leading-[1.35] text-white">{office.name}</p>
           <p className="mt-3 text-[14px] text-[#a9b2bd]">ترخيص رقم <bdi className="num">{office.license}</bdi></p>
         </div>
-        <span className="pointer-events-none absolute -bottom-40 -start-40 size-[420px] rotate-45 rounded-[48px] border border-white/10" />
-        <span className="pointer-events-none absolute -bottom-24 -start-24 size-[260px] rotate-45 rounded-[32px] border border-white/10" />
+        <span className="pointer-events-none absolute -bottom-40 -start-40 size-[420px] rotate-45 rounded-[10px] border border-white/10" />
+        <span className="pointer-events-none absolute -bottom-24 -start-24 size-[260px] rotate-45 rounded-[8px] border border-white/10" />
       </aside>
       <main id="main" className="flex items-center justify-center px-4 py-10">
         <div className="w-full max-w-[420px]">

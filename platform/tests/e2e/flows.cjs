@@ -61,6 +61,14 @@ async function act(p, fn) {
   await p.waitForTimeout(300);
 }
 const dialog = (p) => p.locator('dialog[open]');
+/** حقل التاريخ في المنصة: يوم / شهر / سنة (ميلادي افتراضيًا) */
+async function fillDate(loc, iso) {
+  const [y, m, d] = iso.split('-');
+  const g = loc.locator('xpath=..');
+  await g.locator('select').nth(0).selectOption(String(Number(d)));
+  await g.locator('select').nth(1).selectOption(String(Number(m)));
+  await g.locator('input').fill(y);
+}
 function localDate(offset) {
   const d = new Date(Date.now() + offset * 86400000);
   return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Riyadh' });
@@ -196,7 +204,7 @@ function nextWorkday(offset) {
     await d2.getByRole('button', { name: 'تقديم رد', exact: true }).click();
     await d2.getByRole('button', { name: 'إرفاق مستند', exact: true }).click();
     const dates = d2.getByLabel('الاستحقاق', { exact: true });
-    await dates.nth(0).selectOption('date'); await d2.getByLabel('تاريخ الاستحقاق').first().fill(localDate(5));
+    await dates.nth(0).selectOption('date'); await fillDate(d2.getByLabel('تاريخ الاستحقاق').first(), localDate(5));
     await dates.nth(1).selectOption('unscheduled');
     await act(lawyer, () => d2.getByRole('button', { name: 'حفظ وإكمال الجلسة', exact: true }).click());
     assert(await lawyer.getByText('منعقدة').count() >= 1, 'الجلسة منعقدة');
@@ -207,7 +215,7 @@ function nextWorkday(offset) {
     await go(lawyer, `/office/cases/${defCase}?tab=judgment`);
     if (await lawyer.getByRole('tab', { name: 'الحكم والتنفيذ', exact: true }).count() === 0) { await lawyer.getByRole('button', { name: 'الحكم', exact: true }).click(); }
     await lawyer.getByLabel('النتيجة', { exact: true }).selectOption('partial_win');
-    await lawyer.getByLabel('تاريخ النطق').fill(localDate(-2));
+    await fillDate(lawyer.getByLabel('تاريخ النطق'), localDate(-2));
     await act(lawyer, () => lawyer.getByRole('button', { name: 'تسجيل الحكم', exact: true }).click());
     assert(await lawyer.getByText('متابعة تقديرية لصدور صك الحكم').count() === 1, 'متابعة تقديرية');
     assert(await lawyer.getByText('موعد اعتراض على الحكم').count() === 1, 'عداد اعتراض مستقل');
@@ -219,7 +227,7 @@ function nextWorkday(offset) {
     await go(lawyer, `/office/cases/${defCase}?tab=judgment`);
     await lawyer.getByLabel('الصك').selectOption('issued');
     await lawyer.getByLabel('رقم الصك').fill('D-E2E-1');
-    await lawyer.getByLabel('تاريخ الصك').fill(localDate(-1));
+    await fillDate(lawyer.getByLabel('تاريخ الصك'), localDate(-1));
     await act(lawyer, () => lawyer.getByRole('button', { name: 'حفظ التحديث', exact: true }).click());
     await lawyer.getByLabel('القرار', { exact: true }).selectOption('pursue');
     await lawyer.getByRole('button', { name: 'حفظ القرار', exact: true }).click();

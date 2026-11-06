@@ -116,3 +116,14 @@ export function fromHijri(hy: number, hm: number, hd: number): string | null {
   }
   return null;
 }
+
+export const G_MONTHS = ['يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو', 'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'];
+
+/** معدود عربي: 1 قضية، 2 قضيتان، 3–10 قضايا، 11+ قضية */
+export function countNoun(n: number, forms: { one: string; two: string; few: string; many: string }): string {
+  const c = new Intl.NumberFormat('en-US').format(n);
+  if (n === 1) return forms.one;
+  if (n === 2) return forms.two;
+  const r = n % 100;
+  return `${c} ${r >= 3 && r <= 10 ? forms.few : forms.many}`;
+}

@@ -1,37 +1,39 @@
 import { Link } from '@inertiajs/react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { cx } from '@/Components/ui';
 
 const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const fmt = (n: number, decimals = 0) => new Intl.NumberFormat('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
 
-/** رقم يعدّ من الصفر إلى قيمته مرة واحدة عند ظهوره (منحنى أسّي)، وثابت عند تقليل الحركة */
+/**
+ * رقم يعدّ من الصفر إلى قيمته مرة واحدة عند ظهوره (منحنى أسّي)، وثابت عند تقليل الحركة.
+ * يكتب النص مباشرة في العنصر كل إطار بدل تحديث حالة React، فلا يُعاد رسم المكوّن ٦٠ مرة في الثانية.
+ */
 export function CountUp({ value, decimals = 0, duration = 1300, className }: { value: number; decimals?: number; duration?: number; className?: string }) {
-  const [shown, setShown] = useState(() => (reduced() ? value : 0));
   const ref = useRef<HTMLSpanElement>(null);
-  useEffect(() => {
-    if (reduced()) { setShown(value); return; }
+  const out = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const node = out.current;
+    if (!node) return;
+    if (reduced()) { node.textContent = fmt(value, decimals); return; }
+    node.textContent = fmt(0, decimals);
     let raf = 0;
     let start = 0;
-    const run = () => {
-      const tick = (t: number) => {
-        if (!start) start = t;
-        const p = Math.min(1, (t - start) / duration);
-        setShown(value * (1 - Math.pow(2, -10 * p)));
-        if (p < 1) raf = requestAnimationFrame(tick);
-        else setShown(value);
-      };
-      raf = requestAnimationFrame(tick);
+    const tick = (t: number) => {
+      if (!start) start = t;
+      const p = Math.min(1, (t - start) / duration);
+      node.textContent = fmt(p < 1 ? value * (1 - Math.pow(2, -10 * p)) : value, decimals);
+      if (p < 1) raf = requestAnimationFrame(tick);
     };
     const el = ref.current;
-    if (!el || !('IntersectionObserver' in window)) { run(); return () => cancelAnimationFrame(raf); }
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { run(); io.disconnect(); } }, { threshold: 0.3 });
+    if (!el || !('IntersectionObserver' in window)) { raf = requestAnimationFrame(tick); return () => cancelAnimationFrame(raf); }
+    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { raf = requestAnimationFrame(tick); io.disconnect(); } }, { threshold: 0.3 });
     io.observe(el);
     return () => { io.disconnect(); cancelAnimationFrame(raf); };
-  }, [value, duration]);
+  }, [value, decimals, duration]);
   return (
     <span ref={ref} className={cx('num', className)}>
-      <span aria-hidden>{fmt(shown, decimals)}</span>
+      <span ref={out} aria-hidden>{fmt(value, decimals)}</span>
       <span className="sr-only">{fmt(value, decimals)}</span>
     </span>
   );
@@ -58,8 +60,8 @@ export function BarChart({ data, label, unit, height = 150, format = (v: number)
             <button key={d.key} type="button" role="listitem" onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} onClick={() => setActive(i)}
               aria-label={`${d.label}: ${format(d.value)}${unit ? ' ' + unit : ''}`} aria-pressed={on}
               className="group relative flex h-full flex-1 items-end focus-visible:outline-offset-4">
-              <span className={cx('grow-y block w-full rounded-t-[6px] transition-[background-color,opacity] duration-200', on ? 'bg-ink' : 'bg-[#c9cfd7] group-hover:bg-[#9aa4b0]')}
-                style={{ height: h, animationDelay: `${i * 70}ms` }} />
+              <span className={cx('block w-full rounded-t-[6px] transition-[background-color,opacity] duration-200', on ? 'bg-ink' : 'bg-[#c9cfd7] group-hover:bg-[#9aa4b0]')}
+                style={{ height: h }} />
             </button>
           );
         })}
@@ -71,7 +73,8 @@ export function BarChart({ data, label, unit, height = 150, format = (v: number)
   );
 }
 
-const stageShades = ['#9aa4b0', '#7d8794', '#5f6976', '#323943', '#1b1f25', '#a8640c', '#17784c', '#c9cfd7'];
+// مراحل القضية بتدرّج من الفحمي إلى الفضي — ألوان الحالة (أحمر/كهرماني/أخضر) محجوزة للمعنى
+const stageShades = ['#c9cfd7', '#aeb7c2', '#9aa4b0', '#7d8794', '#5f6976', '#4a5361', '#323943', '#1b1f25'];
 
 /** مسار القضايا: شريط واحد مقسّم على المراحل، كل مقطع رابط لقائمته وتضيء مرحلته عند المرور */
 export function Pipeline({ stages }: { stages: { key: string; label: string; count: number }[] }) {
@@ -81,7 +84,7 @@ export function Pipeline({ stages }: { stages: { key: string; label: string; cou
   const shown = stages.map((s, i) => ({ ...s, color: stageShades[i % stageShades.length] })).filter((s) => s.count > 0);
   return (
     <div>
-      <div className="grow-x flex h-4 overflow-hidden rounded-full bg-rule" aria-hidden>
+      <div className="flex h-4 overflow-hidden rounded-full bg-rule" aria-hidden>
         {shown.map((s) => (
           <span key={s.key} className="h-full transition-opacity duration-200" style={{ width: `${(s.count / total) * 100}%`, background: s.color, opacity: hover && hover !== s.key ? 0.25 : 1 }} />
         ))}
@@ -108,7 +111,7 @@ export function Meter({ value, max, tone = 'ink', label }: { value: number; max:
   const color = { ink: 'var(--ink)', positive: 'var(--positive)', signal: 'var(--signal)', amber: 'var(--amber)' }[tone];
   return (
     <div className="h-2 overflow-hidden rounded-full bg-rule" role="meter" aria-label={label} aria-valuemin={0} aria-valuemax={max} aria-valuenow={value}>
-      <div className="grow-x h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
+      <div className="h-full rounded-full" style={{ width: `${pct}%`, background: color }} />
     </div>
   );
 }

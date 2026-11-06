@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Check, CalendarX2, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ButtonLink, certaintyTone, cx, EmptyState, Money, Num, Panel, Pill, poaLabel, poaTone, DateText } from '@/Components/ui';
-import { dayMonth, relative, timeOnly, weekday, dateOnly, count } from '@/lib/format';
+import { dayMonth, relative, timeOnly, weekday, dateOnly, count, hijri, hijriParts } from '@/lib/format';
 import { BarChart, CountUp, Meter, Pipeline } from '@/Components/motion';
 
 type Item = {
@@ -22,7 +22,7 @@ type Props = {
 };
 
 const typeMark: Record<Item['type'], string> = {
-  hearing: 'text-ink', task: 'text-[#7d8794]', memo: 'text-[#5f6976]', execution: 'text-amber', deadline: 'text-signal',
+  hearing: 'text-ink', task: 'text-[#9aa4b0]', memo: 'text-[#7d8794]', execution: 'text-[#5f6976]', deadline: 'text-ink',
 };
 
 function addDays(d: string, n: number) {
@@ -52,14 +52,17 @@ function WeekRibbon({ agenda, selected, onSelect }: { agenda: Agenda; selected: 
           return (
             <li key={d} className="flex justify-center">
               <button type="button" onClick={() => onSelect(on ? null : d)} aria-pressed={on}
-                aria-label={`${weekday(d)} ${d}: ${n} بند${hearings ? `، منها ${hearings} جلسة` : ''}${deadline ? '، وفيه موعد نظامي' : ''}`}
+                aria-label={`${weekday(d)} ${d} (${hijri(d)}هـ): ${n} بند${hearings ? `، منها ${hearings} جلسة` : ''}${deadline ? '، وفيه موعد نظامي' : ''}`}
                 className={cx('group flex w-full flex-col items-center rounded-xl pb-2 pt-1 transition-colors duration-200', on ? 'bg-white/10' : 'hover:bg-white/[0.05]')}>
                 <span className="grid h-[44px] place-items-center">
-                  <span className={cx('rounded-[4px] transition-[filter] duration-200 group-hover:brightness-125', deadline ? 'bg-[#ff8a80]' : today ? 'bg-white' : n ? 'bg-[#aeb7c2]' : 'border border-white/30 bg-transparent')}
+                  <span className={cx('rounded-[4px] transition-[filter] duration-200 group-hover:brightness-125', today ? 'bg-white' : n ? 'bg-[#aeb7c2]' : 'border border-white/30 bg-transparent', deadline && 'ring-2 ring-[#f0b866] ring-offset-2 ring-offset-[#1b1f25]')}
                     style={{ width: size, height: size, transform: 'rotate(45deg)', animation: `node-in 700ms var(--ease-expo) ${i * 60}ms both` }} />
                 </span>
-                <span className={cx('mt-1 text-[12.5px]', today ? 'font-semibold text-white' : off ? 'text-[#8f99a5]' : 'text-[#c9d0d8]')}>{today ? 'اليوم' : weekday(d).replace('ال', '')}</span>
-                <span className="num text-[11.5px] text-[#a9b2bd]">{d.slice(8)}/{d.slice(5, 7)}</span>
+                <span className={cx('mt-1 text-[11px] sm:text-[12.5px]', today ? 'font-semibold text-white' : off ? 'text-[#8f99a5]' : 'text-[#c9d0d8]')}>
+                  {today ? 'اليوم' : <><span className="sm:hidden">{weekday(d).replace('ال', '').slice(0, 3)}</span><span className="hidden sm:inline">{weekday(d).replace('ال', '')}</span></>}
+                </span>
+                <span className="num text-[11.5px] text-[#c9d0d8]">{hijriParts(d)?.d}<span className="text-[#a9b2bd]">هـ</span></span>
+                <span className="num text-[10.5px] text-[#a9b2bd]">{d.slice(8)}/{d.slice(5, 7)}</span>
                 <span className={cx('num mt-0.5 text-[12px]', n ? 'text-white' : 'text-[#8f99a5]')}>{n ? n : '—'}</span>
               </button>
             </li>
@@ -82,7 +85,7 @@ function AgendaRow({ it }: { it: Item }) {
       <span aria-hidden className={cx('diamond mt-2.5', typeMark[it.type])} />
       <div className="min-w-0 flex-1">
         <Link href={it.href} className="block font-medium text-text hover:underline underline-offset-4">{it.title}</Link>
-        <p className="flex flex-wrap gap-x-2 text-[12.5px] text-muted">
+        <p className="flex flex-wrap gap-x-2 text-[12.5px] text-muted [&>span]:min-w-0 [&>span]:line-clamp-1">
           <span className="text-text/80">{it.label}</span>
           {it.ref && <span>· <Num>{it.ref}</Num></span>}
           {it.client && <span>· {it.client}</span>}
@@ -90,7 +93,9 @@ function AgendaRow({ it }: { it: Item }) {
         </p>
       </div>
       <div className="shrink-0 text-end text-[13px]">
-        {it.date && <div className="text-text"><Num>{it.time ?? dateOnly(it.date).slice(5).replace('-', '/')}</Num></div>}
+        {it.date && (it.time ? <div className="text-text"><Num>{it.time}</Num></div> : (
+          <div className="leading-tight"><span className="num block text-text">{dateOnly(it.date).slice(8)}/{dateOnly(it.date).slice(5, 7)}</span><span className="num block text-[11.5px] text-muted">{hijri(it.date).slice(0, 5)}هـ</span></div>
+        ))}
         {it.taskId && !done && (
           <button type="button" onClick={complete} className="btn btn-ghost btn-sm mt-0.5 h-7 px-2 text-[12.5px]" aria-label={`إنجاز: ${it.title}`}>
             <Check className="size-3.5" aria-hidden />تم
@@ -102,13 +107,21 @@ function AgendaRow({ it }: { it: Item }) {
 }
 
 function Group({ title, items, tone, id, emptyText }: { title: string; items: Item[]; tone?: 'negative'; id: string; emptyText: string }) {
+  // يوم مزدحم: تُعرض أول ٨ بنود ويُكشف الباقي عند الطلب حتى لا تطول الصفحة
+  const [all, setAll] = useState(false);
+  const shown = all ? items : items.slice(0, 8);
   return (
     <section aria-labelledby={id} className="py-1">
       <h3 id={id} className={cx('flex items-center gap-2 pt-3 text-[13.5px] font-semibold', tone === 'negative' ? 'text-negative' : 'text-text')}>
         {title}<span className="font-normal text-muted"><Num>{items.length}</Num></span>
       </h3>
-      {items.length ? <ul className="divide-y divide-rule">{items.map((i) => <AgendaRow key={i.key} it={i} />)}</ul>
+      {items.length ? <ul className="divide-y divide-rule">{shown.map((i) => <AgendaRow key={i.key} it={i} />)}</ul>
         : <p className="py-2 text-[13px] text-muted">{emptyText}</p>}
+      {items.length > 8 && (
+        <button type="button" className="btn btn-ghost btn-sm mt-1" onClick={() => setAll(!all)} aria-expanded={all}>
+          {all ? 'عرض أقل' : <>عرض البنود الباقية (<Num>{items.length - 8}</Num>)</>}
+        </button>
+      )}
     </section>
   );
 }
@@ -153,29 +166,35 @@ export default function Dashboard(p: Props) {
       {/* الشريط الفحمي: الأرقام تعدّ، وشريط الأسبوع تحتها */}
       <section className="night rise relative overflow-hidden rounded-[22px] px-5 pb-4 pt-6 sm:px-8" aria-labelledby="week-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
+          <div className="min-w-0 flex-1 basis-[22rem]">
             <h1 id="week-title" className="text-[26px] font-semibold leading-tight text-white sm:text-[30px]">أسبوع المكتب</h1>
             <p className="mt-1 text-[14px] text-[#c9d0d8]">{weekday(agenda.range.from)} {dayMonth(agenda.range.from)} · {agenda.range.fromHijri}</p>
             {finding && <p className={cx('mt-1.5 text-[13.5px] font-medium', agenda.overdue.length ? 'text-[#ffb4ac]' : 'text-[#c9d0d8]')}>{finding}</p>}
+            {nearest && left !== null && (
+              <Link href={`/office/deadlines#deadline-${nearest.id}`} className="mt-1.5 flex max-w-full items-center gap-2 text-[13.5px] text-white hover:underline underline-offset-4 lg:max-w-[60ch]">
+                <span className={cx('diamond', left <= 3 ? 'text-[#ff8a80]' : left <= 10 ? 'text-[#f0b866]' : 'text-[#aeb7c2]')} aria-hidden />
+                <span className="truncate">أقرب موعد نظامي: <b>{left < 0 ? 'انتهى' : left === 0 ? 'اليوم' : `بعد ${left} ${left === 1 ? 'يوم' : left === 2 ? 'يومين' : left <= 10 ? 'أيام' : 'يومًا'}`}</b> — {nearest.reason}</span>
+              </Link>
+            )}
           </div>
           <div className="flex flex-wrap gap-2">
             <ButtonLink href="/office/cases/create" variant="light" size="sm"><Plus className="size-4" aria-hidden />قضية جديدة</ButtonLink>
-            <ButtonLink href="/office/executions/create" variant="ghost" size="sm">طلب تنفيذ</ButtonLink>
-            <ButtonLink href="/office/clients/create" variant="ghost" size="sm">عميل جديد</ButtonLink>
+            <ButtonLink href="/office/executions/create" variant="ghost" size="sm" className="hidden sm:inline-flex">طلب تنفيذ</ButtonLink>
+            <ButtonLink href="/office/clients/create" variant="ghost" size="sm" className="hidden sm:inline-flex">عميل جديد</ButtonLink>
           </div>
         </div>
         <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-4">
-          {stats.map(([label, value, tone, dec]) => (
-            <div key={label} className="border-s border-white/15 ps-4">
+          {stats.map(([label, value, tone, dec], i) => (
+            <div key={label} className={cx('min-w-0 border-s border-white/15 ps-4', i === 3 && 'col-span-2 lg:col-span-1')}>
               <dt className="text-[12.5px] text-[#a9b2bd]">{label}</dt>
-              <dd className={cx('mt-1 text-[34px] font-semibold leading-none text-white sm:text-[40px]', tone)}><CountUp value={value} decimals={dec ?? 0} /></dd>
+              <dd className={cx('mt-1 font-semibold leading-none text-white', i === 3 ? 'text-[clamp(26px,7.5vw,40px)]' : 'text-[34px] sm:text-[40px]', tone)}><CountUp value={value} decimals={dec ?? 0} /></dd>
             </div>
           ))}
         </dl>
         <WeekRibbon agenda={agenda} selected={day} onSelect={setDay} />
       </section>
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <div className="mt-4 grid items-start gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <section className="card px-5 pb-4 pt-4" aria-labelledby="agenda-title">
           <div className="flex items-center justify-between gap-3">
             <h2 id="agenda-title" className="text-[16px] font-semibold">{day ? `بنود ${weekday(day)}` : 'قائمة الإنجاز'}</h2>
@@ -194,7 +213,7 @@ export default function Dashboard(p: Props) {
                 {byDay.length === 0 && <p className="py-2 text-[13px] text-muted">لا بنود في بقية الأسبوع.</p>}
                 {byDay.map(([d, items]) => (
                   <div key={d} id={`day-${d}`} className="scroll-mt-20">
-                    <p className="mt-2 text-[12.5px] text-muted">{weekday(d)} <Num>{d}</Num></p>
+                    <p className="mt-2 text-[12.5px] text-muted">{weekday(d)} <DateText value={d} /></p>
                     <ul className="divide-y divide-rule">{items.map((i) => <AgendaRow key={i.key} it={i} />)}</ul>
                   </div>
                 ))}
@@ -209,14 +228,20 @@ export default function Dashboard(p: Props) {
             {!nearest || left === null ? <p className="text-[13.5px] text-muted">لا مواعيد نظامية مفتوحة.</p> : (
               <>
                 <div className="flex items-center gap-4">
-                  <span className={cx('text-[64px] font-semibold leading-none', left <= 3 ? 'text-signal' : left <= 10 ? 'text-amber' : 'text-ink')}>
-                    <CountUp value={Math.max(0, left)} />
+                  <span className={cx('num text-[64px] font-semibold leading-none', left <= 3 ? 'text-signal' : left <= 10 ? 'text-amber' : 'text-ink')}>
+                    {Math.max(0, left)}
                   </span>
                   <div className="min-w-0">
                     <p className="font-semibold">{left < 0 ? 'انتهى الموعد' : left === 0 ? 'ينتهي اليوم' : left === 1 ? 'يوم واحد متبقٍ' : left === 2 ? 'يومان متبقيان' : left <= 10 ? 'أيام متبقية' : 'يومًا متبقيًا'}</p>
                     <Link href={`/office/deadlines#deadline-${nearest.id}`} className="block truncate text-[13px] text-muted hover:text-text">{nearest.reason}{nearest.ref && <> · <Num>{nearest.ref}</Num></>}</Link>
                   </div>
                 </div>
+                {(p.counters.alerted > 0 || p.counters.needsDetermination > 0) && (
+                  <p className="mt-2 text-[12.5px] text-muted">
+                    {p.counters.alerted > 0 && <><b className="text-signal"><Num>{p.counters.alerted}</Num></b> عداد انتهى · </>}
+                    {p.counters.needsDetermination > 0 && <><b className="text-amber"><Num>{p.counters.needsDetermination}</Num></b> يحتاج تحديد بدايته</>}
+                  </p>
+                )}
                 <div className="mt-3"><Meter value={Math.max(0, 30 - Math.max(0, left))} max={30} tone={left <= 3 ? 'signal' : left <= 10 ? 'amber' : 'ink'} label="قرب الموعد خلال ٣٠ يومًا" /></div>
                 <ul className="mt-3 divide-y divide-rule">
                   {p.deadlines.filter((d) => d.id !== nearest.id).slice(0, 3).map((d) => (
@@ -263,41 +288,6 @@ export default function Dashboard(p: Props) {
                 ))}
               </ul>
             )}
-          </Panel>
-
-          <Panel id="hearings" title="الجلسات القادمة" actions={<Link href="/office/cases" className="text-[13px] text-muted hover:text-text">القضايا</Link>}>
-            {p.hearings.length === 0 ? <p className="text-[13.5px] text-muted">لا جلسات مجدولة.</p> : (
-              <ul className="divide-y divide-rule">
-                {p.hearings.map((h) => (
-                  <li key={h.id} className="flex items-start gap-3 py-2.5">
-                    <div className="grid w-[54px] shrink-0 place-items-center rounded-[10px] bg-raised py-1 text-center leading-tight">
-                      <span className="num text-[16px] font-semibold text-ink">{h.at.slice(8, 10)}</span>
-                      <span className="num text-[11px] text-muted">{timeOnly(h.at)}</span>
-                    </div>
-                    <div className="min-w-0">
-                      <Link href={`/office/cases/${h.caseId}?tab=hearings`} className="block truncate font-medium hover:underline underline-offset-4">{h.title}</Link>
-                      <p className="truncate text-[12.5px] text-muted">{h.kind} · {h.client}{h.authority ? ` · ${h.authority}` : ''}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Panel>
-
-          <Panel id="counters" title="العدادات">
-            <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-[12px] bg-line">
-              {[
-                ['موقوفة أو مشطوبة قابلة للاستكمال', p.counters.resumable, false],
-                ['عدادات انتهت (تنبيه)', p.counters.alerted, p.counters.alerted > 0],
-                ['تحتاج تحديدًا', p.counters.needsDetermination, p.counters.needsDetermination > 0],
-                ['وكالات قريبة من الانتهاء', p.poas.length, p.poas.length > 0],
-              ].map(([l, v, warn]) => (
-                <div key={String(l)} className="bg-surface px-3 py-2.5">
-                  <dt className="text-[12px] text-muted">{l}</dt>
-                  <dd className={cx('text-[22px] font-semibold', warn ? 'text-signal' : 'text-text')}><CountUp value={Number(v)} /></dd>
-                </div>
-              ))}
-            </dl>
           </Panel>
 
           <Panel id="poas" title="وكالات قريبة من الانتهاء">

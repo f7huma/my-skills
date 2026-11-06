@@ -38,7 +38,7 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
               return (
                 <div key={c} className="col-span-2 border-s border-white/15 ps-4">
                   <dt className="text-[12.5px] text-[#a9b2bd]">المحصّل فعليًا · {c}</dt>
-                  <dd className="mt-1 text-[36px] font-semibold leading-none text-[#9be3bf]"><CountUp value={Number(v)} decimals={2} /></dd>
+                  <dd className="mt-1 min-w-0 text-[clamp(26px,7.5vw,36px)] font-semibold leading-none text-[#9be3bf]"><CountUp value={Number(v)} decimals={2} /></dd>
                   {claimed > 0 && (
                     <div className="mt-3 max-w-[340px]">
                       <div className="[&>div]:bg-white/15"><Meter value={Number(v)} max={claimed} tone="positive" label={`المحصّل من المطالب به (${c})`} /></div>
@@ -74,7 +74,7 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
                     <p className="mt-0.5 text-[13px] text-muted">
                       {c.stage}{c.caseNumber && <> · رقم القضية <Num>{c.caseNumber}</Num></>} · مرجع المكتب <Num>{c.reference}</Num>
                     </p>
-                    {c.clientSummary && <p className="mt-2 text-[14px] leading-7 text-text">{c.clientSummary}</p>}
+                    {c.clientSummary && <p className="mt-2 line-clamp-3 text-[14px] leading-7 text-text">{c.clientSummary}</p>}
                     {c.lastUpdate && <p className="mt-1 text-[12.5px] text-muted">آخر تحديث {relative(c.lastUpdate)}</p>}
                   </Link>
                 </li>
@@ -97,7 +97,7 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
                       <Pill tone="info">{e.status}</Pill>
                     </div>
                     <p className="mt-0.5 text-[13px] text-muted">{e.requestNumber ? <>رقم الطلب <Num>{e.requestNumber}</Num> · </> : null}مرجع المكتب <Num>{e.reference}</Num></p>
-                    {e.clientSummary && <p className="mt-2 text-[14px] leading-7">{e.clientSummary}</p>}
+                    {e.clientSummary && <p className="mt-2 line-clamp-3 text-[14px] leading-7">{e.clientSummary}</p>}
                   </Link>
                 </li>
               ))}

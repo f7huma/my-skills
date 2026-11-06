@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { CalendarClock, ClipboardList, FileBarChart, Gavel, Home, Inbox, LogOut, Menu, Scale, Settings, ShieldCheck, Users, UserCog, Activity, X, Briefcase } from 'lucide-react';
+import { CalendarClock, ClipboardList, FileBarChart, Gavel, Home, Inbox, LogOut, Menu, Scale, Settings, ShieldCheck, Users, UserCog, Activity, X } from 'lucide-react';
 import { ReactNode, useEffect, useState } from 'react';
 import { Brand } from '@/Components/Brand';
 import { Flash } from '@/Components/Flash';
@@ -107,7 +107,6 @@ export default function OfficeLayout({ children }: { children: ReactNode }) {
           <button type="button" className="btn btn-ghost btn-sm lg:hidden" onClick={() => setMenu(true)} aria-label="فتح القائمة" aria-expanded={menu}><Menu className="size-5" /></button>
           <div className="lg:hidden"><Brand compact /></div>
           <div className="flex flex-1 justify-center"><GlobalSearch /></div>
-          <Link href="/office/cases/create" className="btn btn-primary btn-sm hidden sm:inline-flex"><Briefcase className="size-4" aria-hidden />قضية جديدة</Link>
         </div>
         <main id="main" tabIndex={-1} className="min-h-[calc(100dvh-64px)] px-0 pb-6 outline-none sm:px-4 lg:pe-4 lg:ps-2">
           {/* اللوحة الرئيسية ترسم أسطحها بنفسها؛ بقية الصفحات على ورقة بيضاء واحدة */}

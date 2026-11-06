@@ -162,7 +162,7 @@ export default function Show(p: Props) {
               <div className="overflow-x-auto"><table className="table">
                 <thead><tr><th>القضية</th><th>المرجع</th><th>الصفة</th><th>المرحلة</th><th>الحالة</th><th>النتيجة / الانتهاء</th></tr></thead>
                 <tbody>{p.cases.map((x) => (
-                  <tr key={x.id}><td className="font-medium"><Link href={`/office/cases/${x.id}`} className="hover:underline underline-offset-4">{x.title}</Link></td>
+                  <tr key={x.id}><td className="min-w-[240px] max-w-[420px] font-medium"><Link href={`/office/cases/${x.id}`} title={x.title} className="line-clamp-2 hover:underline underline-offset-4">{x.title}</Link></td>
                     <td><Num>{x.reference}</Num></td><td className="text-muted">{x.role}</td><td className="text-muted">{x.stage}</td><td><Pill tone={caseTone(x.status)}>{x.statusLabel}</Pill></td>
                     <td className="text-[13px] text-muted">{x.outcome && <span className="block">{x.outcome}</span>}{x.closedOn && <DateText value={x.closedOn} />}{!x.outcome && !x.closedOn && '—'}</td></tr>
                 ))}</tbody>

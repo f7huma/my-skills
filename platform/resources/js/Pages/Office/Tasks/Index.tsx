@@ -21,16 +21,16 @@ export default function Index({ tasks, status, kinds, dueModes }: { tasks: T[]; 
         <section className="card px-5 py-3" aria-label="قائمة المهام">
           {tasks.length === 0 ? <EmptyState title="لا مهام" /> : (
             <ul className="divide-y divide-rule">{tasks.map((t) => (
-              <li key={t.id} id={`task-${t.id}`} className="flex items-start gap-3 py-2.5">
+              <li key={t.id} id={`task-${t.id}`} className="flex flex-wrap items-start gap-x-3 gap-y-1 py-2.5 sm:flex-nowrap">
                 <input type="checkbox" className="check mt-1" checked={t.status === 'done'} aria-label={'إنجاز ' + t.title}
                   onChange={() => router.post(`/office/tasks/${t.id}/status`, { status: t.status === 'open' ? 'done' : 'open', lock_version: t.lockVersion }, { preserveScroll: true })} />
                 <div className="min-w-0 flex-1">
                   <p className={cx('font-medium', t.status !== 'open' && 'text-muted line-through')}>{t.title}</p>
-                  <p className="text-[12.5px] text-muted">{t.kindLabel}
+                  <p className="line-clamp-2 text-[12.5px] text-muted">{t.kindLabel}
                     {t.case && <> · <Link href={`/office/cases/${t.case.id}?tab=tasks`} className="hover:text-text"><Num>{t.case.reference}</Num> {t.case.title}</Link></>}
                     {t.execution && <> · <Link href={`/office/executions/${t.execution.id}`} className="hover:text-text"><Num>{t.execution.reference}</Num></Link></>}</p>
                 </div>
-                <span className={cx('shrink-0 text-[13px]', t.dueOn && t.dueOn < today && t.status === 'open' ? 'font-semibold text-negative' : 'text-muted')}>{t.dueOn ? <DateText value={t.dueOn} /> : 'بلا موعد'}</span>
+                <span className={cx('w-full ps-[30px] text-[13px] sm:w-auto sm:max-w-[9.5rem] sm:shrink-0 sm:ps-0 sm:text-end', t.dueOn && t.dueOn < today && t.status === 'open' ? 'font-semibold text-negative' : 'text-muted')}>{t.dueOn ? <DateText value={t.dueOn} /> : 'بلا موعد'}</span>
               </li>
             ))}</ul>
           )}

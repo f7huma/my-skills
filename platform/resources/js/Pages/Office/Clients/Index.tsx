@@ -1,3 +1,4 @@
+import { countNoun } from '@/lib/format';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { ButtonLink, EmptyState, Num, PageHeader, Pagination, Pill } from '@/Components/ui';
@@ -11,7 +12,7 @@ export default function Index({ clients, filters }: { clients: Paginated<Row>; f
   return (
     <>
       <Head title="العملاء" />
-      <PageHeader title="العملاء والوكالات" subtitle={<><Num>{clients.total}</Num> عميل</>} actions={<ButtonLink href="/office/clients/create" variant="primary">عميل جديد</ButtonLink>} />
+      <PageHeader title="العملاء والوكالات" subtitle={countNoun(clients.total, { one: 'عميل واحد', two: 'عميلان', few: 'عملاء', many: 'عميلًا' })} actions={<ButtonLink href="/office/clients/create" variant="primary">عميل جديد</ButtonLink>} />
       <form onSubmit={(e) => { e.preventDefault(); apply({}); }} className="mb-4 flex flex-wrap items-center gap-2">
         <label htmlFor="cq" className="sr-only">بحث</label>
         <input id="cq" type="search" className="input h-9 w-full max-w-[320px]" placeholder="الاسم، المرجع، الهوية، السجل التجاري" value={q} onChange={(e) => setQ(e.target.value)} />

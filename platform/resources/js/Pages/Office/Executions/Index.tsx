@@ -1,3 +1,4 @@
+import { countNoun } from '@/lib/format';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 import { ButtonLink, EmptyState, Money, Num, PageHeader, Pagination, Pill } from '@/Components/ui';
@@ -11,7 +12,7 @@ export default function Index({ executions, filters, statuses }: { executions: P
   return (
     <>
       <Head title="التنفيذ" />
-      <PageHeader title="التنفيذ" subtitle={<><Num>{executions.total}</Num> طلب تنفيذ</>} actions={<ButtonLink href="/office/executions/create" variant="primary">طلب تنفيذ مستقل</ButtonLink>} />
+      <PageHeader title="التنفيذ" subtitle={countNoun(executions.total, { one: 'طلب تنفيذ واحد', two: 'طلبا تنفيذ', few: 'طلبات تنفيذ', many: 'طلب تنفيذ' })} actions={<ButtonLink href="/office/executions/create" variant="primary">طلب تنفيذ مستقل</ButtonLink>} />
       <form onSubmit={(e) => { e.preventDefault(); apply({}); }} className="mb-4 flex flex-wrap gap-2">
         <label htmlFor="eq" className="sr-only">بحث</label>
         <input id="eq" type="search" className="input h-9 max-w-[300px]" placeholder="رقم الطلب، المرجع، العميل، الطرف" value={q} onChange={(e) => setQ(e.target.value)} />

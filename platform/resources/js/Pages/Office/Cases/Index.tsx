@@ -2,7 +2,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Bookmark, X } from 'lucide-react';
 import { useState } from 'react';
 import { ButtonLink, caseTone, EmptyState, Num, PageHeader, Pagination, Pill, DateText } from '@/Components/ui';
-import { dateTime } from '@/lib/format';
+import { dateTime, countNoun } from '@/lib/format';
 import type { Option, Paginated } from '@/types';
 
 type Row = { id: number; reference: string; title: string; client: string; clientId: number; caseNumber: string | null; stage: string; status: string; statusLabel: string; category: string | null; role: string; nextHearing: string | null; updatedAt: string };
@@ -28,7 +28,7 @@ export default function Index({ cases, filters, savedFilters, options }: { cases
   return (
     <>
       <Head title="القضايا" />
-      <PageHeader title="القضايا" subtitle={<><Num>{cases.total}</Num> قضية{active && ' مطابقة للفلاتر'}</>} actions={<ButtonLink href="/office/cases/create" variant="primary">قضية جديدة</ButtonLink>} />
+      <PageHeader title="القضايا" subtitle={<>{countNoun(cases.total, { one: 'قضية واحدة', two: 'قضيتان', few: 'قضايا', many: 'قضية' })}{active && ' مطابقة للفلاتر'}</>} actions={<ButtonLink href="/office/cases/create" variant="primary">قضية جديدة</ButtonLink>} />
       {savedFilters.length > 0 && (
         <div className="mb-3 flex flex-wrap items-center gap-1.5">
           <span className="text-[12.5px] text-muted">فلاتر محفوظة:</span>
@@ -57,7 +57,7 @@ export default function Index({ cases, filters, savedFilters, options }: { cases
               <thead><tr><th>القضية</th><th>العميل</th><th>رقم القضية</th><th>المرحلة</th><th>الحالة</th><th className="end">الجلسة القادمة</th></tr></thead>
               <tbody>{cases.data.map((c) => (
                 <tr key={c.id}>
-                  <td className="max-w-[320px]"><Link href={`/office/cases/${c.id}`} className="block truncate font-medium hover:underline underline-offset-4">{c.title}</Link><span className="text-[12.5px] text-muted"><Num>{c.reference}</Num> · {c.role}{c.category ? ' · ' + c.category : ''}</span></td>
+                  <td className="min-w-[220px] max-w-[320px]"><Link href={`/office/cases/${c.id}`} title={c.title} className="block truncate font-medium hover:underline underline-offset-4">{c.title}</Link><span className="text-[12.5px] text-muted"><Num>{c.reference}</Num> · {c.role}{c.category ? ' · ' + c.category : ''}</span></td>
                   <td className="text-muted"><Link href={`/office/clients/${c.clientId}`} className="hover:text-text">{c.client}</Link></td>
                   <td>{c.caseNumber ? <Num>{c.caseNumber}</Num> : <span className="text-faint">—</span>}</td>
                   <td className="text-muted">{c.stage}</td>

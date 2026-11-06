@@ -2,7 +2,7 @@ import { Link, router, useForm } from '@inertiajs/react';
 import { FileText, Download, ShieldAlert, ShieldCheck, Loader2, Eye, EyeOff, Trash2, Upload, Inbox } from 'lucide-react';
 import { ReactNode, useEffect, useId, useRef, useState, forwardRef, InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import type { Doc, Option, Paginated } from '@/types';
-import { dateTime, fileSize, fromHijri, hijri, HIJRI_MONTHS, hijriParts, localDate, money } from '@/lib/format';
+import { dateTime, fileSize, fromHijri, G_MONTHS, hijri, HIJRI_MONTHS, hijriParts, localDate, money, countNoun } from '@/lib/format';
 
 export function cx(...c: (string | false | null | undefined)[]) {
   return c.filter(Boolean).join(' ');
@@ -21,9 +21,9 @@ export function DateText({ value, time = false, fallback = '—', className }: {
   const g = isDateOnly ? value : (time ? dateTime(value) : localDate(value));
   const h = hijri(isDateOnly ? value : localDate(value));
   return (
-    <span className={cx('whitespace-nowrap', className)}>
+    <span className={cx('inline-flex flex-wrap items-baseline gap-x-1.5', className)}>
       <bdi dir="ltr" className="num">{g}</bdi>
-      {h && <span className="ms-1.5 text-[0.88em] text-muted"><bdi dir="ltr" className="num">{h}</bdi>هـ</span>}
+      {h && <span className="whitespace-nowrap text-[0.88em] text-muted"><bdi dir="ltr" className="num">{h}</bdi>هـ</span>}
     </span>
   );
 }
@@ -83,24 +83,31 @@ const readMode = (): 'g' | 'h' => { try { return localStorage.getItem(modeKey) =
  */
 function DateInput({ id, value, onValue, invalid, describedBy, required, disabled }: { id: string; value: string; onValue: (v: string) => void; invalid?: boolean; describedBy?: string; required?: boolean; disabled?: boolean }) {
   const [mode, setMode] = useState<'g' | 'h'>(readMode);
-  const cur = hijriParts(value);
-  const [h, setH] = useState<{ y: string; m: string; d: string }>({ y: cur ? String(cur.y) : '', m: cur ? String(cur.m) : '', d: cur ? String(cur.d) : '' });
+  const partsOf = (v: string, m: 'g' | 'h') => {
+    if (!v) return { y: '', m: '', d: '' };
+    if (m === 'h') { const p = hijriParts(v); return p ? { y: String(p.y), m: String(p.m), d: String(p.d) } : { y: '', m: '', d: '' }; }
+    const [y, mo, d] = v.split('-').map(Number);
+    return { y: String(y), m: String(mo), d: String(d) };
+  };
+  const [f, setF] = useState(() => partsOf(value, mode));
   const [bad, setBad] = useState(false);
-  useEffect(() => {
-    const p = hijriParts(value);
-    if (p) setH({ y: String(p.y), m: String(p.m), d: String(p.d) });
-    else if (!value) setH((x) => (x.y && x.m && x.d ? { y: '', m: '', d: '' } : x));
-  }, [value]);
+  useEffect(() => { if (value || !(f.y && f.m && f.d)) setF(partsOf(value, mode)); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [value, mode]);
   const switchTo = (m: 'g' | 'h') => { setMode(m); setBad(false); try { localStorage.setItem(modeKey, m); } catch { /* اختياري */ } };
-  const updateH = (k: 'y' | 'm' | 'd', v: string) => {
-    const next = { ...h, [k]: v };
-    setH(next);
-    if (next.y && next.m && next.d) {
-      const g = fromHijri(Number(next.y), Number(next.m), Number(next.d));
-      setBad(!g);
-      if (g) onValue(g);
+  const toIso = (y: number, m: number, d: number): string | null => {
+    if (mode === 'h') return fromHijri(y, m, d);
+    const t = new Date(Date.UTC(y, m - 1, d));
+    return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d ? t.toISOString().slice(0, 10) : null;
+  };
+  const update = (k: 'y' | 'm' | 'd', v: string) => {
+    const next = { ...f, [k]: v };
+    setF(next);
+    if (next.y.length === 4 && next.m && next.d) {
+      const iso = toIso(Number(next.y), Number(next.m), Number(next.d));
+      setBad(!iso);
+      if (iso) onValue(iso);
     } else if (!next.y && !next.m && !next.d) { setBad(false); onValue(''); }
   };
+  const months = mode === 'h' ? HIJRI_MONTHS : G_MONTHS;
   const seg = (m: 'g' | 'h', label: string) => (
     <button type="button" onClick={() => switchTo(m)} aria-pressed={mode === m} disabled={disabled}
       className={cx('h-full rounded-[6px] px-2 text-[12px] leading-none transition-colors', mode === m ? 'bg-ink font-medium text-white' : 'text-muted hover:text-text')}>{label}</button>
@@ -111,26 +118,20 @@ function DateInput({ id, value, onValue, invalid, describedBy, required, disable
       <div className="absolute -top-[31px] end-0 flex h-[26px] items-center rounded-[8px] border border-line bg-raised p-0.5" role="group" aria-label="نوع التقويم">
         {seg('g', 'ميلادي')}{seg('h', 'هجري')}
       </div>
-      <div className="flex items-stretch">
-        {mode === 'g' ? (
-          <input id={id} type="date" className="input min-w-0 flex-1" value={value} onChange={(e) => onValue(e.target.value)} required={required} disabled={disabled}
-            aria-invalid={invalid ? true : undefined} aria-describedby={describedBy} />
-        ) : (
-          <div className="grid min-w-0 flex-1 grid-cols-[minmax(0,0.75fr)_minmax(0,1.7fr)_minmax(0,1fr)] gap-1.5" role="group" aria-label="تاريخ هجري">
-            <select id={id} className="input px-2" aria-label="اليوم الهجري" value={h.d} onChange={(e) => updateH('d', e.target.value)} disabled={disabled} aria-invalid={invalid || bad ? true : undefined} aria-describedby={describedBy}>
-              <option value="">اليوم</option>{Array.from({ length: 30 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
-            </select>
-            <select className="input px-2" aria-label="الشهر الهجري" value={h.m} onChange={(e) => updateH('m', e.target.value)} disabled={disabled}>
-              <option value="">الشهر</option>{HIJRI_MONTHS.map((n, i) => <option key={n} value={i + 1}>{n}</option>)}
-            </select>
-            <input className="input num px-2 text-center" aria-label="السنة الهجرية" inputMode="numeric" placeholder="1448" maxLength={4} value={h.y}
-              onChange={(e) => updateH('y', e.target.value.replace(/\D/g, '').slice(0, 4))} disabled={disabled} />
-          </div>
-        )}
+      <div className="grid grid-cols-[minmax(0,0.75fr)_minmax(0,1.7fr)_minmax(0,1fr)] gap-1.5" role="group" aria-label={mode === 'h' ? 'تاريخ هجري' : 'تاريخ ميلادي'}>
+        <select id={id} className="input px-2" title={mode === 'h' ? 'اليوم الهجري' : 'اليوم'} value={f.d} onChange={(e) => update('d', e.target.value)} disabled={disabled} required={required}
+          aria-invalid={invalid || bad ? true : undefined} aria-describedby={describedBy}>
+          <option value="">اليوم</option>{Array.from({ length: mode === 'h' ? 30 : 31 }, (_, i) => <option key={i} value={i + 1}>{i + 1}</option>)}
+        </select>
+        <select className="input px-2" aria-label={mode === 'h' ? 'الشهر الهجري' : 'الشهر'} value={f.m} onChange={(e) => update('m', e.target.value)} disabled={disabled}>
+          <option value="">الشهر</option>{months.map((n, i) => <option key={n} value={i + 1}>{n}</option>)}
+        </select>
+        <input className="input num px-2 text-center" aria-label={mode === 'h' ? 'السنة الهجرية' : 'السنة'} inputMode="numeric" placeholder="السنة" maxLength={4} value={f.y}
+          onChange={(e) => update('y', e.target.value.replace(/\D/g, '').slice(0, 4))} disabled={disabled} />
       </div>
-      {mode === 'h' && bad && <p className="field-error" role="alert">هذا اليوم غير موجود في الشهر الهجري المختار (الشهر ٢٩ يومًا).</p>}
-      {mode === 'h' && !bad && value && <p className="field-hint">يوافق <bdi dir="ltr" className="num">{value}</bdi> م</p>}
-      {mode === 'g' && hijri(value) && <p className="field-hint">يوافق <bdi dir="ltr" className="num">{hijri(value)}</bdi>هـ</p>}
+      {bad && <p className="field-error" role="alert">هذا اليوم غير موجود في الشهر المختار.</p>}
+      {!bad && value && mode === 'h' && <p className="field-hint">يوافق <bdi dir="ltr" className="num">{value}</bdi> م</p>}
+      {!bad && value && mode === 'g' && hijri(value) && <p className="field-hint">يوافق <bdi dir="ltr" className="num">{hijri(value)}</bdi>هـ</p>}
     </div>
   );
 }
@@ -226,7 +227,7 @@ export function PageHeader({ title, subtitle, actions, crumbs }: { title: ReactN
             ))}
           </nav>
         )}
-        <h1 className="text-[24px] font-semibold leading-snug text-text sm:text-[28px]">{title}</h1>
+        <h1 className={cx('text-balance font-semibold leading-snug text-text', typeof title === 'string' && title.length > 90 ? 'text-[20px] sm:text-[22px]' : 'text-[24px] sm:text-[28px]')}>{title}</h1>
         {subtitle && <div className="mt-1 text-[14px] text-muted">{subtitle}</div>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -442,7 +443,7 @@ export function UploadForm({ ownerType, ownerId, categories, defaultCategory = '
 }
 
 export function Pagination<T>({ page }: { page: Paginated<T> }) {
-  if (page.last_page <= 1) return page.total ? <p className="mt-3 text-[13px] text-muted"><Num>{page.total}</Num> سجل</p> : null;
+  if (page.last_page <= 1) return page.total ? <p className="mt-3 text-[13px] text-muted">{countNoun(page.total, { one: 'سجل واحد', two: 'سجلان', few: 'سجلات', many: 'سجلًا' })}</p> : null;
   return (
     <nav aria-label="الصفحات" className="mt-4 flex flex-wrap items-center justify-between gap-3 text-[13px]">
       <p className="text-muted"><Num>{`${page.from}–${page.to}`}</Num> من <Num>{page.total}</Num></p>

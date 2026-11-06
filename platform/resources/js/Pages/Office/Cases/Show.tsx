@@ -7,7 +7,7 @@ import { emptyTask, TaskFields, type TaskInput } from '@/Components/TaskFields';
 import {
   Button, ButtonLink, caseTone, Checkbox, cx, DocumentList, EmptyState, FormError, KeyValues, Modal, Money, Num, PageHeader, Panel, Pill, SelectField,
   Tabs, TextArea, TextField, Timeline, UploadForm, useModal, DateText } from '@/Components/ui';
-import { dateTime, relative, weekday } from '@/lib/format';
+import { dateTime, relative, weekday, countNoun } from '@/lib/format';
 import { useTab } from '@/lib/useTab';
 import type { Doc, Option, Totals } from '@/types';
 
@@ -84,7 +84,7 @@ function SummaryTab({ p }: { p: Props }) {
             <li className="flex items-start gap-2"><Clock className="mt-0.5 size-4 text-muted" aria-hidden />
               {nextHearing ? <span>{nextHearing.kindLabel}: <DateText value={nextHearing.at} time />{nextHearing.authority && <span className="text-muted"> · {nextHearing.authority}</span>}</span> : <span className="text-muted">لا جلسة مجدولة.</span>}
             </li>
-            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 size-4 text-muted" aria-hidden /><span><Num>{openTasks.length}</Num> مهمة مفتوحة{openTasks.filter((t) => !t.dueOn).length > 0 && <span className="text-muted"> (منها <Num>{openTasks.filter((t) => !t.dueOn).length}</Num> بلا موعد)</span>}</span></li>
+            <li className="flex items-start gap-2"><CheckCircle2 className="mt-0.5 size-4 text-muted" aria-hidden /><span>{countNoun(openTasks.length, { one: 'مهمة مفتوحة واحدة', two: 'مهمتان مفتوحتان', few: 'مهام مفتوحة', many: 'مهمة مفتوحة' })}{openTasks.filter((t) => !t.dueOn).length > 0 && <span className="text-muted"> (منها <Num>{openTasks.filter((t) => !t.dueOn).length}</Num> بلا موعد)</span>}</span></li>
             {p.deadlines.filter((d) => d.status !== 'closed').slice(0, 3).map((d) => (
               <li key={d.id} className="flex items-start gap-2"><Scale className="mt-0.5 size-4 text-muted" aria-hidden /><span>{d.reason}: <DateText value={d.endOn} fallback="يحتاج تحديدًا" /></span></li>
             ))}
