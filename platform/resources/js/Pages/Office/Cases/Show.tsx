@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { CalendarPlus, CheckCircle2, Clock, FileText, Gavel, Pencil, Plus, Printer, RotateCcw, Scale } from 'lucide-react';
+import { CalendarPlus, CheckCircle2, Clock, FileText, Gavel, Pencil, Plus, Printer, RotateCcw, Scale, X } from 'lucide-react';
 import { ReactNode, useEffect, useState } from 'react';
 import { CollectionsPanel, type CollectionRow } from '@/Components/Collections';
 import { DeadlineList, type DeadlineRow } from '@/Components/Deadlines';
@@ -364,7 +364,7 @@ function CompleteHearing({ h, p, onDone }: { h: Hearing; p: Props; onDone: () =>
         <legend className="text-[15px] font-semibold">المهام الناتجة عن الجلسة</legend>
         {form.data.tasks.map((t, i) => (
           <div key={i} className="well relative p-3">
-            <button type="button" className="btn btn-ghost btn-sm absolute end-2 top-2" aria-label="حذف المهمة" onClick={() => form.setData('tasks', form.data.tasks.filter((_, j) => j !== i))}>✕</button>
+            <button type="button" className="btn btn-ghost btn-sm absolute end-2 top-2" aria-label="حذف المهمة" onClick={() => form.setData('tasks', form.data.tasks.filter((_, j) => j !== i))}><X className="size-4" aria-hidden /></button>
             <TaskFields value={t} prefix={`tasks.${i}.`} errors={form.errors as Record<string, string>} kinds={p.options.taskKinds} dueModes={p.options.dueModes}
               onChange={(v) => form.setData('tasks', form.data.tasks.map((x, j) => (j === i ? v : x)))} />
           </div>

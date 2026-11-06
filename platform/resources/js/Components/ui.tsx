@@ -1,5 +1,5 @@
 import { Link, router, useForm } from '@inertiajs/react';
-import { FileText, Download, ShieldAlert, ShieldCheck, Loader2, Eye, EyeOff, Trash2, Upload, Inbox } from 'lucide-react';
+import { X, FileText, Download, ShieldAlert, ShieldCheck, Loader2, Eye, EyeOff, Trash2, Upload, Inbox } from 'lucide-react';
 import { ReactNode, useEffect, useId, useRef, useState, forwardRef, InputHTMLAttributes, SelectHTMLAttributes, TextareaHTMLAttributes } from 'react';
 import type { Doc, Option, Paginated } from '@/types';
 import { dateTime, fileSize, fromHijri, G_MONTHS, hijri, HIJRI_MONTHS, hijriParts, localDate, money, countNoun } from '@/lib/format';
@@ -319,7 +319,7 @@ export function Modal({ open, onClose, title, children, wide }: { open: boolean;
         <div className="flex max-h-[calc(100dvh-32px)] flex-col">
           <div className="flex items-center justify-between border-b border-rule px-5 py-3.5">
             <h2 id="dlg-title" className="text-[16px] font-semibold">{title}</h2>
-            <button type="button" onClick={onClose} className="btn btn-ghost btn-sm" aria-label="إغلاق">✕</button>
+            <button type="button" onClick={onClose} className="btn btn-ghost btn-sm" aria-label="إغلاق"><X className="size-4" aria-hidden /></button>
           </div>
           <div className="overflow-y-auto px-5 py-4">{children}</div>
         </div>
@@ -358,7 +358,7 @@ export function Timeline({ events, showUser }: { events: { id: number; title: st
 export function ScanBadge({ scan }: { scan: string }) {
   if (scan === 'clean') return <span className="inline-flex items-center gap-1 text-[12px] text-positive"><ShieldCheck className="size-3.5" aria-hidden />سليم</span>;
   if (scan === 'pending') return <span className="inline-flex items-center gap-1 text-[12px] text-muted"><Loader2 className="size-3.5 animate-spin" aria-hidden />قيد الفحص</span>;
-  if (scan === 'error') return <span className="inline-flex items-center gap-1 text-[12px] text-[#7a4307]"><ShieldAlert className="size-3.5" aria-hidden />محجوب حتى يكتمل الفحص</span>;
+  if (scan === 'error') return <span className="inline-flex items-center gap-1 text-[12px] text-[var(--pill-warning-ink)]"><ShieldAlert className="size-3.5" aria-hidden />محجوب حتى يكتمل الفحص</span>;
   return <span className="inline-flex items-center gap-1 text-[12px] text-negative"><ShieldAlert className="size-3.5" aria-hidden />مرفوض</span>;
 }
 
