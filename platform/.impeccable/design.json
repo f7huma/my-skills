@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-06T21:00:00Z",
+  "generatedAt": "2026-11-06T22:00:00Z",
   "title": "Design System: مكتب فيصل حميضان الحميضان للمحاماة",
   "extensions": {
     "colorMeta": {
@@ -238,12 +238,17 @@
       {
         "name": "nav-lift",
         "value": "0 1px 2px rgba(48,55,65,.08)",
-        "purpose": "White active nav item on the mist rail and portal header."
+        "purpose": "White active link in the portal header; the sliding selected-day indicator uses 0 1px 3px rgba(48,55,65,.12)."
+      },
+      {
+        "name": "menu",
+        "value": "0 12px 32px -12px rgba(35,42,51,.35)",
+        "purpose": "Account menu popover."
       },
       {
         "name": "dialog",
         "value": "0 24px 64px rgba(20,24,30,0.22)",
-        "purpose": "Modal dialogs; backdrop rgba(20,24,30,0.38)."
+        "purpose": "Modal dialogs; backdrop rgba(20,24,30,0.38). The mobile bottom sheet uses a rgba(35,42,51,0.4) scrim and no shadow."
       },
       {
         "name": "input-focus",
@@ -255,12 +260,37 @@
       {
         "name": "ease-out",
         "value": "cubic-bezier(0.23, 1, 0.32, 1)",
-        "purpose": "Feedback transitions: button colours 150ms, press scale 0.97 at 120ms, input border/halo 150ms, dialog-in 180ms."
+        "purpose": "Entering and feedback: page-enter 220ms, stagger 420ms, ribbon node pop 520ms, menu-pop 160ms, tab-in 180ms, path-fill 700ms, detail-swap 200ms, sheet down 200ms, button colours 150ms, press scale 120ms, dialog-in 180ms."
+      },
+      {
+        "name": "ease-in-out",
+        "value": "cubic-bezier(0.77, 0, 0.175, 1)",
+        "purpose": "Movement across the screen: sliding selected-day indicator 260ms, sign-in scale beam swing and pans 1800ms."
       },
       {
         "name": "ease-drawer",
         "value": "cubic-bezier(0.32, 0.72, 0, 1)",
-        "purpose": "Mobile nav drawer slide-in, 260ms; scrim fade 200ms."
+        "purpose": "Mobile bottom sheet rising, 300ms; scrim 200ms."
+      },
+      {
+        "name": "page-enter",
+        "value": "220ms fade + 6px rise",
+        "purpose": "Main content on every navigation (office and portal)."
+      },
+      {
+        "name": "stagger",
+        "value": "420ms, 50ms steps, capped at 300ms",
+        "purpose": "Dashboard sections and side panels, once on load."
+      },
+      {
+        "name": "count-up",
+        "value": "900ms first view / 500ms on change, exponential ease-out",
+        "purpose": "Hero figures: from 0 when first in view, previous to new when data changes; written via ref, screen readers get the final value."
+      },
+      {
+        "name": "stage-ring",
+        "value": "1.6s ease-out, 2 iterations",
+        "purpose": "Current stage-path node ring pulse."
       },
       {
         "name": "hover-colour",
@@ -269,13 +299,8 @@
       },
       {
         "name": "reduced-motion",
-        "value": "fade-in 150ms ease-out",
-        "purpose": "Replaces press scale, dialog and drawer spatial motion under prefers-reduced-motion."
-      },
-      {
-        "name": "no-entrance",
-        "value": "none",
-        "purpose": "Owner rule: working pages have no entrance motion; motion belongs only to a public intro section, which does not exist."
+        "value": "fade-in 150-200ms ease-out",
+        "purpose": "Replaces every entrance; removes node pop, path fill, ring pulse, sign-in scene movement, slides and press scales."
       }
     ],
     "breakpoints": [
@@ -343,50 +368,65 @@
       "css": ".ds-card { direction: rtl; background: #fff; border: 1px solid #dde1e2; border-radius: 14px; box-shadow: 0 1px 2px rgba(27,31,37,.04), 0 12px 28px -22px rgba(27,31,37,.35); padding: 16px 20px 20px; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; font-size: 14px; font-weight: 350; color: #181c22; } .ds-card-h { display: flex; justify-content: space-between; align-items: center; } .ds-card-h h2 { margin: 0; font-size: 16px; font-weight: 600; } .ds-card-h a { font-size: 13px; color: #545c67; text-decoration: none; } .ds-card-h a:hover { color: #181c22; } .ds-list { list-style: none; margin: 8px 0 0; padding: 0; } .ds-list li { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid #e9ecec; font-weight: 500; } .ds-list li:first-child { border-top: 0; } .ds-diamond { width: 7px; height: 7px; transform: rotate(45deg); border-radius: 1.5px; background: #303741; flex: none; }"
     },
     {
-      "name": "Office Rail Navigation",
+      "name": "Office Top Bar Navigation",
       "kind": "nav",
-      "refersTo": "nav-item",
-      "description": "Mist rail with lattice; active item is a white lifted pill with a charcoal diamond on its start edge.",
-      "html": "<nav class=\"ds-rail\"><a class=\"ds-nav ds-nav-on\" href=\"#\"><span class=\"ds-nav-d\"></span>الرئيسية</a><a class=\"ds-nav\" href=\"#\">القضايا</a><a class=\"ds-nav\" href=\"#\">المطالبات الواردة<span class=\"ds-badge\">1</span></a></nav>",
-      "css": ".ds-rail { direction: rtl; width: 240px; padding: 12px; background-color: #e1e5e6; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23303741' stroke-opacity='.07'%3E%3Cpath d='M28 6 50 28 28 50 6 28Z'/%3E%3Cpath d='M18 10h20'/%3E%3C/g%3E%3Cpath d='M28 23 33 28 28 33 23 28Z' fill='%23303741' fill-opacity='.05'/%3E%3C/svg%3E\"); font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; } .ds-nav { position: relative; display: flex; align-items: center; gap: 12px; height: 40px; padding: 0 12px; border-radius: 10px; font-size: 14px; color: #3f4650; text-decoration: none; transition: background-color 150ms, color 150ms; } .ds-nav:hover { background: rgba(255,255,255,.7); color: #181c22; } .ds-nav:focus-visible { outline: 2px solid #303741; outline-offset: 2px; } .ds-nav-on { background: #fff; color: #303741; font-weight: 500; box-shadow: 0 1px 2px rgba(48,55,65,.08); } .ds-nav-d { position: absolute; inset-inline-start: -3px; width: 7px; height: 7px; transform: rotate(45deg); border-radius: 1.5px; background: #303741; } .ds-badge { margin-inline-start: auto; background: #a82a22; color: #fff; border-radius: 6px; padding: 0 6px; font-size: 11.5px; font-weight: 600; line-height: 20px; }"
+      "refersTo": "nav-group",
+      "description": "Sticky mist top bar with grouped navigation; the open group carries a 3px charcoal underline with a diamond, and its destinations appear as pills in a sub-link row.",
+      "html": "<header class=\"ds-bar\"><nav class=\"ds-groups\"><a class=\"ds-grp\" href=\"#\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3.5 19 10.5 12 17.5 5 10.5Z\"/><path d=\"M12 8.5 14 10.5 12 12.5 10 10.5Z\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M6.5 20.5h11\"/></svg>الرئيسية</a><a class=\"ds-grp\" aria-current=\"page\" href=\"#\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3v17\"/><path d=\"M8 20.5h8\"/><path d=\"M5 6.5h14\"/><path d=\"m11 3.5 1-1 1 1\"/><path d=\"M5 6.5 2.75 12a2.5 2.5 0 0 0 4.5 0Z\"/><path d=\"M19 6.5 16.75 12a2.5 2.5 0 0 0 4.5 0Z\"/></svg>الملفات<span class=\"ds-badge\">1</span></a><a class=\"ds-grp\" href=\"#\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15.5\" rx=\"2\"/><path d=\"M3.5 9.5h17\"/><path d=\"M8 3v4M16 3v4\"/><path d=\"M12 12.5 14 14.5 12 16.5 10 14.5Z\" fill=\"currentColor\" stroke=\"none\"/></svg>المواعيد والمهام</a></nav><nav class=\"ds-sub\"><a class=\"ds-pill ds-pill-on\" href=\"#\">القضايا</a><a class=\"ds-pill\" href=\"#\">العملاء والوكالات</a><a class=\"ds-pill\" href=\"#\">المطالبات الواردة</a></nav></header>",
+      "css": ".ds-bar { direction: rtl; background-color: #e1e5e6; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23303741' stroke-opacity='.07'%3E%3Cpath d='M28 6 50 28 28 50 6 28Z'/%3E%3Cpath d='M18 10h20'/%3E%3C/g%3E%3Cpath d='M28 23 33 28 28 33 23 28Z' fill='%23303741' fill-opacity='.05'/%3E%3C/svg%3E\"); border-bottom: 1px solid rgba(48,55,65,.1); font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; } .ds-groups { display: flex; height: 64px; gap: 2px; padding: 0 12px; } .ds-grp { position: relative; display: flex; align-items: center; gap: 8px; padding: 0 12px; font-size: 14px; color: #3f4650; text-decoration: none; transition: color 150ms; } .ds-grp:hover { color: #303741; } .ds-grp:focus-visible { outline: 2px solid #303741; outline-offset: 2px; border-radius: 6px; } .ds-grp[aria-current='page'] { color: #303741; font-weight: 500; } .ds-grp[aria-current='page']::after { content: ''; position: absolute; inset-inline: 10px; bottom: -1px; height: 3px; border-radius: 3px 3px 0 0; background: #303741; } .ds-grp[aria-current='page']::before { content: ''; position: absolute; bottom: 1px; inset-inline-start: 50%; width: 7px; height: 7px; background: #303741; transform: translate(50%, 0) rotate(45deg); border-radius: 1.5px; } .ds-badge { background: #a82a22; color: #fff; border-radius: 6px; padding: 0 6px; font-size: 11px; font-weight: 600; line-height: 18px; } .ds-sub { display: flex; gap: 4px; padding: 6px 12px; border-top: 1px solid rgba(48,55,65,.1); background: rgba(244,245,244,.7); } .ds-pill { display: flex; align-items: center; height: 36px; padding: 0 12px; border-radius: 10px; font-size: 13.5px; color: #3f4650; text-decoration: none; transition: background-color 150ms; } .ds-pill:hover { background: #fff; } .ds-pill:focus-visible { outline: 2px solid #303741; outline-offset: 2px; } .ds-pill-on, .ds-pill-on:hover { background: #303741; color: #fff; }"
+    },
+    {
+      "name": "Mobile Dock",
+      "kind": "nav",
+      "refersTo": "dock-item",
+      "description": "Five-slot bottom dock below lg; the current slot is charcoal with a small diamond above its icon.",
+      "html": "<nav class=\"ds-dock\"><a class=\"ds-dk\" aria-current=\"page\" href=\"#\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3.5 19 10.5 12 17.5 5 10.5Z\"/><path d=\"M12 8.5 14 10.5 12 12.5 10 10.5Z\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M6.5 20.5h11\"/></svg>الرئيسية</a><a class=\"ds-dk\" href=\"#\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 3v17\"/><path d=\"M8 20.5h8\"/><path d=\"M5 6.5h14\"/><path d=\"m11 3.5 1-1 1 1\"/><path d=\"M5 6.5 2.75 12a2.5 2.5 0 0 0 4.5 0Z\"/><path d=\"M19 6.5 16.75 12a2.5 2.5 0 0 0 4.5 0Z\"/></svg>القضايا</a><a class=\"ds-dk\" href=\"#\"><svg width=\"19\" height=\"19\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3.5\" y=\"5\" width=\"17\" height=\"15.5\" rx=\"2\"/><path d=\"M3.5 9.5h17\"/><path d=\"M8 3v4M16 3v4\"/><path d=\"M12 12.5 14 14.5 12 16.5 10 14.5Z\" fill=\"currentColor\" stroke=\"none\"/></svg>المواعيد</a></nav>",
+      "css": ".ds-dock { direction: rtl; display: grid; grid-template-columns: repeat(3, 1fr); width: 300px; background: rgba(255,255,255,.95); border-top: 1px solid rgba(48,55,65,.1); font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; } .ds-dk { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; height: 64px; font-size: 11.5px; color: #545c67; text-decoration: none; } .ds-dk svg { width: 22px; height: 22px; } .ds-dk:active { transform: scale(0.94); transition: transform 120ms cubic-bezier(0.23,1,0.32,1); } .ds-dk:focus-visible { outline: 2px solid #303741; outline-offset: -2px; } .ds-dk[aria-current='page'] { color: #303741; font-weight: 500; } .ds-dk[aria-current='page']::before { content: ''; position: absolute; top: 6px; width: 6px; height: 6px; background: #303741; transform: rotate(45deg); border-radius: 1px; }"
     },
     {
       "name": "Tabs",
       "kind": "nav",
       "refersTo": "tab",
-      "description": "Underline tabs; selected tab gets a static 3px charcoal bar.",
+      "description": "Underline tabs with optional icon; the selected tab gets a 3px charcoal bar that grows in over 180ms.",
       "html": "<div class=\"ds-tabs\"><button class=\"ds-tab\" aria-selected=\"true\">الملخص</button><button class=\"ds-tab\">المستندات</button><button class=\"ds-tab\">الجلسات</button></div>",
-      "css": ".ds-tabs { direction: rtl; display: flex; gap: 4px; border-bottom: 1px solid #dde1e2; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; } .ds-tab { position: relative; padding: 10px; font: inherit; font-size: 14px; color: #545c67; background: none; border: 0; cursor: pointer; } .ds-tab:hover { color: #181c22; } .ds-tab:focus-visible { outline: 2px solid #303741; outline-offset: 2px; } .ds-tab[aria-selected='true'] { color: #181c22; font-weight: 600; } .ds-tab[aria-selected='true']::after { content: ''; position: absolute; inset-inline: 2px; bottom: -1px; height: 3px; background: #303741; border-radius: 3px 3px 0 0; }"
+      "css": ".ds-tabs { direction: rtl; display: flex; gap: 4px; border-bottom: 1px solid #dde1e2; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; } .ds-tab { position: relative; padding: 10px; font: inherit; font-size: 14px; color: #545c67; background: none; border: 0; cursor: pointer; } .ds-tab:hover { color: #181c22; } .ds-tab:focus-visible { outline: 2px solid #303741; outline-offset: 2px; } .ds-tab[aria-selected='true'] { color: #181c22; font-weight: 600; } .ds-tab[aria-selected='true']::after { content: ''; position: absolute; inset-inline: 2px; bottom: -1px; height: 3px; background: #303741; border-radius: 3px 3px 0 0; } .ds-tab[aria-selected='true']::after { animation: ds-tab-in 180ms cubic-bezier(0.23,1,0.32,1); } @keyframes ds-tab-in { from { transform: scaleX(0.4); opacity: 0; } } @media (prefers-reduced-motion: reduce) { .ds-tab[aria-selected='true']::after { animation: none; } }"
     },
     {
       "name": "Hero Band Figures",
       "kind": "custom",
       "refersTo": "mist-band",
-      "description": "Signature mist band: charcoal title, dual-calendar date, rule-separated static figures; state colour only for meaning.",
+      "description": "Signature mist band: charcoal title, dual-calendar date, rule-separated figures that count up once on first view; state colour only for meaning.",
       "html": "<section class=\"ds-band\"><h1>أسبوع المكتب</h1><p class=\"ds-band-d\">الجمعة 6 نوفمبر · 26 جمادى الأولى 1448 هـ</p><p class=\"ds-band-f\">بندان متأخران</p><dl class=\"ds-figs\"><div><dt>جلسات اليوم</dt><dd>1</dd></div><div><dt>قضايا سارية</dt><dd>4</dd></div><div><dt>المقبوض هذا الشهر · ر.س</dt><dd>25,000</dd></div></dl></section>",
       "css": ".ds-band { direction: rtl; padding: 24px 32px; border-radius: 22px; color: #303741; background-color: #e1e5e6; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23303741' stroke-opacity='.07'%3E%3Cpath d='M28 6 50 28 28 50 6 28Z'/%3E%3Cpath d='M18 10h20'/%3E%3C/g%3E%3Cpath d='M28 23 33 28 28 33 23 28Z' fill='%23303741' fill-opacity='.05'/%3E%3C/svg%3E\"); font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; } .ds-band h1 { margin: 0; font-size: 30px; font-weight: 600; line-height: 1.25; } .ds-band-d { margin: 4px 0 0; font-size: 14px; color: #545c67; } .ds-band-f { margin: 6px 0 0; font-size: 13.5px; font-weight: 500; color: #a82a22; } .ds-figs { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 24px; margin: 24px 0 0; } .ds-figs div { border-inline-start: 1px solid rgba(48,55,65,.15); padding-inline-start: 16px; } .ds-figs dt { font-size: 12.5px; color: #545c67; } .ds-figs dd { margin: 4px 0 0; font-size: 40px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; direction: ltr; text-align: right; }"
+    },
+    {
+      "name": "Stage Path",
+      "kind": "custom",
+      "description": "Case stages as rotated-square nodes on a baseline: past solid charcoal, current ringed, later dashed; a charcoal fill grows to the current stage.",
+      "html": "<ol class=\"ds-path\"><span class=\"ds-base\"></span><span class=\"ds-fill\"></span><li><span class=\"ds-node ds-done\"><i></i></span>الإعداد</li><li><span class=\"ds-node ds-done\"><i></i></span>القيد</li><li><span class=\"ds-node ds-cur\"><i></i></span><b>المحكمة</b></li><li><span class=\"ds-node ds-next\"><i></i></span>الحكم</li></ol>",
+      "css": ".ds-path { direction: rtl; position: relative; display: grid; grid-template-columns: repeat(4, 1fr); width: 420px; margin: 0; padding: 0; list-style: none; font-family: 'Readex Pro Variable', 'Readex Pro', system-ui, sans-serif; } .ds-path li { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 12.5px; color: #545c67; position: relative; } .ds-path b { color: #303741; font-weight: 600; } .ds-base, .ds-fill { position: absolute; top: 19px; height: 2px; border-radius: 2px; } .ds-base { inset-inline: 12.5%; background: #dde1e2; } .ds-fill { inset-inline-start: 12.5%; width: 50%; background: #303741; transform-origin: right; animation: ds-fill 700ms cubic-bezier(0.23,1,0.32,1) both; } .ds-node { position: relative; width: 40px; height: 40px; border-radius: 10px; border: 1px solid; transform: rotate(45deg); box-sizing: border-box; } .ds-done { background: #303741; border-color: #303741; } .ds-cur { background: #fff; border-color: #303741; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #303741; } .ds-next { background: #fff; border: 1px dashed #c3c9d1; } @keyframes ds-fill { from { transform: scaleX(0); } } @media (prefers-reduced-motion: reduce) { .ds-fill { animation: none; } }"
     }
   ],
   "narrative": {
     "northStar": "The Logo Sheet",
-    "overview": "The product is laid out like the office logo printed on its own paper. The logo's charcoal ink is used for type, primary actions and focus. The logo's cool-grey ground (mist) forms the frame: the office side rail, the portal header, the hero bands on the dashboard and client home, and the sign-in panel. Wide areas sit on a cool off-white, and work happens on white sheets and cards. The logo's corner geometry comes through as the only ornament. On mist surfaces it appears as a faint charcoal lattice (diamond outline, short bar and small filled diamond). As markers, a 7px diamond is used in the nav, the agenda and the pipeline legend, and diamond nodes make up the dashboard's week ribbon. The original charcoal logo mark appears everywhere; the sign-in panel shows the full lockup at its original proportions.\n\nDensity is office-grade. The body is 14px Readex Pro at a light 350 weight. Lists are separated by hairline rules, never by zebra striping or header bars. Numbers are always isolated LTR, tabular figures inside Arabic text, and dates are always shown as Gregorian with the Hijri date next to them. Colour does no decorating. Charcoal and its grey ramp carry structure and data, and red, amber and green appear only when they mean overdue, soon or collected. These state colours are dark enough to sit directly on the mist bands at 4.5:1 or better.\n\nThe workspace is still. Nothing animates in on load: figures appear at their final value and bars and nodes render in place. Motion is limited to touch and state feedback: a press scale, colour changes on hover (fine pointers only), and the dialog and drawer opening. The system is light-only.",
+    "overview": "The product is laid out like the office logo printed on its own paper. The logo's charcoal ink is used for type, primary actions and focus. The logo's cool-grey ground (mist) forms the frame: the office top bar, the portal header, the hero bands on the dashboard and client home, and the sign-in panel. Wide areas sit on a cool off-white, and work happens on white sheets and cards. The logo's geometry supplies the only ornament: the diamond and, from the same judicial vocabulary, the scale. On mist surfaces the diamond appears as a faint charcoal lattice (diamond outline, short bar and small filled diamond). As markers, a 7px diamond is used in the nav, the agenda and the pipeline legend; diamond nodes make up the dashboard's week ribbon and the case stage path; and the custom icon set is drawn from diamonds and scales. The original charcoal logo appears everywhere; the sign-in panel shows the full lockup at its original proportions inside an animated diamond-and-scale scene.\n\nDensity is office-grade. The body is 14px Readex Pro at a light 350 weight. Lists are separated by hairline rules, never by zebra striping or header bars. Numbers are always isolated LTR, tabular figures inside Arabic text, and dates are always shown as Gregorian with the Hijri date next to them. Colour does no decorating. Charcoal and its grey ramp carry structure and data, and red, amber and green appear only when they mean overdue, soon or collected. These state colours are dark enough to sit directly on the mist bands at 4.5:1 or better.\n\nMotion is short, purposeful and always on the project's three curves. Pages fade up into place on navigation, dashboard sections arrive in a brief stagger, hero figures count up once, indicators slide rather than jump (selected day, tab underline, stage-path fill), and menus and sheets open from where they are summoned. Forms never animate in: the sign-in form and every working form are usable on the first frame. Under reduced motion all of it collapses to short fades or nothing. The system is light-only.",
     "keyCharacteristics": [
       "Logo-grey (mist) frame with a 7% charcoal lattice; cool off-white ground; white sheets and cards.",
       "Charcoal ink for text, primary buttons, focus and selection.",
-      "The diamond is the only ornament.",
+      "The diamond and the scale are the only ornament, in markers, icons and the sign-in scene.",
       "One sans family (Readex Pro, self-hosted), weights 350/500/600, tabular isolated numerals.",
       "State colour is reserved for meaning; data is drawn in charcoal and grey.",
-      "No entrance motion; feedback motion only. Light theme only."
+      "Short, curve-bound motion that guides attention; forms never animate in; reduced motion is fades only. Light theme only."
     ],
     "rules": [
       {
         "name": "The Meaning-Only Rule",
-        "body": "Red, amber and green appear only to say overdue, soon or collected. Charts, pipelines and agenda type markers use charcoal and greys, never a state hue.",
+        "body": "Red, amber and green appear only to say overdue, soon or collected. Charts, pipelines, stage paths and agenda type markers use charcoal and greys, never a state hue.",
         "section": "colors"
       },
       {
         "name": "The Logo Ground Frames the Work Rule",
-        "body": "Logo grey with the lattice belongs to the frame (rail, portal header, sign-in panel) and the two hero bands. Inner working pages sit on a single white sheet over the off-white ground, with no band.",
+        "body": "Logo grey with the lattice belongs to the frame (office top bar, portal header, sign-in panel) and the two hero bands. Inner working pages sit on a single white sheet over the off-white ground, with no band.",
         "section": "colors"
       },
       {
@@ -411,26 +451,26 @@
       },
       {
         "name": "The Sheet Is Flat Rule",
-        "body": "Full-page sheets carry only a border. Shadow belongs to cards that sit directly on the ground, and depth is never stacked inside a sheet.",
+        "body": "Full-page sheets carry only a border. Shadow belongs to cards that sit directly on the ground and to floating menus, and depth is never stacked inside a sheet.",
         "section": "elevation"
       }
     ],
     "dos": [
-      "Do put logo grey plus the lattice on the frame and the two hero bands only. Inner pages get one white sheet on the off-white ground.",
-      "Do use the original charcoal logo files as shipped. On the sign-in panel the full lockup keeps its original proportions.",
-      "Do use the diamond (7px rotated square) as the list, legend and active-nav marker.",
-      "Do keep charts and pipelines in charcoal and grey. Use signal red, amber or green only for overdue, soon or collected, and use them directly on mist.",
+      "Do put logo grey plus the lattice on the frame (top bar, portal header, sign-in panel) and the two hero bands only. Inner pages get one white sheet on the off-white ground.",
+      "Do use the original charcoal logo files as shipped. On the sign-in panel the full lockup keeps its original proportions and only fades in; the scene moves around it.",
+      "Do use the diamond (7px rotated square) as the list, legend and active-nav marker, and draw new icons in the judicial set's grammar (24 grid, 1.6 stroke, round caps, diamond and scale motifs).",
+      "Do keep charts, pipelines and stage paths in charcoal and grey. Use signal red, amber or green only for overdue, soon or collected, and use them directly on mist.",
       "Do wrap every number, reference and date LTR-isolated with tabular figures, and pair every Gregorian date with its Hijri date.",
-      "Do limit motion to feedback: press scale, colour transitions on fine-pointer hover, and the dialog and drawer opening. Respect `prefers-reduced-motion`.",
+      "Do keep motion short and on the three project curves: page enter 220ms, stagger 420ms/50ms, indicators that slide instead of jump, menus 160ms, sheets 300ms up / 200ms down. Respect `prefers-reduced-motion` with fades only.",
       "Do keep the 2px charcoal focus outline and the radius steps band 22 > sheet 18 > card 14 > control 10 > chip 7."
     ],
     "donts": [
-      "Don't add entrance motion, count-ups or load-time reveals to working pages. By the owner's rule, motion belongs only to a public intro section, and there isn't one.",
-      "Don't reintroduce a dark charcoal frame, lightened \"on-dark\" state variants, or a dark theme. The system is light-only.",
-      "Don't use a state hue as a chart or category colour.",
+      "Don't animate forms in. Sign-in and working forms are visible and usable on the first frame.",
+      "Don't reintroduce a side rail, a dark charcoal frame, lightened \"on-dark\" state variants, or a dark theme. The system is light-only.",
+      "Don't use a state hue as a chart, stage or category colour.",
       "Don't add a second typeface, uppercase, letter-spacing, or small labels above headings.",
       "Don't add zebra striping or filled header bars to tables. Rows are divided by rules alone.",
-      "Don't add a decorative motif other than the diamond and the logo-corner lattice (no gradients, glows or illustrations).",
+      "Don't add a decorative motif other than the diamond, the logo-corner lattice and the scale (no gradients, glows or unrelated illustrations).",
       "Don't load fonts, scripts or images from external hosts. Every asset is self-hosted under the strict CSP.",
       "Don't put a shadow on a full-page sheet or stack elevated cards inside a sheet."
     ]

@@ -22,7 +22,7 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
     <>
       <Head title="ملفاتي" />
       {/* الشريط الفحمي: ملفات العميل ومبالغه تعدّ أمامه */}
-      <section className="mist stagger-self mb-6 overflow-hidden rounded-[22px] px-5 pb-6 pt-6 sm:px-8" aria-labelledby="portal-title">
+      <section className="mist mb-6 overflow-hidden rounded-[22px] px-5 pb-6 pt-6 sm:px-8" aria-labelledby="portal-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 id="portal-title" className="text-[26px] font-semibold leading-tight text-ink sm:text-[30px]">ملفاتك لدى المكتب</h1>

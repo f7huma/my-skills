@@ -135,7 +135,7 @@ export default function OfficeLayout({ children }: { children: ReactNode }) {
                 return (
                   <li key={g.key} className="flex">
                     <Link href={g.items[0].href} aria-current={on ? 'page' : undefined}
-                      className={cx('nav-group relative flex items-center gap-2 px-3 text-[14px] transition-colors duration-150', on ? 'font-medium text-ink' : 'text-[#3f4650] hover:text-ink')}>
+                      className={cx('nav-group relative flex items-center gap-2 px-3 text-[14px] transition-colors duration-150', on ? 'font-medium text-ink' : 'text-muted hover:text-ink')}>
                       <I size={19} className="shrink-0" />{g.label}
                       {g.key === 'files' && <Badge n={badge} />}
                     </Link>
@@ -169,7 +169,7 @@ export default function OfficeLayout({ children }: { children: ReactNode }) {
                 return (
                   <li key={it.href} className="shrink-0">
                     <Link href={it.href} aria-current={on ? 'page' : undefined}
-                      className={cx('flex h-9 items-center gap-2 rounded-[10px] px-3 text-[13.5px] transition-colors duration-150', on ? 'bg-ink text-white' : 'text-[#3f4650] hover:bg-white')}>
+                      className={cx('flex h-9 items-center gap-2 rounded-[10px] px-3 text-[13.5px] transition-colors duration-150', on ? 'bg-ink text-white' : 'text-muted hover:bg-white')}>
                       <I size={17} />{it.label}{it.badge && <Badge n={badge} />}
                     </Link>
                   </li>
