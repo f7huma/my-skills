@@ -45,7 +45,7 @@ function WeekRibbon({ agenda, selected, onSelect }: { agenda: Agenda; selected: 
   const max = Math.max(1, ...load.map((l) => l.n));
   return (
     <div className="relative mt-7">
-      <span aria-hidden className="absolute inset-x-[7%] top-[26px] h-px bg-white/15" />
+      <span aria-hidden className="absolute inset-x-[7%] top-[26px] h-px bg-ink/15" />
       <ol className="relative grid grid-cols-7" aria-label="أيام الأسبوع — اختر يومًا لعرض بنوده">
         {load.map(({ d, n, hearings, deadline }, i) => {
           const today = i === 0;
@@ -56,17 +56,17 @@ function WeekRibbon({ agenda, selected, onSelect }: { agenda: Agenda; selected: 
             <li key={d} className="flex justify-center">
               <button type="button" onClick={() => onSelect(on ? null : d)} aria-pressed={on}
                 aria-label={`${weekday(d)} ${d} (${hijri(d)}هـ): ${n} بند${hearings ? `، منها ${hearings} جلسة` : ''}${deadline ? '، وفيه موعد نظامي' : ''}`}
-                className={cx('group flex w-full flex-col items-center rounded-xl pb-2 pt-1 transition-colors duration-200', on ? 'bg-white/10' : 'hover:bg-white/[0.05]')}>
+                className={cx('group flex w-full flex-col items-center rounded-xl pb-2 pt-1 transition-colors duration-200', on ? 'bg-white' : 'hover:bg-white/70')}>
                 <span className="grid h-[44px] place-items-center">
-                  <span className={cx('rounded-[4px] transition-[filter] duration-200 group-hover:brightness-125', today ? 'bg-white' : n ? 'bg-[#aeb7c2]' : 'border border-white/30 bg-transparent', deadline && 'ring-2 ring-[#f0b866] ring-offset-2 ring-offset-[#1b1f25]')}
-                    style={{ width: size, height: size, transform: 'rotate(45deg)', animation: `node-in 700ms var(--ease-expo) ${i * 60}ms both` }} />
+                  <span className={cx('rounded-[4px] transition-[filter] duration-200 group-hover:brightness-125', today ? 'bg-ink' : n ? 'bg-[#8b95a1]' : 'border border-ink/30 bg-transparent', deadline && 'ring-2 ring-amber ring-offset-2 ring-offset-[#e1e5e6]')}
+                    style={{ width: size, height: size, transform: 'rotate(45deg)' }} />
                 </span>
-                <span className={cx('mt-1 text-[10.5px] sm:text-[12.5px]', today ? 'font-semibold text-white' : off ? 'text-[#8f99a5]' : 'text-[#c9d0d8]')}>
+                <span className={cx('mt-1 text-[10.5px] sm:text-[12.5px]', today ? 'font-semibold text-ink' : off ? 'text-faint' : 'text-muted')}>
                   {today ? 'اليوم' : <><span className="sm:hidden" aria-hidden>{SHORT_DAYS[new Date(d + 'T12:00:00Z').getUTCDay()]}</span><span className="hidden sm:inline">{weekday(d).replace('ال', '')}</span></>}
                 </span>
-                <span className="num text-[11.5px] text-[#c9d0d8]">{hijriParts(d)?.d}<span className="text-[#a9b2bd]">هـ</span></span>
-                <span className="num text-[10.5px] text-[#a9b2bd]">{d.slice(8)}/{d.slice(5, 7)}</span>
-                <span className={cx('num mt-0.5 text-[12px]', n ? 'text-white' : 'text-[#8f99a5]')}>{n ? n : '—'}</span>
+                <span className="num text-[11.5px] text-muted">{hijriParts(d)?.d}<span className="text-muted">هـ</span></span>
+                <span className="num text-[10.5px] text-muted">{d.slice(8)}/{d.slice(5, 7)}</span>
+                <span className={cx('num mt-0.5 text-[12px]', n ? 'text-ink' : 'text-faint')}>{n ? n : '—'}</span>
               </button>
             </li>
           );
@@ -160,7 +160,7 @@ export default function Dashboard(p: Props) {
   const dayItems = day ? [...agenda.today, ...agenda.week].filter((i) => i.date === day) : [];
   const stats: [string, number, string?, number?][] = [
     ['جلسات اليوم', hearingsToday],
-    ['مواعيد نظامية هذا الأسبوع', weekDeadlines, weekDeadlines ? 'text-[#ffb4ac]' : undefined],
+    ['مواعيد نظامية هذا الأسبوع', weekDeadlines, weekDeadlines ? 'text-signal' : undefined],
     ['قضايا سارية', p.counters.activeCases],
     ['المقبوض هذا الشهر · ر.س', insights.collectedThisMonth, undefined, 0],
   ];
@@ -169,30 +169,30 @@ export default function Dashboard(p: Props) {
     <>
       <Head title="أسبوع المكتب" />
       {/* الشريط الفحمي: الأرقام تعدّ، وشريط الأسبوع تحتها */}
-      <section className="night rise relative overflow-hidden rounded-[22px] px-5 pb-4 pt-6 sm:px-8" aria-labelledby="week-title">
+      <section className="mist relative overflow-hidden rounded-[22px] px-5 pb-4 pt-6 sm:px-8" aria-labelledby="week-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1 basis-[22rem]">
-            <h1 id="week-title" className="text-[26px] font-semibold leading-tight text-white sm:text-[30px]">أسبوع المكتب</h1>
-            <p className="mt-1 text-[14px] text-[#c9d0d8]">{weekday(agenda.range.from)} {dayMonth(agenda.range.from)} · {agenda.range.fromHijri}</p>
-            {finding && <p className={cx('mt-1.5 text-[13.5px] font-medium', agenda.overdue.length ? 'text-[#ffb4ac]' : 'text-[#c9d0d8]')}>{finding}</p>}
+            <h1 id="week-title" className="text-[26px] font-semibold leading-tight text-ink sm:text-[30px]">أسبوع المكتب</h1>
+            <p className="mt-1 text-[14px] text-muted">{weekday(agenda.range.from)} {dayMonth(agenda.range.from)} · {agenda.range.fromHijri}</p>
+            {finding && <p className={cx('mt-1.5 text-[13.5px] font-medium', agenda.overdue.length ? 'text-signal' : 'text-muted')}>{finding}</p>}
             {nearest && left !== null && (
-              <Link href={`/office/deadlines#deadline-${nearest.id}`} className="mt-1.5 flex max-w-full items-start gap-2 text-[13.5px] text-white hover:underline underline-offset-4 lg:max-w-[60ch]">
-                <span className={cx('diamond', left <= 3 ? 'text-[#ff8a80]' : left <= 10 ? 'text-[#f0b866]' : 'text-[#aeb7c2]')} aria-hidden />
+              <Link href={`/office/deadlines#deadline-${nearest.id}`} className="mt-1.5 flex max-w-full items-start gap-2 text-[13.5px] text-ink hover:underline underline-offset-4 lg:max-w-[60ch]">
+                <span className={cx('diamond', left <= 3 ? 'text-signal' : left <= 10 ? 'text-amber' : 'text-[#8b95a1]')} aria-hidden />
                 <span className="line-clamp-2">أقرب موعد نظامي: <b>{inDays(left)}</b> — {nearest.reason}</span>
               </Link>
             )}
           </div>
           <div className="flex flex-wrap gap-2">
-            <ButtonLink href="/office/cases/create" variant="light" size="sm"><Plus className="size-4" aria-hidden />قضية جديدة</ButtonLink>
+            <ButtonLink href="/office/cases/create" variant="primary" size="sm"><Plus className="size-4" aria-hidden />قضية جديدة</ButtonLink>
             <ButtonLink href="/office/executions/create" variant="ghost" size="sm" className="hidden sm:inline-flex">طلب تنفيذ</ButtonLink>
             <ButtonLink href="/office/clients/create" variant="ghost" size="sm" className="hidden sm:inline-flex">عميل جديد</ButtonLink>
           </div>
         </div>
         <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-4">
           {stats.map(([label, value, tone, dec], i) => (
-            <div key={label} className={cx('min-w-0 border-s border-white/15 ps-4', i === 3 && 'col-span-2 lg:col-span-1')}>
-              <dt className="text-[12.5px] text-[#a9b2bd]">{label}</dt>
-              <dd className={cx('mt-1 font-semibold leading-none text-white', i === 3 ? 'text-[clamp(26px,7.5vw,40px)]' : 'text-[34px] sm:text-[40px]', tone)}><CountUp value={value} decimals={dec ?? 0} /></dd>
+            <div key={label} className={cx('min-w-0 border-s border-ink/15 ps-4', i === 3 && 'col-span-2 lg:col-span-1')}>
+              <dt className="text-[12.5px] text-muted">{label}</dt>
+              <dd className={cx('mt-1 font-semibold leading-none text-ink', i === 3 ? 'text-[clamp(26px,7.5vw,40px)]' : 'text-[34px] sm:text-[40px]', tone)}><CountUp value={value} decimals={dec ?? 0} /></dd>
             </div>
           ))}
         </dl>

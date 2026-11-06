@@ -1,42 +1,12 @@
 import { Link } from '@inertiajs/react';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { cx } from '@/Components/ui';
 
-const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const fmt = (n: number, decimals = 0) => new Intl.NumberFormat('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
 
-/**
- * رقم يعدّ من الصفر إلى قيمته مرة واحدة عند ظهوره (منحنى أسّي)، وثابت عند تقليل الحركة.
- * يكتب النص مباشرة في العنصر كل إطار بدل تحديث حالة React، فلا يُعاد رسم المكوّن ٦٠ مرة في الثانية.
- */
-export function CountUp({ value, decimals = 0, duration = 1300, className }: { value: number; decimals?: number; duration?: number; className?: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const out = useRef<HTMLSpanElement>(null);
-  useLayoutEffect(() => {
-    const node = out.current;
-    if (!node) return;
-    if (reduced()) { node.textContent = fmt(value, decimals); return; }
-    node.textContent = fmt(0, decimals);
-    let raf = 0;
-    let start = 0;
-    const tick = (t: number) => {
-      if (!start) start = t;
-      const p = Math.min(1, (t - start) / duration);
-      node.textContent = fmt(p < 1 ? value * (1 - Math.pow(2, -10 * p)) : value, decimals);
-      if (p < 1) raf = requestAnimationFrame(tick);
-    };
-    const el = ref.current;
-    if (!el || !('IntersectionObserver' in window)) { raf = requestAnimationFrame(tick); return () => cancelAnimationFrame(raf); }
-    const io = new IntersectionObserver(([e]) => { if (e.isIntersecting) { raf = requestAnimationFrame(tick); io.disconnect(); } }, { threshold: 0.3 });
-    io.observe(el);
-    return () => { io.disconnect(); cancelAnimationFrame(raf); };
-  }, [value, decimals, duration]);
-  return (
-    <span ref={ref} className={cx('num', className)}>
-      <span ref={out} aria-hidden>{fmt(value, decimals)}</span>
-      <span className="sr-only">{fmt(value, decimals)}</span>
-    </span>
-  );
+/** رقم بتنسيق جدولي. الحركة محصورة في القسم التعريفي؛ أرقام الصفحات العملية تظهر بقيمتها فورًا */
+export function CountUp({ value, decimals = 0, className }: { value: number; decimals?: number; duration?: number; className?: string }) {
+  return <span className={cx('num', className)}>{fmt(value, decimals)}</span>;
 }
 
 /** أعمدة تفاعلية: تنمو عند التحميل، وتعرض قيمتها عند المرور أو التركيز */

@@ -21,28 +21,28 @@ export default function Home({ cases, executions, totals, claims, canView, canSu
     <>
       <Head title="ملفاتي" />
       {/* الشريط الفحمي: ملفات العميل ومبالغه تعدّ أمامه */}
-      <section className="night rise mb-6 overflow-hidden rounded-[22px] px-5 pb-6 pt-6 sm:px-8" aria-labelledby="portal-title">
+      <section className="mist mb-6 overflow-hidden rounded-[22px] px-5 pb-6 pt-6 sm:px-8" aria-labelledby="portal-title">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <h1 id="portal-title" className="text-[26px] font-semibold leading-tight text-white sm:text-[30px]">ملفاتك لدى المكتب</h1>
-            <p className="mt-1 text-[14px] text-[#c9d0d8]">{auth?.user.name}{latest?.lastUpdate && <> · آخر تحديث {relative(latest.lastUpdate)}</>}</p>
+            <h1 id="portal-title" className="text-[26px] font-semibold leading-tight text-ink sm:text-[30px]">ملفاتك لدى المكتب</h1>
+            <p className="mt-1 text-[14px] text-muted">{auth?.user.name}{latest?.lastUpdate && <> · آخر تحديث {relative(latest.lastUpdate)}</>}</p>
           </div>
-          {canSubmit && <Button variant="light" onClick={() => router.post('/portal/claims')}><FilePlus2 className="size-4" aria-hidden />إدراج مطالبة جديدة</Button>}
+          {canSubmit && <Button variant="primary" onClick={() => router.post('/portal/claims')}><FilePlus2 className="size-4" aria-hidden />إدراج مطالبة جديدة</Button>}
         </div>
         {canView && (
           <dl className="mt-6 grid grid-cols-2 gap-x-6 gap-y-5 lg:grid-cols-4">
-            <div className="border-s border-white/15 ps-4"><dt className="text-[12.5px] text-[#a9b2bd]">القضايا</dt><dd className="mt-1 text-[36px] font-semibold leading-none text-white"><CountUp value={cases.length} /></dd></div>
-            <div className="border-s border-white/15 ps-4"><dt className="text-[12.5px] text-[#a9b2bd]">طلبات التنفيذ</dt><dd className="mt-1 text-[36px] font-semibold leading-none text-white"><CountUp value={executions.length} /></dd></div>
+            <div className="border-s border-ink/15 ps-4"><dt className="text-[12.5px] text-muted">القضايا</dt><dd className="mt-1 text-[36px] font-semibold leading-none text-ink"><CountUp value={cases.length} /></dd></div>
+            <div className="border-s border-ink/15 ps-4"><dt className="text-[12.5px] text-muted">طلبات التنفيذ</dt><dd className="mt-1 text-[36px] font-semibold leading-none text-ink"><CountUp value={executions.length} /></dd></div>
             {(received.length ? received : [['SAR', '0']]).slice(0, 2).map(([c, v]) => {
               const claimed = Number(totals.claimed[c] ?? 0);
               return (
-                <div key={c} className="col-span-2 border-s border-white/15 ps-4">
-                  <dt className="text-[12.5px] text-[#a9b2bd]">المحصّل فعليًا · {c}</dt>
-                  <dd className="mt-1 min-w-0 text-[clamp(26px,7.5vw,36px)] font-semibold leading-none text-[#9be3bf]"><CountUp value={Number(v)} decimals={2} /></dd>
+                <div key={c} className="col-span-2 border-s border-ink/15 ps-4">
+                  <dt className="text-[12.5px] text-muted">المحصّل فعليًا · {c}</dt>
+                  <dd className="mt-1 min-w-0 text-[clamp(26px,7.5vw,36px)] font-semibold leading-none text-positive"><CountUp value={Number(v)} decimals={2} /></dd>
                   {claimed > 0 && (
                     <div className="mt-3 max-w-[340px]">
-                      <div className="[&>div]:bg-white/15"><Meter value={Number(v)} max={claimed} tone="positive" label={`المحصّل من المطالب به (${c})`} /></div>
-                      <p className="mt-1.5 text-[12px] text-[#a9b2bd]">من <bdi className="num">{new Intl.NumberFormat('en-US').format(claimed)}</bdi> مطالب بها</p>
+                      <div><Meter value={Number(v)} max={claimed} tone="positive" label={`المحصّل من المطالب به (${c})`} /></div>
+                      <p className="mt-1.5 text-[12px] text-muted">من <bdi className="num">{new Intl.NumberFormat('en-US').format(claimed)}</bdi> مطالب بها</p>
                     </div>
                   )}
                 </div>

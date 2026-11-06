@@ -18,13 +18,13 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-dvh bg-chrome">
       <a href="#main" className="skip-link">تخطَّ إلى المحتوى</a>
-      <header className="night no-print">
+      <header className="mist no-print">
         <div className="mx-auto flex max-w-[1120px] flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3.5 sm:px-6">
-          <Link href="/portal" aria-label="الصفحة الرئيسية للبوابة"><Brand light /></Link>
+          <Link href="/portal" aria-label="الصفحة الرئيسية للبوابة"><Brand /></Link>
           <nav aria-label="التنقل" className="order-3 flex w-full gap-1 sm:order-none sm:w-auto">
             {links.map((l) => (
               <Link key={l.href} href={l.href} aria-current={l.active ? 'page' : undefined}
-                className={cx('rounded-[10px] px-3.5 py-1.5 text-[14px] transition-colors', l.active ? 'bg-white/[0.12] font-medium text-white' : 'text-[#c9d0d8] hover:bg-white/[0.06] hover:text-white')}>{l.label}</Link>
+                className={cx('rounded-[10px] px-3.5 py-1.5 text-[14px] transition-colors', l.active ? 'bg-white shadow-[0_1px_2px_rgba(48,55,65,.08)] font-medium text-ink' : 'text-muted hover:bg-white/70 hover:text-text')}>{l.label}</Link>
             ))}
           </nav>
           <div className="ms-auto flex items-center gap-1">

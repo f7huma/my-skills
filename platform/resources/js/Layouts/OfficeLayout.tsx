@@ -33,8 +33,8 @@ function NavList({ items, url, badge }: { items: typeof nav; url: string; badge:
           <li key={it.href}>
             <Link href={it.href} aria-current={active ? 'page' : undefined}
               className={cx('relative flex h-10 items-center gap-3 rounded-[10px] px-3 text-[14px] transition-colors duration-150',
-                active ? 'bg-white/[0.09] font-medium text-white' : 'text-[#b9c1cb] hover:bg-white/[0.05] hover:text-white')}>
-              {active && <span aria-hidden className="diamond absolute -start-[3px] text-white" />}
+                active ? 'bg-white shadow-[0_1px_2px_rgba(48,55,65,.08)] font-medium text-ink' : 'text-[#3f4650] hover:bg-white/70 hover:text-text')}>
+              {active && <span aria-hidden className="diamond absolute -start-[3px] text-ink" />}
               <Icon className="size-[18px] shrink-0" strokeWidth={1.5} aria-hidden />
               <span className="flex-1 truncate">{it.label}</span>
               {'badge' in it && it.badge === 'claims' && badge > 0 && (
@@ -59,24 +59,24 @@ export default function OfficeLayout({ children }: { children: ReactNode }) {
   const badge = counts?.claimsInbox ?? 0;
 
   const sidebar = (
-    <div className="night flex h-full flex-col gap-6 px-3 pb-4 pt-5">
-      <Link href="/office" className="px-2" aria-label="الرئيسية — مكتب فيصل حميضان الحميضان"><Brand light /></Link>
+    <div className="mist flex h-full flex-col gap-6 px-3 pb-4 pt-5">
+      <Link href="/office" className="px-2" aria-label="الرئيسية — مكتب فيصل حميضان الحميضان"><Brand /></Link>
       <nav aria-label="التنقل الرئيسي" className="flex-1 space-y-6 overflow-y-auto">
         <NavList items={nav} url={page.url} badge={badge} />
         <div>
-          <p className="mb-1.5 px-3 text-[12px] text-[#a9b2bd]">إدارة المكتب</p>
+          <p className="mb-1.5 px-3 text-[12px] text-muted">إدارة المكتب</p>
           <NavList items={admin} url={page.url} badge={0} />
         </div>
       </nav>
-      <div className="space-y-1 border-t border-white/10 pt-3">
-        <Link href="/account/security" className="flex items-center gap-2.5 rounded-[10px] px-3 py-1.5 text-[13.5px] text-white hover:bg-white/[0.05]">
-          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white/10 text-[13px] font-semibold">{auth?.user.name?.trim().charAt(0)}</span>
+      <div className="space-y-1 border-t border-ink/15 pt-3">
+        <Link href="/account/security" className="flex items-center gap-2.5 rounded-[10px] px-3 py-1.5 text-[13.5px] text-ink hover:bg-white/70">
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-white text-[13px] font-semibold">{auth?.user.name?.trim().charAt(0)}</span>
           <span className="min-w-0">
             <span className="block truncate font-medium">{auth?.user.name}</span>
-            <span className="flex items-center gap-1 text-[12px] text-[#a9b2bd]"><ShieldCheck className="size-3.5" aria-hidden />أمان الحساب</span>
+            <span className="flex items-center gap-1 text-[12px] text-muted"><ShieldCheck className="size-3.5" aria-hidden />أمان الحساب</span>
           </span>
         </Link>
-        <Link href="/logout" method="post" as="button" className="flex w-full items-center gap-2.5 rounded-[10px] px-3 py-1.5 text-[13.5px] text-[#b9c1cb] hover:bg-white/[0.05] hover:text-white">
+        <Link href="/logout" method="post" as="button" className="flex w-full items-center gap-2.5 rounded-[10px] px-3 py-1.5 text-[13.5px] text-[#3f4650] hover:bg-white/70 hover:text-text">
           <LogOut className="size-4" aria-hidden />تسجيل الخروج
         </Link>
       </div>
@@ -95,7 +95,7 @@ export default function OfficeLayout({ children }: { children: ReactNode }) {
       {menu && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="القائمة">
           <div className="drawer-scrim absolute inset-0 bg-[rgba(20,24,30,0.38)]" onClick={() => setMenu(false)} />
-          <div className="drawer-panel night absolute inset-y-0 start-0 w-[min(300px,86vw)] shadow-xl">
+          <div className="drawer-panel mist absolute inset-y-0 start-0 w-[min(300px,86vw)] shadow-xl">
             <button type="button" onClick={() => setMenu(false)} className="btn btn-ghost btn-sm absolute end-2 top-4 z-10" aria-label="إغلاق القائمة"><X className="size-4" /></button>
             {sidebar}
           </div>
