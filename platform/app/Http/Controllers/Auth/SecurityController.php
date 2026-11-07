@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Models\User;
 use App\Http\Controllers\Controller;
 use App\Services\Audit;
 use App\Services\Auth\AccountManager;
@@ -25,6 +26,8 @@ class SecurityController extends Controller
             'setup' => $pending ? ['qr' => $tf->qrSvg($user, $pending), 'secret' => $pending] : null,
             'recoveryCodes' => $request->session()->get('2fa.recovery_codes'),
             'remainingRecoveryCodes' => count($user->two_factor_recovery_codes ?? []),
+            'username' => $user->username,
+            'email' => $user->email,
         ]);
     }
 
@@ -93,6 +96,17 @@ class SecurityController extends Controller
         Audit::log('auth.password_changed', $user);
 
         return back()->with('success', 'تم تغيير كلمة المرور وإنهاء الجلسات الأخرى.');
+    }
+
+    /** تعيين اسم المستخدم أو تغييره (أو حذفه بتركه فارغًا) */
+    public function updateUsername(Request $request)
+    {
+        $user = $request->user();
+        $data = $request->validate(['username' => User::usernameRules($user->id)]);
+        $user->forceFill(['username' => User::normalizeUsername($data['username'] ?? null)])->save();
+        Audit::log('auth.username_changed', $user);
+
+        return back()->with('success', $user->username ? 'حُفظ اسم المستخدم. يمكنك الدخول به من الآن.' : 'حُذف اسم المستخدم؛ الدخول بالبريد فقط.');
     }
 
     public function logoutOtherSessions(Request $request, AccountManager $accounts)

@@ -84,6 +84,25 @@ class AuthTest extends TestCase
         $this->post($path, ['password' => '1234', 'password_confirmation' => '1234'])->assertRedirect(route('home'));
     }
 
+    public function test_login_with_username_containing_spaces(): void
+    {
+        $this->demo();
+        $u = $this->lawyer();
+        $this->actingAs($u)->put('/account/security/username', ['username' => '  فيصل   الحميضان '])->assertSessionHasNoErrors();
+        $this->assertSame('فيصل الحميضان', $u->fresh()->username);
+        $this->post('/logout');
+        // المسافات الزائدة لا تهم، والبحث لا يميّز حالة الأحرف اللاتينية
+        $this->post('/login', ['email' => 'فيصل  الحميضان', 'password' => 'Demo-Pass-2026'])->assertRedirect(route('home'));
+        $this->post('/logout');
+        $this->post('/login', ['email' => 'lawyer@example.test', 'password' => 'Demo-Pass-2026'])->assertRedirect(route('home'));
+        $this->post('/logout');
+        $this->post('/login', ['email' => 'فيصل الحميضان', 'password' => 'wrong'])->assertSessionHasErrors('email');
+        // اسم مستخدم مكرر أو يحوي @ يُرفض
+        $other = \App\Models\User::where('email', 'cfo@example.test')->first();
+        $this->actingAs($other)->put('/account/security/username', ['username' => 'فيصل الحميضان'])->assertSessionHasErrors('username');
+        $this->actingAs($other)->put('/account/security/username', ['username' => 'a@b'])->assertSessionHasErrors('username');
+    }
+
     public function test_deactivation_ends_existing_sessions_immediately(): void
     {
         $this->demo();

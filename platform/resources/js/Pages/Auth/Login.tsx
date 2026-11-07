@@ -11,7 +11,7 @@ export default function Login() {
       <Head title="تسجيل الدخول" />
       {flash.status && <p className="mb-4 rounded-lg px-3 py-2 text-[13.5px] pill-info" style={{ height: 'auto' }}>{flash.status}</p>}
       <form onSubmit={(e) => { e.preventDefault(); form.post('/login', { onFinish: () => form.reset('password') }); }} className="space-y-4" noValidate>
-        <TextField label="البريد الإلكتروني" type="email" autoComplete="username" ltr required value={form.data.email} onChange={(e) => form.setData('email', e.target.value)} error={form.errors.email} autoFocus />
+        <TextField label="اسم المستخدم أو البريد الإلكتروني" type="text" dir="auto" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} required value={form.data.email} onChange={(e) => form.setData('email', e.target.value)} error={form.errors.email} autoFocus />
         <TextField label="كلمة المرور" type="password" autoComplete="current-password" ltr required value={form.data.password} onChange={(e) => form.setData('password', e.target.value)} error={form.errors.password} />
         <Checkbox label="تذكرني على هذا الجهاز" checked={form.data.remember} onChange={(v) => form.setData('remember', v)} />
         <Button variant="primary" type="submit" className="w-full" loading={form.processing}>دخول</Button>

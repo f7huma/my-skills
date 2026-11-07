@@ -34,6 +34,7 @@ class InvitationController extends Controller
     {
         $data = $request->validate([
             'password' => ['required', 'confirmed', Password::min(4)],
+            'username' => User::usernameRules(User::where('email', Invitation::where('token_hash', Invitation::hashToken($token))->value('email'))->value('id')),
         ]);
 
         $user = DB::transaction(function () use ($token, $data) {
@@ -56,6 +57,9 @@ class InvitationController extends Controller
                 }
             } else {
                 $user = User::create(['name' => $inv->name, 'email' => $inv->email, 'password' => $data['password'], 'role' => $inv->role, 'is_active' => true]);
+            }
+            if (! empty($data['username'])) {
+                $user->forceFill(['username' => User::normalizeUsername($data['username'])])->save();
             }
             if ($inv->client_id) {
                 ClientMembership::updateOrCreate(

@@ -20,7 +20,7 @@ class UserController extends Controller
     {
         return Inertia::render('Admin/Users', [
             'users' => User::with(['memberships.client:id,name'])->orderBy('role')->orderBy('name')->get()->map(fn (User $u) => [
-                'id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'role' => $u->role, 'active' => $u->is_active,
+                'id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'username' => $u->username, 'role' => $u->role, 'active' => $u->is_active,
                 'twoFactor' => $u->hasTwoFactor(), 'lastLogin' => $u->last_login_at?->toIso8601String(),
                 'memberships' => $u->memberships->map(fn ($m) => ['id' => $m->id, 'client' => $m->client->name, 'clientId' => $m->client_id,
                     'canView' => $m->can_view, 'canSubmitClaims' => $m->can_submit_claims, 'revoked' => (bool) $m->revoked_at]),

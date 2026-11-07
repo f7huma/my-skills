@@ -44,7 +44,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         RateLimiter::for('login', fn (Request $r) => [
-            Limit::perMinute(5)->by(mb_strtolower((string) $r->input('email')).'|'.$r->ip()),
+            Limit::perMinute(5)->by(mb_strtolower(trim(preg_replace('/\s+/u', ' ', (string) $r->input('email')))).'|'.$r->ip()),
             Limit::perMinute(20)->by($r->ip()),
         ]);
         RateLimiter::for('two-factor', fn (Request $r) => Limit::perMinute(5)->by($r->session()->get('login.id').'|'.$r->ip()));

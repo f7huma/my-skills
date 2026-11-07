@@ -4,7 +4,7 @@ import { Button, Checkbox, cx, EmptyState, Modal, Num, PageHeader, Panel, Pill, 
 import { dateTime } from '@/lib/format';
 import type { Option, SharedProps } from '@/types';
 
-type U = { id: number; name: string; email: string; role: string; active: boolean; twoFactor: boolean; lastLogin: string | null; memberships: { id: number; client: string; clientId: number; canView: boolean; canSubmitClaims: boolean; revoked: boolean }[] };
+type U = { id: number; name: string; email: string; username: string | null; role: string; active: boolean; twoFactor: boolean; lastLogin: string | null; memberships: { id: number; client: string; clientId: number; canView: boolean; canSubmitClaims: boolean; revoked: boolean }[] };
 
 export default function Users({ users, invitations, clients }: { users: U[]; invitations: { id: number; name: string; email: string; role: string; client: string | null; expiresAt: string }[]; clients: Option[] }) {
   const { auth, flash } = usePage<SharedProps>().props;
@@ -20,7 +20,7 @@ export default function Users({ users, invitations, clients }: { users: U[]; inv
         <ul className="divide-y divide-rule">{users.map((u) => (
           <li key={u.id} className="grid gap-2 py-3 lg:grid-cols-[1fr_auto]">
             <div className="min-w-0">
-              <p className="font-medium">{u.name} <span className="text-[12.5px] font-normal text-muted"><Num>{u.email}</Num></span></p>
+              <p className="font-medium">{u.name} <span className="text-[12.5px] font-normal text-muted"><Num>{u.email}</Num>{u.username && <> · اسم المستخدم: <bdi>{u.username}</bdi></>}</span></p>
               <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-[12.5px] text-muted">
                 <Pill tone={u.role === 'lawyer' ? 'accent' : 'neutral'}>{u.role === 'lawyer' ? 'محامٍ' : 'عميل'}</Pill>
                 {!u.active && <Pill tone="negative">معطّل</Pill>}

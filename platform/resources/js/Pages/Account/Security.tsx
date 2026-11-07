@@ -5,9 +5,9 @@ import PortalLayout from '@/Layouts/PortalLayout';
 import { Button, PageHeader, Pill, TextField } from '@/Components/ui';
 import type { SharedProps } from '@/types';
 
-type Props = { twoFactorEnabled: boolean; mfaRequired: boolean; setup: { qr: string; secret: string } | null; recoveryCodes: string[] | null; remainingRecoveryCodes: number };
+type Props = { twoFactorEnabled: boolean; mfaRequired: boolean; setup: { qr: string; secret: string } | null; recoveryCodes: string[] | null; remainingRecoveryCodes: number; username: string | null; email: string };
 
-function Section({ title, description, children }: { title: string; description: string; children: ReactNode }) {
+function Section({ title, description, children }: { title: string; description: ReactNode; children: ReactNode }) {
   return (
     <section className="grid gap-4 border-b border-rule py-8 first:pt-0 last:border-0 md:grid-cols-[minmax(0,320px)_1fr] md:gap-10">
       <div>
@@ -19,12 +19,14 @@ function Section({ title, description, children }: { title: string; description:
   );
 }
 
-export default function Security({ twoFactorEnabled, mfaRequired, setup, recoveryCodes, remainingRecoveryCodes }: Props) {
+export default function Security(p: Props) {
+  const { twoFactorEnabled, mfaRequired, setup, recoveryCodes, remainingRecoveryCodes } = p;
   const start = useForm({ password: '' });
   const confirm = useForm({ code: '' });
   const recovery = useForm({ password: '' });
   const disable = useForm({ password: '' });
   const pwd = useForm({ current_password: '', password: '', password_confirmation: '' });
+  const uname = useForm({ username: p.username ?? '' });
   const others = useForm({ password: '' });
 
   return (
@@ -84,6 +86,14 @@ export default function Security({ twoFactorEnabled, mfaRequired, setup, recover
             )}
           </div>
         )}
+      </Section>
+
+      <Section title="اسم المستخدم" description={<>تدخل به بدل البريد <bdi className="num">{p.email}</bdi>. يقبل الحروف والأرقام والمسافات. اتركه فارغًا لتدخل بالبريد فقط.</>}>
+        <form onSubmit={(e) => { e.preventDefault(); uname.put('/account/security/username', { preserveScroll: true }); }} className="grid gap-4 sm:grid-cols-3 sm:items-end">
+          <TextField className="sm:col-span-2" label="اسم المستخدم" dir="auto" autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={60}
+            value={uname.data.username} onChange={(e) => uname.setData('username', e.target.value)} error={uname.errors.username} placeholder="مثل: فيصل الحميضان" />
+          <div><Button variant="primary" type="submit" loading={uname.processing}>حفظ اسم المستخدم</Button></div>
+        </form>
       </Section>
 
       <Section title="كلمة المرور" description="تغيير كلمة المرور يُنهي جلساتك على الأجهزة الأخرى.">

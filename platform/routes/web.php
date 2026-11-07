@@ -35,6 +35,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/two-factor/recovery-codes', 'regenerateRecoveryCodes')->name('recovery');
         Route::delete('/two-factor', 'disableTwoFactor')->name('disable');
         Route::put('/password', 'updatePassword')->name('password');
+        Route::put('/username', 'updateUsername')->name('username');
         Route::post('/sessions/logout-others', 'logoutOtherSessions')->name('logout-others');
     });
 

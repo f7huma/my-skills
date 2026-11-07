@@ -21,8 +21,10 @@ class LoginController extends Controller
 
     public function store(Request $request)
     {
-        $data = $request->validate(['email' => 'required|email|max:190', 'password' => 'required|string|max:200', 'remember' => 'boolean']);
-        $user = User::where('email', mb_strtolower($data['email']))->first();
+        // «email» هنا حقل الدخول: بريد أو اسم مستخدم (يقبل المسافات)
+        $data = $request->validate(['email' => 'required|string|max:190', 'password' => 'required|string|max:200', 'remember' => 'boolean'],
+            ['email.required' => 'اكتب اسم المستخدم أو البريد الإلكتروني.']);
+        $user = User::findForLogin($data['email']);
         // نتحقق من كلمة المرور حتى عند عدم وجود المستخدم لتقليل فروق التوقيت
         $valid = $user && $user->password && Hash::check($data['password'], $user->password);
         if (! $user) {

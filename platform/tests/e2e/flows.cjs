@@ -32,7 +32,7 @@ async function login(browser, email, viewport = { width: 1440, height: 900 }) {
   page.errors = [];
   page.on('pageerror', (e) => page.errors.push(e.message));
   await page.goto(BASE + '/login');
-  await page.getByLabel('البريد الإلكتروني').fill(email);
+  await page.getByLabel('اسم المستخدم أو البريد الإلكتروني').fill(email);
   await page.getByLabel('كلمة المرور').fill(PASS);
   await page.getByRole('button', { name: 'دخول', exact: true }).click();
   await page.waitForURL((u) => !u.pathname.startsWith('/login'));
