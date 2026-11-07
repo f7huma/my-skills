@@ -170,6 +170,8 @@ Route::middleware('auth')->group(function () {
             Route::post('/users/{user}/deactivate', [UserController::class, 'deactivate'])->name('admin.users.deactivate');
             Route::post('/users/{user}/reactivate', [UserController::class, 'reactivate'])->name('admin.users.reactivate');
             Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])->name('admin.users.reset-password');
+            Route::post('/accounts', [UserController::class, 'createAccount'])->name('admin.accounts.store');
+            Route::put('/users/{user}/password', [UserController::class, 'setPassword'])->name('admin.users.password');
             Route::post('/users/{user}/revoke-sessions', [UserController::class, 'revokeSessions'])->name('admin.users.revoke-sessions');
             Route::put('/memberships/{membership}', [UserController::class, 'updateMembership'])->name('admin.memberships.update');
 

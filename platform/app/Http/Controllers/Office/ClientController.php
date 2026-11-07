@@ -130,8 +130,8 @@ class ClientController extends Controller
             'documents' => $docs->where('documentable_type', null)->map(fn ($d) => Office::document($d))->values(),
             'allDocumentsCount' => $docs->count(),
             'totals' => Collection::totals(Collection::where('client_id', $client->id)),
-            'members' => $client->memberships()->with('user:id,name,email,is_active,last_login_at')->get()->map(fn ($m) => [
-                'id' => $m->id, 'userId' => $m->user_id, 'name' => $m->user->name, 'email' => $m->user->email, 'active' => $m->user->is_active,
+            'members' => $client->memberships()->with('user:id,name,email,username,is_active,last_login_at')->get()->map(fn ($m) => [
+                'id' => $m->id, 'userId' => $m->user_id, 'name' => $m->user->name, 'email' => $m->user->email, 'username' => $m->user->username, 'active' => $m->user->is_active,
                 'canView' => $m->can_view, 'canSubmitClaims' => $m->can_submit_claims, 'revoked' => (bool) $m->revoked_at,
                 'lastLogin' => $m->user->last_login_at?->toIso8601String()]),
             'pendingInvitations' => \App\Models\Invitation::where('client_id', $client->id)->whereNull('accepted_at')->whereNull('revoked_at')

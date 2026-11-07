@@ -5,7 +5,7 @@ import PortalLayout from '@/Layouts/PortalLayout';
 import { Button, PageHeader, Pill, TextField } from '@/Components/ui';
 import type { SharedProps } from '@/types';
 
-type Props = { twoFactorEnabled: boolean; mfaRequired: boolean; setup: { qr: string; secret: string } | null; recoveryCodes: string[] | null; remainingRecoveryCodes: number; username: string | null; email: string };
+type Props = { twoFactorEnabled: boolean; mfaRequired: boolean; setup: { qr: string; secret: string } | null; recoveryCodes: string[] | null; remainingRecoveryCodes: number; username: string | null; email: string | null };
 
 function Section({ title, description, children }: { title: string; description: ReactNode; children: ReactNode }) {
   return (
@@ -88,7 +88,7 @@ export default function Security(p: Props) {
         )}
       </Section>
 
-      <Section title="اسم المستخدم" description={<>تدخل به بدل البريد <bdi className="num">{p.email}</bdi>. يقبل الحروف والأرقام والمسافات. اتركه فارغًا لتدخل بالبريد فقط.</>}>
+      <Section title="اسم المستخدم" description={p.email ? <>تدخل به بدل البريد <bdi className="num">{p.email}</bdi>. يقبل الحروف والأرقام والمسافات. اتركه فارغًا لتدخل بالبريد فقط.</> : 'هو ما تدخل به إلى المنصة. يقبل الحروف والأرقام والمسافات.'}>
         <form onSubmit={(e) => { e.preventDefault(); uname.put('/account/security/username', { preserveScroll: true }); }} className="grid gap-4 sm:grid-cols-3 sm:items-end">
           <TextField className="sm:col-span-2" label="اسم المستخدم" dir="auto" autoComplete="username" autoCapitalize="none" spellCheck={false} maxLength={60}
             value={uname.data.username} onChange={(e) => uname.setData('username', e.target.value)} error={uname.errors.username} placeholder="مثل: فيصل الحميضان" />

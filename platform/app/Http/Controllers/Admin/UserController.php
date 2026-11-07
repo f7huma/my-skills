@@ -53,6 +53,52 @@ class UserController extends Controller
         return back()->with('success', 'أُنشئت الدعوة وأُرسلت بالبريد. يمكنك نسخ الرابط أدناه (يظهر مرة واحدة).')->with('invite_url', $res['url']);
     }
 
+    /**
+     * إنشاء حساب مباشرة باسم مستخدم وكلمة مرور يحددهما المكتب، دون دعوة بالبريد.
+     * المكتب يرسل البيانات للعميل بنفسه. كلمة المرور لا تُخزَّن إلا مشفّرة ولا تُعاد في أي استجابة.
+     */
+    public function createAccount(Request $request)
+    {
+        $data = $request->validate([
+            'name' => 'required|string|max:150',
+            'username' => array_merge(['required'], array_slice(User::usernameRules(), 1)),
+            'password' => ['required', \Illuminate\Validation\Rules\Password::min(4)],
+            'email' => 'nullable|email|max:190|unique:users,email',
+            'role' => 'required|in:lawyer,client',
+            'client_id' => 'nullable|required_if:role,client|exists:clients,id',
+            'can_view' => 'boolean', 'can_submit_claims' => 'boolean',
+        ], ['username.required' => 'اكتب اسم المستخدم الذي سيدخل به.']);
+        if ($data['role'] === 'client' && ! $request->boolean('can_view') && ! $request->boolean('can_submit_claims')) {
+            return back()->withErrors(['can_view' => 'امنح صلاحية واحدة على الأقل.']);
+        }
+        $user = \Illuminate\Support\Facades\DB::transaction(function () use ($data, $request) {
+            $user = User::create(['name' => $data['name'], 'email' => isset($data['email']) ? mb_strtolower($data['email']) : null,
+                'username' => User::normalizeUsername($data['username']), 'password' => $data['password'], 'role' => $data['role'], 'is_active' => true]);
+            if ($data['role'] === 'client') {
+                ClientMembership::create(['client_id' => $data['client_id'], 'user_id' => $user->id, 'can_view' => $request->boolean('can_view'),
+                    'can_submit_claims' => $request->boolean('can_submit_claims'), 'granted_by' => $request->user()->id]);
+            }
+
+            return $user;
+        });
+        Audit::log('account.created_directly', $user, ['role' => $user->role, 'client' => $data['client_id'] ?? null]);
+
+        return back()->with('success', 'أُنشئ الحساب. أرسل للمستخدم اسم المستخدم وكلمة المرور ورابط المنصة.');
+    }
+
+    /** تعيين كلمة مرور جديدة مباشرة لمستخدم (يُنهي جلساته الحالية) */
+    public function setPassword(Request $request, User $user, AccountManager $accounts)
+    {
+        $data = $request->validate(['password' => ['required', \Illuminate\Validation\Rules\Password::min(4)]]);
+        $user->forceFill(['password' => $data['password']])->save();
+        if ($user->id !== $request->user()->id) {
+            $accounts->revokeSessions($user);
+        }
+        Audit::log('account.password_set_by_office', $user);
+
+        return back()->with('success', 'عُيّنت كلمة المرور الجديدة. أرسلها للمستخدم.');
+    }
+
     public function revokeInvitation(Invitation $invitation)
     {
         $invitation->forceFill(['revoked_at' => now()])->save();

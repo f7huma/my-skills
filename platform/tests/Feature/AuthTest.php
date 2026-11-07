@@ -103,6 +103,30 @@ class AuthTest extends TestCase
         $this->actingAs($other)->put('/account/security/username', ['username' => 'a@b'])->assertSessionHasErrors('username');
     }
 
+    public function test_office_creates_client_account_directly_without_email(): void
+    {
+        $this->demo();
+        $client = $this->client('شركة الأمثلة');
+        $lawyer = $this->lawyer();
+        $this->actingAs($lawyer)->post('/office/admin/accounts', ['name' => 'محاسب الشركة', 'username' => 'محاسب  الأمثلة', 'password' => '2468',
+            'role' => 'client', 'client_id' => $client->id, 'can_view' => true, 'can_submit_claims' => false])->assertSessionHasNoErrors();
+        $u = User::where('username', 'محاسب الأمثلة')->first();
+        $this->assertNotNull($u);
+        $this->assertNull($u->email);
+        $this->assertSame('client', $u->role);
+        $this->assertTrue($u->memberships()->where('client_id', $client->id)->where('can_view', true)->exists());
+        // تكرار اسم المستخدم مرفوض
+        $this->post('/office/admin/accounts', ['name' => 'x', 'username' => 'محاسب الأمثلة', 'password' => '2468', 'role' => 'client', 'client_id' => $client->id, 'can_view' => true])
+            ->assertSessionHasErrors('username');
+        // المحامي يعيّن كلمة مرور جديدة
+        $this->put("/office/admin/users/{$u->id}/password", ['password' => '1357'])->assertSessionHasNoErrors();
+        $this->post('/logout');
+        $this->post('/login', ['email' => 'محاسب الأمثلة', 'password' => '1357'])->assertRedirect(route('home'));
+        // العميل لا يستطيع حذف اسم المستخدم لأن حسابه بلا بريد، ولا يصل لمسارات الإدارة
+        $this->put('/account/security/username', ['username' => ''])->assertSessionHasErrors('username');
+        $this->put("/office/admin/users/{$lawyer->id}/password", ['password' => '9999'])->assertForbidden();
+    }
+
     public function test_deactivation_ends_existing_sessions_immediately(): void
     {
         $this->demo();

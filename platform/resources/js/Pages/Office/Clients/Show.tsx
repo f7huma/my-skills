@@ -17,7 +17,7 @@ type Props = {
   executions: { id: number; reference: string; requestNumber: string | null; type: string; status: string; caseId: number | null }[];
   claims: { id: number; reference: string; opponent: string; status: string; statusLabel: string; amount: string | null; currency: string }[];
   documents: Doc[]; allDocumentsCount: number; totals: Totals;
-  members: { id: number; userId: number; name: string; email: string; active: boolean; canView: boolean; canSubmitClaims: boolean; revoked: boolean; lastLogin: string | null }[];
+  members: { id: number; userId: number; name: string; email: string | null; username: string | null; active: boolean; canView: boolean; canSubmitClaims: boolean; revoked: boolean; lastLogin: string | null }[];
   pendingInvitations: { id: number; name: string; email: string; expires_at: string; can_view: boolean; can_submit_claims: boolean }[];
   categories: Option[];
 };
@@ -47,6 +47,57 @@ function PoaForm({ clientId, poa, onDone }: { clientId: number; poa?: Poa; onDon
   );
 }
 
+/** بيانات دخول جاهزة للنسخ وإرسالها للعميل (تُبنى في المتصفح من المدخلات، لا تعود من الخادم) */
+function Credentials({ username, password, onClose }: { username: string; password: string; onClose: () => void }) {
+  const text = `رابط المنصة: ${window.location.origin}\nاسم المستخدم: ${username}\nكلمة المرور: ${password}`;
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="space-y-3">
+      <p className="text-[14px]">أُنشئ الحساب. انسخ البيانات التالية وأرسلها للعميل (واتساب أو رسالة):</p>
+      <pre className="whitespace-pre-wrap rounded-[12px] bg-raised p-4 font-sans text-[14px] leading-7" dir="rtl">{text}</pre>
+      <div className="flex gap-2">
+        <Button variant="primary" onClick={() => { navigator.clipboard?.writeText(text).then(() => setCopied(true)).catch(() => setCopied(false)); }}>{copied ? 'تم النسخ' : 'نسخ البيانات'}</Button>
+        <Button variant="ghost" onClick={onClose}>إغلاق</Button>
+      </div>
+      <p className="text-[12.5px] text-muted">لن تظهر كلمة المرور مرة أخرى. يستطيع العميل تغييرها بعد الدخول من «أمان الحساب».</p>
+    </div>
+  );
+}
+
+/** إنشاء حساب للعميل مباشرة: اسم مستخدم وكلمة مرور يحددهما المكتب */
+function CreateAccountForm({ clientId, onDone }: { clientId: number; onDone: () => void }) {
+  const form = useForm({ name: '', username: '', password: '', email: '', role: 'client', client_id: clientId, can_view: true, can_submit_claims: false });
+  const [done, setDone] = useState<{ username: string; password: string } | null>(null);
+  if (done) return <Credentials username={done.username} password={done.password} onClose={() => { setDone(null); onDone(); }} />;
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); const sent = { username: form.data.username.trim().replace(/\s+/g, ' '), password: form.data.password };
+      form.post('/office/admin/accounts', { preserveScroll: true, onSuccess: () => { form.reset(); setDone(sent); } }); }} className="grid grid-cols-1 gap-4">
+      <TextField label="الاسم الظاهر" required value={form.data.name} onChange={(e) => form.setData('name', e.target.value)} error={form.errors.name} placeholder="مثل: المدير المالي — شركة الأمثلة" />
+      <TextField label="اسم المستخدم للدخول" required dir="auto" autoComplete="off" autoCapitalize="none" spellCheck={false} maxLength={60} value={form.data.username}
+        onChange={(e) => form.setData('username', e.target.value)} error={form.errors.username} hint="يقبل الحروف والأرقام والمسافات، مثل: شركة الأمثلة" />
+      <TextField label="كلمة المرور" required dir="ltr" autoComplete="new-password" value={form.data.password} onChange={(e) => form.setData('password', e.target.value)} error={form.errors.password} hint="4 خانات على الأقل. تظهر لك هنا لتنسخها." />
+      <TextField label="البريد الإلكتروني (اختياري)" type="email" ltr value={form.data.email} onChange={(e) => form.setData('email', e.target.value)} error={form.errors.email} />
+      <Checkbox label="متابعة القضايا والتنفيذ والمبالغ" checked={form.data.can_view} onChange={(v) => form.setData('can_view', v)} />
+      <Checkbox label="تقديم المطالبات" hint="منفصلة عن صلاحية المتابعة." checked={form.data.can_submit_claims} onChange={(v) => form.setData('can_submit_claims', v)} />
+      {form.errors.can_view && <p className="field-error">{form.errors.can_view}</p>}
+      <Button variant="primary" type="submit" loading={form.processing}>إنشاء الحساب</Button>
+    </form>
+  );
+}
+
+/** كلمة مرور جديدة لمستخدم يحددها المكتب */
+function SetPasswordForm({ userId, username, onDone }: { userId: number; username: string | null; onDone: () => void }) {
+  const form = useForm({ password: '' });
+  const [done, setDone] = useState<string | null>(null);
+  if (done) return <Credentials username={username ?? '—'} password={done} onClose={() => { setDone(null); onDone(); }} />;
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); const pw = form.data.password; form.put(`/office/admin/users/${userId}/password`, { preserveScroll: true, onSuccess: () => { form.reset(); setDone(pw); } }); }} className="grid grid-cols-1 gap-4">
+      <TextField label="كلمة المرور الجديدة" required dir="ltr" autoComplete="new-password" value={form.data.password} onChange={(e) => form.setData('password', e.target.value)} error={form.errors.password} hint="4 خانات على الأقل. تُنهي جلسات المستخدم الحالية." />
+      <Button variant="primary" type="submit" loading={form.processing}>تعيين كلمة المرور</Button>
+    </form>
+  );
+}
+
 function InviteForm({ clientId, onDone }: { clientId: number; onDone: () => void }) {
   const form = useForm({ name: '', email: '', role: 'client', client_id: clientId, can_view: true, can_submit_claims: false });
   return (
@@ -67,6 +118,7 @@ export default function Show(p: Props) {
   const c = p.client;
   const poaModal = useModal();
   const inviteModal = useModal();
+  const accountModal = useModal();
   const editPoa = usePoaState();
   const inviteUrl = usePage<SharedProps>().props.flash.inviteUrl;
   return (
@@ -195,7 +247,10 @@ export default function Show(p: Props) {
 
         {tab === 'access' && (
           <Panel title="حسابات بوابة العميل" description="يمكن للمنشأة أن يكون لها أكثر من مستخدم. صلاحية المتابعة منفصلة عن تقديم المطالبات."
-            actions={<Button size="sm" variant="primary" onClick={inviteModal.show}><Plus className="size-4" aria-hidden />دعوة مستخدم</Button>}>
+            actions={<>
+              <Button size="sm" variant="ghost" onClick={inviteModal.show}>دعوة بالبريد</Button>
+              <Button size="sm" variant="primary" onClick={accountModal.show}><Plus className="size-4" aria-hidden />إنشاء حساب</Button>
+            </>}>
             {inviteUrl && <p className="mb-3 break-all rounded-lg px-3 py-2 text-[13px] pill-info" style={{ height: 'auto' }}>رابط الدعوة (يظهر مرة واحدة): <bdi dir="ltr">{inviteUrl}</bdi></p>}
             {p.members.length === 0 && p.pendingInvitations.length === 0 ? <EmptyState title="لا مستخدمين لهذا العميل" /> : (
               <ul className="divide-y divide-rule">
@@ -209,7 +264,8 @@ export default function Show(p: Props) {
                 ))}
               </ul>
             )}
-            <Modal open={inviteModal.open} onClose={inviteModal.close} title="دعوة مستخدم للبوابة"><InviteForm clientId={c.id} onDone={inviteModal.close} /></Modal>
+            <Modal open={inviteModal.open} onClose={inviteModal.close} title="دعوة مستخدم للبوابة بالبريد"><InviteForm clientId={c.id} onDone={inviteModal.close} /></Modal>
+            <Modal open={accountModal.open} onClose={accountModal.close} title="إنشاء حساب للعميل"><CreateAccountForm clientId={c.id} onDone={accountModal.close} /></Modal>
           </Panel>
         )}
       </div>
@@ -223,16 +279,19 @@ export default function Show(p: Props) {
 }
 
 function MemberRow({ m }: { m: Props['members'][number] }) {
+  const pwModal = useModal();
   const save = (data: { can_view: boolean; can_submit_claims: boolean; revoked: boolean }) => router.put(`/office/admin/memberships/${m.id}`, data, { preserveScroll: true });
   return (
     <li className="flex flex-wrap items-center justify-between gap-3 py-3">
       <div className="min-w-0">
         <p className="font-medium">{m.name} {!m.active && <Pill tone="negative">معطّل</Pill>} {m.revoked && <Pill>عضوية ملغاة</Pill>}</p>
-        <p className="text-[12.5px] text-muted"><Num>{m.email}</Num> · آخر دخول {m.lastLogin ? <DateText value={m.lastLogin} time /> : 'لم يدخل بعد'}</p>
+        <p className="text-[12.5px] text-muted">{m.username && <>اسم المستخدم: <bdi className="font-medium text-text">{m.username}</bdi> · </>}{m.email && <><Num>{m.email}</Num> · </>}آخر دخول {m.lastLogin ? <DateText value={m.lastLogin} time /> : 'لم يدخل بعد'}</p>
       </div>
       <div className="flex flex-wrap items-center gap-4 text-[13.5px]">
         <label className="flex items-center gap-1.5"><input type="checkbox" className="check" checked={m.canView} disabled={m.revoked} onChange={(e) => save({ can_view: e.target.checked, can_submit_claims: m.canSubmitClaims, revoked: m.revoked })} />متابعة</label>
         <label className="flex items-center gap-1.5"><input type="checkbox" className="check" checked={m.canSubmitClaims} disabled={m.revoked} onChange={(e) => save({ can_view: m.canView, can_submit_claims: e.target.checked, revoked: m.revoked })} />مطالبات</label>
+        <button type="button" className="btn btn-secondary btn-sm" onClick={pwModal.show}>كلمة مرور جديدة</button>
+        <Modal open={pwModal.open} onClose={pwModal.close} title={`كلمة مرور جديدة — ${m.name}`}><SetPasswordForm userId={m.userId} username={m.username} onDone={pwModal.close} /></Modal>
         <button type="button" className={m.revoked ? 'btn btn-secondary btn-sm' : 'btn btn-danger btn-sm'} onClick={() => save({ can_view: m.canView, can_submit_claims: m.canSubmitClaims, revoked: !m.revoked })}>{m.revoked ? 'إعادة العضوية' : 'إلغاء العضوية'}</button>
       </div>
     </li>

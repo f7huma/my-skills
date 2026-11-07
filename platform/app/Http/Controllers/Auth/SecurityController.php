@@ -103,6 +103,9 @@ class SecurityController extends Controller
     {
         $user = $request->user();
         $data = $request->validate(['username' => User::usernameRules($user->id)]);
+        if (! $user->email && blank($data['username'] ?? null)) {
+            throw ValidationException::withMessages(['username' => 'حسابك بلا بريد؛ اسم المستخدم مطلوب للدخول.']);
+        }
         $user->forceFill(['username' => User::normalizeUsername($data['username'] ?? null)])->save();
         Audit::log('auth.username_changed', $user);
 
