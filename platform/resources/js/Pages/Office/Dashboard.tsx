@@ -2,9 +2,10 @@ import { Head, Link, router } from '@inertiajs/react';
 import { Check, CalendarX2, Plus } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { ButtonLink, certaintyTone, cx, EmptyState, Money, Num, Panel, Pill, poaLabel, poaTone, DateText } from '@/Components/ui';
-import { dayMonth, relative, timeOnly, weekday, dateOnly, count, countNoun, hijri, hijriParts } from '@/lib/format';
+import { dayMonth, relative, timeOnly, weekday, dateOnly, count, countNoun, hijri, hijriParts, localDate } from '@/lib/format';
 import { CountUp, Meter, Pipeline } from '@/Components/motion';
 import { GavelScene } from '@/Components/LegalArt';
+import { IconHearing, IconTasks } from '@/Components/Icons';
 
 type Item = {
   key: string; type: 'hearing' | 'task' | 'memo' | 'execution' | 'deadline'; label: string; title: string; date: string | null; time?: string;
@@ -112,6 +113,89 @@ function AgendaRow({ it }: { it: Item }) {
   );
 }
 
+/** مبدّل «اليوم / الأسبوع» صغير بعدد كل قسم */
+function Seg({ value, onChange, options, label }: { value: string; onChange: (v: string) => void; options: [string, string, number][]; label: string }) {
+  return (
+    <div role="tablist" aria-label={label} className="inline-flex rounded-[10px] border border-line bg-raised p-0.5">
+      {options.map(([k, l, n]) => (
+        <button key={k} role="tab" type="button" aria-selected={value === k} onClick={() => onChange(k)}
+          className={cx('flex h-8 items-center gap-1.5 rounded-[8px] px-3 text-[13px] transition-colors duration-150', value === k ? 'bg-ink font-medium text-white' : 'text-muted hover:text-text')}>
+          {l}<span className={cx('num rounded-md px-1.5 text-[11.5px] leading-5', value === k ? 'bg-white/20' : 'bg-white text-text')}>{n}</span>
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/** الجلسات: اليوم والأسبوع بخط زمني واضح — الوقت بارز، والقضية والجهة تحته */
+function HearingsBoard({ hearings, today }: { hearings: Props['hearings']; today: string }) {
+  const todays = hearings.filter((h) => localDate(h.at) === today);
+  const [tab, setTab] = useState<string>(todays.length ? 'today' : 'week');
+  const list = tab === 'today' ? todays : hearings;
+  return (
+    <section className="card overflow-hidden" aria-labelledby="hb-title">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-rule px-5 py-4">
+        <h2 id="hb-title" className="flex items-center gap-2.5 text-[18px] font-semibold">
+          <span className="grid size-9 place-items-center rounded-[10px] bg-ink text-white"><IconHearing size={20} /></span>الجلسات
+        </h2>
+        <Seg label="نطاق الجلسات" value={tab} onChange={setTab} options={[['today', 'اليوم', todays.length], ['week', 'الأسبوع', hearings.length]]} />
+      </header>
+      {list.length === 0 ? (
+        <p className="flex items-center gap-2 px-5 py-8 text-[14px] text-muted"><IconHearing size={20} />{tab === 'today' ? 'لا جلسات اليوم.' : 'لا جلسات خلال الأيام السبعة القادمة.'}</p>
+      ) : (
+        <ol key={tab} className="detail-swap divide-y divide-rule">
+          {list.map((h) => {
+            const d = localDate(h.at);
+            const isToday = d === today;
+            return (
+              <li key={h.id}>
+                <Link href={`/office/cases/${h.caseId}?tab=hearings`} className="group flex items-stretch gap-4 px-5 py-3.5 transition-colors duration-150 hover:bg-raised">
+                  <span className={cx('grid w-[68px] shrink-0 place-items-center rounded-[12px] py-1.5 text-center leading-tight', isToday ? 'bg-ink text-white' : 'bg-mist text-ink')}>
+                    <span className="num text-[19px] font-semibold">{timeOnly(h.at)}</span>
+                    <span className={cx('text-[11.5px]', isToday ? 'text-white/80' : 'text-muted')}>{isToday ? 'اليوم' : weekday(d).replace('ال', '')}</span>
+                  </span>
+                  <span className="min-w-0 flex-1 self-center">
+                    <span className="block truncate font-semibold text-text group-hover:underline underline-offset-4">{h.title}</span>
+                    <span className="mt-0.5 block truncate text-[13px] text-muted">{h.kind} · {h.client}{h.authority ? ` · ${h.authority}` : ''}</span>
+                    {!isToday && <span className="mt-0.5 block text-[12px] text-muted"><DateText value={d} /></span>}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+        </ol>
+      )}
+    </section>
+  );
+}
+
+/** المهام: المتأخرة واليوم والأسبوع، مع إنجاز مباشر */
+function TasksBoard({ agenda }: { agenda: Agenda }) {
+  const isTask = (i: Item) => i.type === 'task' || i.type === 'memo';
+  const overdue = agenda.overdue.filter(isTask);
+  const today = agenda.today.filter(isTask);
+  const week = agenda.week.filter(isTask);
+  const [tab, setTab] = useState<string>(overdue.length || today.length ? 'today' : 'week');
+  const list = tab === 'today' ? [...overdue, ...today] : [...overdue, ...today, ...week];
+  return (
+    <section className="card overflow-hidden" aria-labelledby="tb-title">
+      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-rule px-5 py-4">
+        <h2 id="tb-title" className="flex items-center gap-2.5 text-[18px] font-semibold">
+          <span className="grid size-9 place-items-center rounded-[10px] bg-ink text-white"><IconTasks size={20} /></span>المهام
+          {overdue.length > 0 && <span className="pill pill-negative">{overdue.length} متأخرة</span>}
+        </h2>
+        <Seg label="نطاق المهام" value={tab} onChange={setTab} options={[['today', 'اليوم', overdue.length + today.length], ['week', 'الأسبوع', overdue.length + today.length + week.length]]} />
+      </header>
+      {list.length === 0 ? (
+        <p className="flex items-center gap-2 px-5 py-8 text-[14px] text-muted"><IconTasks size={20} />{tab === 'today' ? 'لا مهام مستحقة اليوم.' : 'لا مهام هذا الأسبوع.'}</p>
+      ) : (
+        <ul key={tab} className="detail-swap divide-y divide-rule px-5">{list.map((i) => <AgendaRow key={i.key} it={i} />)}</ul>
+      )}
+      <footer className="border-t border-rule px-5 py-2.5 text-end"><Link href="/office/tasks" className="text-[13px] font-medium text-ink hover:underline underline-offset-4">كل المهام</Link></footer>
+    </section>
+  );
+}
+
 function Group({ title, items, tone, id, emptyText }: { title: string; items: Item[]; tone?: 'negative'; id: string; emptyText: string }) {
   // يوم مزدحم: تُعرض أول ٨ بنود ويُكشف الباقي عند الطلب حتى لا تطول الصفحة
   const [all, setAll] = useState(false);
@@ -204,10 +288,15 @@ export default function Dashboard(p: Props) {
         <WeekRibbon agenda={agenda} selected={day} onSelect={setDay} />
       </section>
 
+      {/* الجلسات والمهام أولًا: اليوم والأسبوع */}
+      <div className="mt-4 grid items-start gap-4 lg:grid-cols-2">
+        <HearingsBoard hearings={p.hearings} today={agenda.range.from} />
+        <TasksBoard agenda={agenda} />
+      </div>
       <div className="mt-4 grid items-start gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <section className="card px-5 pb-4 pt-4" aria-labelledby="agenda-title">
           <div className="flex items-center justify-between gap-3">
-            <h2 id="agenda-title" className="text-[16px] font-semibold">{day ? `بنود ${weekday(day)}` : 'قائمة الإنجاز'}</h2>
+            <h2 id="agenda-title" className="text-[16px] font-semibold">{day ? `بنود ${weekday(day)}` : 'كل بنود الأسبوع'}</h2>
             {day ? <button type="button" className="btn btn-ghost btn-sm" onClick={() => setDay(null)}>عرض الأسبوع كاملًا</button>
               : <Link href="/office/tasks" className="text-[13px] text-muted hover:text-text">كل المهام</Link>}
           </div>

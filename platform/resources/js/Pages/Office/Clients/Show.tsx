@@ -292,7 +292,11 @@ function MemberRow({ m }: { m: Props['members'][number] }) {
         <label className="flex items-center gap-1.5"><input type="checkbox" className="check" checked={m.canSubmitClaims} disabled={m.revoked} onChange={(e) => save({ can_view: m.canView, can_submit_claims: e.target.checked, revoked: m.revoked })} />مطالبات</label>
         <button type="button" className="btn btn-secondary btn-sm" onClick={pwModal.show}>كلمة مرور جديدة</button>
         <Modal open={pwModal.open} onClose={pwModal.close} title={`كلمة مرور جديدة — ${m.name}`}><SetPasswordForm userId={m.userId} username={m.username} onDone={pwModal.close} /></Modal>
-        <button type="button" className={m.revoked ? 'btn btn-secondary btn-sm' : 'btn btn-danger btn-sm'} onClick={() => save({ can_view: m.canView, can_submit_claims: m.canSubmitClaims, revoked: !m.revoked })}>{m.revoked ? 'إعادة العضوية' : 'إلغاء العضوية'}</button>
+        <button type="button" className="btn btn-danger btn-sm" onClick={() => {
+          if (confirm(`حذف عضوية «${m.name}» نهائيًا؟\nلن يستطيع الوصول لملفات هذا العميل، وإن لم تكن له عضوية أخرى يُغلق حسابه ويُحرَّر اسم المستخدم. لا يمكن التراجع.`))
+            router.delete(`/office/admin/memberships/${m.id}`, { preserveScroll: true });
+        }}>حذف نهائي</button>
+        <button type="button" className={m.revoked ? 'btn btn-secondary btn-sm' : 'btn btn-danger btn-sm'} onClick={() => save({ can_view: m.canView, can_submit_claims: m.canSubmitClaims, revoked: !m.revoked })}>{m.revoked ? 'إعادة العضوية' : 'إيقاف مؤقت'}</button>
       </div>
     </li>
   );

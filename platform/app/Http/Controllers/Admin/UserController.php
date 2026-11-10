@@ -19,7 +19,7 @@ class UserController extends Controller
     public function index()
     {
         return Inertia::render('Admin/Users', [
-            'users' => User::with(['memberships.client:id,name'])->orderBy('role')->orderBy('name')->get()->map(fn (User $u) => [
+            'users' => User::with(['memberships.client:id,name'])->whereNull('closed_at')->orderBy('role')->orderBy('name')->get()->map(fn (User $u) => [
                 'id' => $u->id, 'name' => $u->name, 'email' => $u->email, 'username' => $u->username, 'role' => $u->role, 'active' => $u->is_active,
                 'twoFactor' => $u->hasTwoFactor(), 'lastLogin' => $u->last_login_at?->toIso8601String(),
                 'memberships' => $u->memberships->map(fn ($m) => ['id' => $m->id, 'client' => $m->client->name, 'clientId' => $m->client_id,
@@ -137,6 +137,30 @@ class UserController extends Controller
         $accounts->revokeSessions($user);
 
         return back()->with('success', 'أُنهيت جميع جلسات المستخدم.');
+    }
+
+    /**
+     * حذف عضوية العميل نهائيًا. إن لم يبقَ للمستخدم أي عضوية أخرى يُغلق حسابه نهائيًا:
+     * يُعطّل، وتُنهى جلساته، ويُفرَّغ بريده واسم المستخدم ليمكن استخدامهما لحساب جديد.
+     * لا يُحذف صف المستخدم نفسه لأن سجل التدقيق (للإضافة فقط) يشير إليه.
+     */
+    public function destroyMembership(ClientMembership $membership, AccountManager $accounts)
+    {
+        $user = $membership->user;
+        $clientId = $membership->client_id;
+        \Illuminate\Support\Facades\DB::transaction(function () use ($membership, $user, $accounts) {
+            $membership->delete();
+            if ($user && $user->role === 'client' && ! $user->memberships()->exists()) {
+                $user->forceFill(['is_active' => false, 'closed_at' => now(), 'email' => null, 'username' => null,
+                    'password' => \Illuminate\Support\Str::random(64)])->save();
+                $accounts->revokeSessions($user);
+            } elseif ($user) {
+                $accounts->revokeSessions($user);
+            }
+        });
+        Audit::log('membership.deleted', null, ['user' => $user?->id, 'client' => $clientId, 'account_closed' => (bool) $user?->fresh()->closed_at]);
+
+        return back()->with('success', $user?->fresh()->closed_at ? 'حُذفت العضوية وأُغلق الحساب نهائيًا.' : 'حُذفت العضوية نهائيًا.');
     }
 
     public function updateMembership(Request $request, ClientMembership $membership, AccountManager $accounts)

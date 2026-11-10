@@ -127,6 +127,29 @@ class AuthTest extends TestCase
         $this->put("/office/admin/users/{$lawyer->id}/password", ['password' => '9999'])->assertForbidden();
     }
 
+    public function test_deleting_last_membership_closes_client_account(): void
+    {
+        $this->demo();
+        $client = $this->client('شركة الأمثلة');
+        $this->actingAs($this->lawyer())->post('/office/admin/accounts', ['name' => 'مؤقت', 'username' => 'حساب مؤقت', 'password' => '2468',
+            'role' => 'client', 'client_id' => $client->id, 'can_view' => true])->assertSessionHasNoErrors();
+        $u = User::where('username', 'حساب مؤقت')->first();
+        $m = $u->memberships()->first();
+        $this->delete("/office/admin/memberships/{$m->id}")->assertSessionHasNoErrors();
+        $this->assertDatabaseMissing('client_memberships', ['id' => $m->id]);
+        $u->refresh();
+        $this->assertNotNull($u->closed_at);
+        $this->assertFalse($u->is_active);
+        $this->assertNull($u->username);
+        // اسم المستخدم صار متاحًا لحساب جديد، والحساب المغلق لا يظهر في القائمة
+        $this->post('/office/admin/accounts', ['name' => 'جديد', 'username' => 'حساب مؤقت', 'password' => '2468', 'role' => 'client', 'client_id' => $client->id, 'can_view' => true])
+            ->assertSessionHasNoErrors();
+        $ids = collect($this->get('/office/admin/users')->viewData('page')['props']['users'])->pluck('id');
+        $this->assertNotContains($u->id, $ids);
+        $this->post('/logout');
+        $this->post('/login', ['email' => 'حساب مؤقت', 'password' => '2468'])->assertRedirect(route('home'));
+    }
+
     public function test_deactivation_ends_existing_sessions_immediately(): void
     {
         $this->demo();

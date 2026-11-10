@@ -30,7 +30,7 @@ class DashboardController extends Controller
                     'amount' => $c->amount, 'currency' => $c->currency, 'status' => $c->status, 'statusLabel' => Claim::STATUSES[$c->status],
                     'missing' => $c->missing_documents, 'submittedAt' => $c->submitted_at?->toIso8601String()]),
             'hearings' => Hearing::with('legalCase:id,reference,title,client_id', 'legalCase.client:id,name')->where('status', 'scheduled')
-                ->where('scheduled_at', '>=', now()->startOfDay())->orderBy('scheduled_at')->limit(6)->get()
+                ->whereBetween('scheduled_at', [$today->copy()->startOfDay()->utc(), $today->copy()->addDays(7)->endOfDay()->utc()])->orderBy('scheduled_at')->limit(60)->get()
                 ->map(fn ($h) => ['id' => $h->id, 'kind' => Hearing::KINDS[$h->kind], 'at' => $h->scheduled_at->toIso8601String(), 'authority' => $h->authority,
                     'caseId' => $h->legal_case_id, 'ref' => $h->legalCase->reference, 'title' => $h->legalCase->title, 'client' => $h->legalCase->client->name]),
             'deadlines' => Deadline::with('legalCase:id,reference', 'executionRequest:id,reference')->whereIn('status', ['open', 'alerted'])

@@ -174,6 +174,7 @@ Route::middleware('auth')->group(function () {
             Route::put('/users/{user}/password', [UserController::class, 'setPassword'])->name('admin.users.password');
             Route::post('/users/{user}/revoke-sessions', [UserController::class, 'revokeSessions'])->name('admin.users.revoke-sessions');
             Route::put('/memberships/{membership}', [UserController::class, 'updateMembership'])->name('admin.memberships.update');
+            Route::delete('/memberships/{membership}', [UserController::class, 'destroyMembership'])->name('admin.memberships.destroy');
 
             Route::controller(SettingsController::class)->group(function () {
                 Route::get('/settings', 'index')->name('admin.settings');
