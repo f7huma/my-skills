@@ -90,18 +90,20 @@ class ClientReportService
         };
     }
 
-    public function generate(Client $client, string $period, string $from, string $to, User $by): ClientReport
+    public function generate(Client $client, string $period, string $from, string $to, User $by, bool $autoSync = false): ClientReport
     {
         $tz = config('office.display_timezone');
         $start = CarbonImmutable::parse($from, $tz)->startOfDay();
         $end = CarbonImmutable::parse($to, $tz)->startOfDay();
 
-        return DB::transaction(function () use ($client, $period, $start, $end, $by) {
+        return DB::transaction(function () use ($client, $period, $start, $end, $by, $autoSync) {
             $report = ClientReport::create([
                 'client_id' => $client->id, 'period' => $period, 'period_start' => $start->toDateString(), 'period_end' => $end->toDateString(),
-                'title' => $this->title($period, $start, $end), 'matters' => [], 'status' => 'draft', 'created_by' => $by->id,
+                'title' => $this->title($period, $start, $end), 'matters' => [], 'status' => 'draft', 'created_by' => $by->id, 'auto_sync' => $autoSync,
             ]);
-            $this->fill($report);
+            if ($autoSync) {
+                $this->fill($report);
+            }
 
             return $report;
         });
@@ -202,7 +204,7 @@ class ClientReportService
      */
     public function sync(ClientReport $report): int
     {
-        if (! $report->isOpen()) {
+        if (! $report->isOpen() || ! $report->auto_sync) {
             return 0;
         }
 
@@ -274,7 +276,7 @@ class ClientReportService
             return;
         }
         $day = $date ? CarbonImmutable::parse($date)->setTimezone(config('office.display_timezone'))->toDateString() : today_local()->toDateString();
-        ClientReport::where('client_id', $clientId)->where('status', 'draft')
+        ClientReport::where('client_id', $clientId)->where('status', 'draft')->where('auto_sync', true)
             ->whereDate('period_start', '<=', $day)->whereDate('period_end', '>=', $day)
             ->get()->each(fn (ClientReport $r) => $this->sync($r));
     }
@@ -293,28 +295,47 @@ class ClientReportService
         return $matters;
     }
 
-    /** بنية العرض المشتركة بين الشاشة وPDF */
+    /**
+     * بنية العرض المشتركة بين الشاشة وPDF:
+     * - groups: أعمال المكتب المنظَّمة مجمّعة حسب المرحلة (الصلح، الدعاوى، التنفيذ...).
+     * - platform: ما عكسته المنصة تلقائيًا (إن فُعِّل العكس)، مجمّعًا حسب الملف.
+     */
     public function present(ClientReport $r, bool $forClient = false): array
     {
         $r->loadMissing('client:id,name,logo_path', 'items');
-        $byKey = $r->items->groupBy('matter_key');
-        // المولَّد تُحذف منه التواريخ؛ ما كتبه المحامي بيده يُعرض كما كتبه
-        $item = fn ($i) => ['id' => $i->id, 'on' => $i->occurred_on->toDateString(),
-            'title' => $i->source === 'auto' ? (self::undate($i->title) ?? $i->title) : $i->title,
-            'details' => $i->source === 'auto' ? self::undate($i->details) : $i->details, 'source' => $i->source, 'matter' => $i->matter_key];
-        $money = collect($r->collected ?? []);
+        $manual = $r->items->where('source', 'manual');
+        $auto = $r->items->where('source', 'auto');
+
+        $groups = [];
+        $collectedManual = 0.0;
+        foreach ($manual as $i) {
+            $p = WorkCatalog::present($i->kind, $i->fields);
+            $collectedManual += $p['collected'] ?? 0;
+            $groups[$p['group']][] = ['id' => $i->id, 'kind' => $i->kind ?? 'other', 'headline' => $p['headline'] ?? $i->title, 'facts' => $p['facts'],
+                'notes' => $i->details, 'fields' => $i->fields ?? ($i->kind ? [] : ['action_label' => $i->title]), 'source' => 'manual'];
+        }
+        $groups = collect(WorkCatalog::GROUPS)->map(fn ($label, $key) => ['key' => $key, 'label' => $label, 'items' => $groups[$key] ?? []])
+            ->filter(fn ($g) => count($g['items']))->values()->all();
+
+        // ما عكسته المنصة: يُعرض حسب الملف كما كان
+        $byKey = $auto->groupBy('matter_key');
+        $plain = fn ($i) => ['id' => $i->id, 'kind' => null, 'headline' => self::undate($i->title) ?? $i->title, 'facts' => [],
+            'notes' => self::undate($i->details), 'fields' => [], 'source' => 'auto'];
+        $money = collect($r->auto_sync ? ($r->collected ?? []) : []);
         $sum = fn ($rows) => collect($rows)->groupBy('currency')->map(fn ($g, $cur) => ['currency' => $cur, 'amount' => number_format($g->sum(fn ($x) => (float) $x['amount']), 2, '.', '')])
             ->filter(fn ($x) => (float) $x['amount'] > 0)->values()->all();
-        // لا يظهر في التقرير إلا ملف وقع فيه إجراء خلال الفترة
         $matters = collect($r->matters ?? [])
             ->when($forClient, fn ($m) => $m->reject(fn ($x) => $x['hidden'] ?? false))
-            ->map(fn ($m) => $m + ['items' => ($byKey[$m['key']] ?? collect())->map($item)->values()->all(),
-                'collected' => $sum($money->where('matter', $m['key']))])
+            ->map(fn ($m) => $m + ['items' => ($byKey[$m['key']] ?? collect())->map($plain)->values()->all(), 'collected' => $sum($money->where('matter', $m['key']))])
             ->filter(fn ($m) => count($m['items']) > 0)->values()->all();
-        $general = ($byKey['general'] ?? collect())->map($item)->values()->all();
+        $platformGeneral = ($byKey['general'] ?? collect())->map($plain)->values()->all();
+
         $hiddenKeys = collect($r->matters ?? [])->where('hidden', true)->pluck('key')->all();
-        $collectedTotal = $sum($money->reject(fn ($c) => $forClient && in_array($c['matter'], $hiddenKeys, true)));
-        $visibleItems = collect($matters)->sum(fn ($m) => count($m['items'])) + count($general);
+        $collected = $money->reject(fn ($c) => $forClient && in_array($c['matter'], $hiddenKeys, true))->all();
+        if ($collectedManual > 0) {
+            $collected[] = ['currency' => 'SAR', 'amount' => (string) $collectedManual];
+        }
+        $platformCount = collect($matters)->sum(fn ($m) => count($m['items'])) + count($platformGeneral);
 
         return [
             'id' => $r->id, 'title' => $r->title, 'period' => $r->period, 'periodLabel' => ClientReport::PERIODS[$r->period],
@@ -322,13 +343,13 @@ class ClientReportService
             'client' => ['id' => $r->client_id, 'name' => $r->client->name, 'logo' => ClientLogo::url($r->client, $forClient)],
             'intro' => $r->intro, 'nextSteps' => $r->next_steps, 'status' => $r->status, 'statusLabel' => ClientReport::STATUSES[$r->status],
             'publishedAt' => $r->published_at?->toIso8601String(), 'closedAt' => $r->closed_at?->toIso8601String(), 'lockVersion' => $r->lock_version,
-            'matters' => $matters, 'general' => $general,
+            'autoSync' => (bool) $r->auto_sync,
+            'groups' => $groups,
+            'platform' => ['matters' => $matters, 'general' => $platformGeneral, 'count' => $platformCount],
             'stats' => [
-                'cases' => collect($matters)->where('kind', 'case')->count(),
-                'executions' => collect($matters)->where('kind', 'execution')->count(),
-                'actions' => $visibleItems,
-                'hearings' => collect($matters)->flatMap(fn ($m) => $m['items'])->filter(fn ($i) => str_contains($i['title'], 'جلسة'))->count(),
-                'collected' => $collectedTotal, // فارغ إن لم يُحصَّل شيء، فلا يظهر المؤشر
+                'total' => $manual->count() + $platformCount,
+                'groups' => collect($groups)->map(fn ($g) => ['key' => $g['key'], 'label' => $g['label'], 'count' => count($g['items'])])->all(),
+                'collected' => $sum($collected),
             ],
         ];
     }

@@ -171,6 +171,7 @@ Route::middleware('auth')->group(function () {
             Route::post('/client-reports/{report}/publish', 'publish')->name('client-reports.publish');
             Route::post('/client-reports/{report}/close', 'close')->name('client-reports.close');
             Route::put('/client-reports/{report}/period', 'period')->name('client-reports.period');
+            Route::put('/client-reports/{report}/auto-sync', 'autoSync')->name('client-reports.auto-sync');
             Route::get('/clients/{client}/logo', 'logo')->name('clients.logo');
             Route::post('/clients/{client}/logo', 'storeLogo')->middleware('throttle:uploads')->name('clients.logo.store');
             Route::delete('/clients/{client}/logo', 'destroyLogo')->name('clients.logo.destroy');

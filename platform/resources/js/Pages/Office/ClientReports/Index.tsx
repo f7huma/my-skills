@@ -2,18 +2,18 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { IconReports } from '@/Components/Icons';
 import { StatusPill } from '@/Components/ReportView';
-import { Button, cx, EmptyState, PageHeader, SelectField, TextField } from '@/Components/ui';
+import { Button, Checkbox, cx, EmptyState, PageHeader, SelectField, TextField } from '@/Components/ui';
 import { countNoun } from '@/lib/format';
 import type { Option } from '@/types';
 
-type Row = { id: number; title: string; client: string; clientId: number; period: string; start: string; end: string; status: string; statusLabel: string; items: number; publishedAt: string | null; closedAt: string | null };
+type Row = { id: number; title: string; client: string; clientId: number; period: string; start: string; end: string; status: string; statusLabel: string; items: number; publishedAt: string | null; closedAt: string | null; autoSync: boolean };
 
 const FILTERS: [string, string][] = [['all', 'الكل'], ['draft', 'مفتوحة'], ['closed', 'مكتملة'], ['published', 'منشورة']];
 
 /** التقارير الدورية: فتح تقرير جديد وقائمة التقارير */
 export default function Index({ reports, clients, preset }: { reports: Row[]; clients: Option[]; preset: { client: number | null; today: string; ranges: Record<string, [string, string]> } }) {
   const [s0, e0] = preset.ranges.monthly;
-  const form = useForm({ client_id: preset.client ? String(preset.client) : '', period: 'monthly', start: s0, end: e0 });
+  const form = useForm({ client_id: preset.client ? String(preset.client) : '', period: 'monthly', start: s0, end: e0, auto_sync: false });
   const pick = (k: string) => { const r = preset.ranges[k]; form.setData((d) => ({ ...d, period: k, ...(r ? { start: r[0], end: r[1] } : {}) })); };
   const [filter, setFilter] = useState('all');
   const shown = filter === 'all' ? reports : reports.filter((r) => r.status === filter);
@@ -21,7 +21,7 @@ export default function Index({ reports, clients, preset }: { reports: Row[]; cl
   return (
     <>
       <Head title="التقارير الدورية" />
-      <PageHeader title="التقارير الدورية للعملاء" subtitle="افتح التقرير في بداية الفترة: يبقى مسودة تلتقط كل إجراء جديد على أعمال العميل تلقائيًا، وتضيف فيه متى شئت، ثم تُغلقه وتعتمده فيُنشر في صفحة العميل." />
+      <PageHeader title="التقارير الدورية للعملاء" subtitle="افتح التقرير في بداية الفترة، وأضف أعمالك فيه متى شئت، ثم أغلقه واعتمده فيُنشر في صفحة العميل." />
 
       <section className="mist mb-6 rounded-[22px] p-5 sm:p-6" aria-labelledby="new-r">
         <h2 id="new-r" className="mb-4 flex items-center gap-2 text-[17px] font-semibold"><IconReports size={20} />تقرير جديد</h2>
@@ -43,6 +43,9 @@ export default function Index({ reports, clients, preset }: { reports: Row[]; cl
           <TextField label="من تاريخ" type="date" required value={form.data.start} onChange={(e) => form.setData('start', e.target.value)} error={form.errors.start} />
           <TextField label="إلى تاريخ" type="date" required value={form.data.end} onChange={(e) => form.setData('end', e.target.value)} error={form.errors.end} />
           <Button variant="primary" type="submit" loading={form.processing} className="sm:col-span-2 lg:col-span-1 lg:mt-[26px] lg:min-w-[140px]">فتح التقرير</Button>
+          <div className="sm:col-span-2 lg:col-span-3">
+            <Checkbox label="عكس أعمال المنصة تلقائيًا" hint="اتركه مطفأً لتضيف أنت الأعمال فقط. يمكنك تغييره لاحقًا من داخل التقرير." checked={form.data.auto_sync} onChange={(v) => form.setData('auto_sync', v)} />
+          </div>
           </div>
         </form>
       </section>
@@ -71,7 +74,7 @@ export default function Index({ reports, clients, preset }: { reports: Row[]; cl
                     <p className="font-semibold leading-snug text-text">{r.title}</p>
                     <p className="mt-0.5 text-[13px] text-muted">{r.client}</p>
                   </div>
-                  <StatusPill status={r.status} label={r.statusLabel} />
+                  <StatusPill status={r.status} label={r.statusLabel} live={r.autoSync} />
                 </div>
                 <p className="mt-auto pt-3 text-[12.5px] text-muted">{r.period} · <bdi dir="ltr" className="num">{r.start}</bdi> إلى <bdi dir="ltr" className="num">{r.end}</bdi> · {countNoun(r.items, { one: 'إجراء واحد', two: 'إجراءان', few: 'إجراءات', many: 'إجراءً' })}</p>
               </Link>

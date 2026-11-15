@@ -10,6 +10,7 @@ use App\Services\Audit;
 use App\Services\Media\ClientLogo;
 use App\Services\Reports\ClientReportService;
 use App\Services\Reports\PdfRenderer;
+use App\Services\Reports\WorkCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -72,7 +73,7 @@ class ClientReportController extends Controller
                 ->map(fn (ClientReport $r) => ['id' => $r->id, 'title' => $r->title, 'client' => $r->client->name, 'clientId' => $r->client_id,
                     'period' => ClientReport::PERIODS[$r->period], 'start' => $r->period_start->toDateString(), 'end' => $r->period_end->toDateString(),
                     'status' => $r->status, 'statusLabel' => ClientReport::STATUSES[$r->status], 'items' => $r->items_count,
-                    'publishedAt' => $r->published_at?->toIso8601String(), 'closedAt' => $r->closed_at?->toIso8601String()]),
+                    'publishedAt' => $r->published_at?->toIso8601String(), 'closedAt' => $r->closed_at?->toIso8601String(), 'autoSync' => (bool) $r->auto_sync]),
             'clients' => Client::whereNull('archived_at')->orderBy('name')->get(['id', 'name'])->map(fn ($c) => ['value' => $c->id, 'label' => $c->name]),
             'preset' => ['client' => $clientId, 'today' => today_local()->toDateString(),
                 'ranges' => collect(['weekly', 'monthly', 'yearly'])->mapWithKeys(fn ($p) => [$p => collect($this->svc->range($p, today_local()->toDateString()))->map->toDateString()->all()])],
@@ -83,12 +84,12 @@ class ClientReportController extends Controller
     {
         $data = $request->validate([
             'client_id' => 'required|exists:clients,id', 'period' => ['required', Rule::in(array_keys(ClientReport::PERIODS))],
-            'start' => 'required|date', 'end' => 'required|date|after_or_equal:start',
+            'start' => 'required|date', 'end' => 'required|date|after_or_equal:start', 'auto_sync' => 'boolean',
         ], self::DATE_MESSAGES);
-        $report = $this->svc->generate(Client::findOrFail($data['client_id']), $data['period'], $data['start'], $data['end'], $request->user());
+        $report = $this->svc->generate(Client::findOrFail($data['client_id']), $data['period'], $data['start'], $data['end'], $request->user(), (bool) ($data['auto_sync'] ?? false));
         Audit::log('client_report.created', $report, ['period' => $report->period]);
 
-        return redirect()->route('client-reports.show', $report)->with('success', 'فُتح التقرير مسودةً من أعمال الفترة، وسيلتقط كل إجراء جديد تلقائيًا حتى تُغلقه.');
+        return redirect()->route('client-reports.show', $report)->with('success', $report->auto_sync ? 'فُتح التقرير، وسيعكس أعمال المنصة تلقائيًا حتى تُغلقه.' : 'فُتح التقرير. أضف أعمالك من «إضافة عمل».');
     }
 
     public function show(ClientReport $report)
@@ -96,7 +97,7 @@ class ClientReportController extends Controller
         $this->svc->sync($report);
         $report->refresh();
 
-        return Inertia::render('Office/ClientReports/Show', ['report' => $this->svc->present($report)]);
+        return Inertia::render('Office/ClientReports/Show', ['report' => $this->svc->present($report), 'catalog' => WorkCatalog::forClient()]);
     }
 
     public function update(Request $request, ClientReport $report)
@@ -119,42 +120,57 @@ class ClientReportController extends Controller
 
     public function regenerate(ClientReport $report)
     {
-        abort_if($report->isPublished(), 422, 'اسحب التقرير من صفحة العميل أولًا.');
+        abort_if($report->isPublished() || ! $report->auto_sync, 422, 'إعادة البناء متاحة عند تفعيل عكس أعمال المنصة.');
         $this->svc->fill($report);
         Audit::log('client_report.regenerated', $report);
 
         return back()->with('success', 'أُعيد بناء الإجراءات من سجل الأعمال، وبقيت إضافاتك اليدوية كما هي.');
     }
 
-    private function matterKeys(ClientReport $report): array
-    {
-        return collect($report->matters)->pluck('key')->push('general')->all();
-    }
-
+    /** عمل منظَّم من قائمة أعمال المكتب، بحقوله الخاصة */
     public function storeItem(Request $request, ClientReport $report)
     {
-        $data = $request->validate([
-            'matter_key' => ['required', Rule::in($this->matterKeys($report))],
-            'title' => 'required|string|max:300', 'details' => 'nullable|string|max:3000',
-        ], ['title.required' => 'اكتب الإجراء.']);
-        // لا تاريخ يُعرض للإجراءات؛ يُحفظ داخليًا لترتيب القائمة فقط (آخر القائمة)
+        $data = $request->validate(['kind' => 'required|string|max:40', 'fields' => 'array', 'notes' => 'nullable|string|max:3000'], ['kind.required' => 'اختر نوع العمل.']);
+        [$fields, $title] = WorkCatalog::validate($data['kind'], $data['fields'] ?? []);
         $on = min(today_local()->toDateString(), $report->period_end->toDateString());
-        $item = $report->items()->create($data + ['occurred_on' => max($on, $report->period_start->toDateString()), 'source' => 'manual']);
+        $item = $report->items()->create([
+            'matter_key' => 'general', 'occurred_on' => max($on, $report->period_start->toDateString()), 'source' => 'manual',
+            'kind' => $data['kind'], 'fields' => $fields, 'title' => $title, 'details' => $data['notes'] ?? null,
+        ]);
         Audit::log('client_report.item_added', $report, ['item' => $item->id]);
 
-        return back()->with('success', 'أُضيف الإجراء.');
+        return back()->with('success', 'أُضيف العمل إلى التقرير.');
     }
 
     public function updateItem(Request $request, ClientReportItem $item)
     {
-        $data = $request->validate([
-            'matter_key' => ['required', Rule::in($this->matterKeys($item->report))],
-            'title' => 'required|string|max:300', 'details' => 'nullable|string|max:3000',
-        ]);
-        $item->update($data);
+        $data = $request->validate(['kind' => 'required|string|max:40', 'fields' => 'array', 'notes' => 'nullable|string|max:3000']);
+        // ما عكسته المنصة يُعدَّل نصه فقط
+        $kind = $item->source === 'auto' ? 'other' : $data['kind'];
+        [$fields, $title] = WorkCatalog::validate($kind, $data['fields'] ?? []);
+        $item->update($item->source === 'auto'
+            ? ['title' => $fields['action_label'], 'details' => $data['notes'] ?? null]
+            : ['kind' => $kind, 'fields' => $fields, 'title' => $title, 'details' => $data['notes'] ?? null]);
         Audit::log('client_report.item_updated', $item->report, ['item' => $item->id]);
 
-        return back()->with('success', 'عُدّل الإجراء.');
+        return back()->with('success', 'عُدّل العمل.');
+    }
+
+    /** تشغيل عكس أعمال المنصة أو إيقافه. الإيقاف يزيل ما جلبته المنصة ويُبقي أعمالك */
+    public function autoSync(Request $request, ClientReport $report)
+    {
+        abort_if($report->isPublished(), 422, 'اسحب التقرير من صفحة العميل أولًا.');
+        $on = $request->validate(['auto_sync' => 'required|boolean'])['auto_sync'];
+        $report->forceFill(['auto_sync' => $on])->save();
+        if ($on) {
+            $report->isOpen() ? $this->svc->fill($report) : null;
+        } else {
+            $report->items()->where('source', 'auto')->delete();
+            $report->forceFill(['matters' => [], 'collected' => null, 'dismissed_refs' => null])->save();
+        }
+        Audit::log('client_report.auto_sync', $report, ['on' => $on]);
+
+        return back()->with('success', $on ? 'سيعكس التقرير أعمال المنصة تلقائيًا.' : 'أُوقف عكس أعمال المنصة، وبقيت أعمالك كما هي.');
     }
 
     public function destroyItem(ClientReportItem $item)

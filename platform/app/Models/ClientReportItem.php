@@ -12,7 +12,7 @@ class ClientReportItem extends Model
 
     protected function casts(): array
     {
-        return ['occurred_on' => 'date'];
+        return ['occurred_on' => 'date', 'fields' => 'array'];
     }
 
     public function report(): BelongsTo

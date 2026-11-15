@@ -6,7 +6,8 @@
   $stageShort = ['intake' => 'الإعداد', 'reconciliation' => 'الصلح', 'filing' => 'القيد', 'court' => 'المحكمة', 'judgment' => 'الحكم', 'objection' => 'الاعتراض', 'execution' => 'التنفيذ', 'closed' => 'منتهية'];
   $collected = $r['stats']['collected'] ?? [];
   $ink = '#303741'; $mist = '#e8ebec'; $off = '#f6f7f6'; $line = '#dde1e3'; $muted = '#6a737d'; $text = '#262c33';
-  $cases = collect($r['matters'])->where('kind', 'case'); $execs = collect($r['matters'])->where('kind', 'execution');
+  $cases = collect($r['platform']['matters'])->where('kind', 'case'); $execs = collect($r['platform']['matters'])->where('kind', 'execution');
+  $bullet = '<table style="width:1.5mm; margin:1.9mm 0 0 auto;"><tr><td style="height:1.5mm; background:'.$ink.'; padding:0; border:none;"></td></tr></table>';
 @endphp
 <!doctype html>
 <html lang="ar" dir="rtl">
@@ -65,14 +66,17 @@
 
 {{-- الأرقام --}}
 <table style="margin-top:2.6mm; border-collapse:separate; border-spacing:1.6mm 0;"><tr>
-  @foreach([['قضايا', $r['stats']['cases']], ['طلبات تنفيذ', $r['stats']['executions']], ['أعمال منجزة', $r['stats']['actions']], ['جلسات', $r['stats']['hearings']]] as [$k, $v])
+  <td style="background:{{ $ink }}; padding:2mm 3mm; vertical-align:middle; width:28mm;">
+    <span style="font-size:12.5pt; font-weight:700; color:#ffffff;" class="num">{{ $r['stats']['total'] }}</span>&nbsp; <span style="font-size:8pt; color:#d6dbdf;">عملًا</span>
+  </td>
+  @foreach($r['stats']['groups'] as $g)
     <td style="border:0.5pt solid {{ $line }}; padding:2mm 3mm; vertical-align:middle;">
-      <span style="font-size:12.5pt; font-weight:700; color:{{ $ink }};" class="num">{{ $v }}</span>&nbsp; <span style="font-size:8pt;" class="muted">{{ $k }}</span>
+      <span style="font-size:11.5pt; font-weight:700; color:{{ $ink }};" class="num">{{ $g['count'] }}</span>&nbsp; <span style="font-size:7.8pt;" class="muted">{{ $g['label'] }}</span>
     </td>
   @endforeach
   @if(count($collected))
     <td style="border:0.5pt solid #b9dccb; background:#f1f8f4; padding:2mm 3mm; vertical-align:middle;">
-      <div style="font-size:7.4pt;" class="muted">المبالغ المحصَّلة</div>
+      <div style="font-size:7.4pt;" class="muted">المحصَّل</div>
       <div style="font-size:10pt; font-weight:700; color:#136a43;">{!! $amounts($collected) !!}</div>
     </td>
   @endif
@@ -83,6 +87,24 @@
 <div class="note">{!! nl2br(e($r['intro'])) !!}</div>
 @endif
 
+{{-- أعمال المكتب حسب المرحلة --}}
+@foreach($r['groups'] as $g)
+<h2>{{ $g['label'] }} <span style="font-size:8pt; font-weight:400; color:{{ $muted }};">(<span class="num">{{ count($g['items']) }}</span>)</span></h2>
+<table class="items">
+  @foreach($g['items'] as $it)
+  <tr>
+    <td style="width:4mm;">{!! $bullet !!}</td>
+    <td>
+      <div class="a" style="font-weight:700;">{!! $n($it['headline']) !!}</div>
+      @if(count($it['facts']))<div style="font-size:8.4pt; line-height:1.55;">@foreach($it['facts'] as $f)<span class="muted">{{ $f['label'] }}:</span> {!! $n($f['value']) !!}@if(!$loop->last)<span style="color:#c3c9ce;">&nbsp;&nbsp;|&nbsp;&nbsp;</span>@endif @endforeach</div>@endif
+      @if($it['notes'])<div class="d">{!! nl2br($n($it['notes'])) !!}</div>@endif
+    </td>
+  </tr>
+  @endforeach
+</table>
+@endforeach
+
+@if($r['platform']['count'])
 @foreach([['القضايا', $cases], ['طلبات التنفيذ', $execs]] as [$heading, $list])
   @if($list->count())
   <h2>{{ $heading }}</h2>
@@ -109,7 +131,7 @@
         @foreach($m['items'] as $it)
         <tr>
           <td style="width:4mm;"><table style="width:1.5mm; margin:1.9mm 0 0 auto;"><tr><td style="height:1.5mm; background:{{ $ink }}; padding:0; border:none;"></td></tr></table></td>
-          <td><div class="a">{!! $n($it['title']) !!}</div>@if($it['details'])<div class="d">{!! $n($it['details']) !!}</div>@endif</td>
+          <td><div class="a">{!! $n($it['headline']) !!}</div>@if($it['notes'])<div class="d">{!! $n($it['notes']) !!}</div>@endif</td>
         </tr>
         @endforeach
       </table>
@@ -122,16 +144,18 @@
   @endif
 @endforeach
 
-@if(count($r['general']))
-<h2>أعمال أخرى</h2>
+@if(count($r['platform']['general']))
+<h2>أعمال عامة</h2>
 <table class="items">
-  @foreach($r['general'] as $it)
+  @foreach($r['platform']['general'] as $it)
   <tr>
     <td style="width:4mm;"><table style="width:1.5mm; margin:1.9mm 0 0 auto;"><tr><td style="height:1.5mm; background:{{ $ink }}; padding:0; border:none;"></td></tr></table></td>
-    <td><div class="a">{!! $n($it['title']) !!}</div>@if($it['details'])<div class="d">{!! $n($it['details']) !!}</div>@endif</td>
+    <td><div class="a">{!! $n($it['headline']) !!}</div>@if($it['notes'])<div class="d">{!! $n($it['notes']) !!}</div>@endif</td>
   </tr>
   @endforeach
 </table>
+@endif
+
 @endif
 
 @if($r['nextSteps'])
