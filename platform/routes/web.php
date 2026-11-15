@@ -47,6 +47,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/', [Portal\PortalController::class, 'home'])->name('home');
         Route::get('/cases/{case}', [Portal\PortalController::class, 'showCase'])->whereNumber('case')->name('cases.show');
         Route::get('/executions/{execution}', [Portal\PortalController::class, 'showExecution'])->whereNumber('execution')->name('executions.show');
+        Route::get('/reports', [Portal\ReportController::class, 'index'])->name('reports.index');
+        Route::get('/reports/{report}', [Portal\ReportController::class, 'show'])->whereNumber('report')->name('reports.show');
+        Route::get('/reports/{report}/pdf', [Portal\ReportController::class, 'pdf'])->whereNumber('report')->middleware('throttle:reports')->name('reports.pdf');
         Route::controller(Portal\ClaimController::class)->prefix('claims')->name('claims.')->group(function () {
             Route::get('/', 'index')->name('index');
             Route::post('/', 'store')->name('store');
@@ -155,6 +158,21 @@ Route::middleware('auth')->group(function () {
             Route::post('/claims/{claim}/convert-case', 'convertCase')->name('claims.convert-case');
             Route::post('/claims/{claim}/convert-execution', 'convertExecution')->name('claims.convert-execution');
             Route::post('/claims/{claim}/close', 'close')->name('claims.close');
+        });
+
+        Route::controller(Office\ClientReportController::class)->group(function () {
+            Route::get('/client-reports', 'index')->name('client-reports.index');
+            Route::post('/client-reports', 'store')->name('client-reports.store');
+            Route::get('/client-reports/{report}', 'show')->name('client-reports.show');
+            Route::put('/client-reports/{report}', 'update')->name('client-reports.update');
+            Route::delete('/client-reports/{report}', 'destroy')->name('client-reports.destroy');
+            Route::post('/client-reports/{report}/regenerate', 'regenerate')->name('client-reports.regenerate');
+            Route::post('/client-reports/{report}/publish', 'publish')->name('client-reports.publish');
+            Route::post('/client-reports/{report}/unpublish', 'unpublish')->name('client-reports.unpublish');
+            Route::get('/client-reports/{report}/pdf', 'pdf')->middleware('throttle:reports')->name('client-reports.pdf');
+            Route::post('/client-reports/{report}/items', 'storeItem')->name('client-reports.items.store');
+            Route::put('/client-report-items/{item}', 'updateItem')->name('client-reports.items.update');
+            Route::delete('/client-report-items/{item}', 'destroyItem')->name('client-reports.items.destroy');
         });
 
         Route::controller(ReportController::class)->prefix('reports')->name('reports.')->group(function () {

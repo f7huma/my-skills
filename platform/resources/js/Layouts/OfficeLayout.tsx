@@ -28,7 +28,10 @@ const groups: Group[] = [
     { href: '/office/deadlines', label: 'المواعيد والعدادات', icon: IconDeadlines, match: /^\/office\/deadlines/ },
     { href: '/office/tasks', label: 'المهام', icon: IconTasks, match: /^\/office\/tasks/ },
   ] },
-  { key: 'reports', label: 'التقارير', icon: IconReports, items: [{ href: '/office/reports', label: 'التقارير', icon: IconReports, match: /^\/office\/reports/ }] },
+  { key: 'reports', label: 'التقارير', icon: IconReports, items: [
+    { href: '/office/client-reports', label: 'التقارير الدورية', icon: IconReports, match: /^\/office\/client-reports/ },
+    { href: '/office/reports', label: 'تقارير PDF سريعة', icon: IconReports, match: /^\/office\/reports/ },
+  ] },
   { key: 'admin', label: 'إدارة المكتب', icon: IconSettings, items: [
     { href: '/office/admin/users', label: 'الحسابات والصلاحيات', icon: IconUsers, match: /^\/office\/admin\/users/ },
     { href: '/office/admin/settings', label: 'الإعدادات', icon: IconSettings, match: /^\/office\/admin\/settings/ },

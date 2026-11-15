@@ -129,7 +129,7 @@ export default function Show(p: Props) {
         actions={<>
           <ButtonLink href={`/office/cases/create?client=${c.id}`} variant="primary" size="sm"><Plus className="size-4" aria-hidden />قضية</ButtonLink>
           <ButtonLink href={`/office/executions/create?client=${c.id}`} size="sm">طلب تنفيذ</ButtonLink>
-          <ButtonLink href={`/office/reports?type=client&client=${c.id}`} size="sm">تقرير</ButtonLink>
+          <ButtonLink href={`/office/client-reports?client=${c.id}`} size="sm">تقرير دوري</ButtonLink>
           <ButtonLink href={`/office/clients/${c.id}/edit`} size="sm" variant="ghost"><Pencil className="size-4" aria-hidden />تعديل</ButtonLink>
         </>} />
 

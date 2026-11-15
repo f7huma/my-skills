@@ -13,6 +13,7 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
   const canSubmit = portal?.clients.some((c) => c.canSubmitClaims);
   const links = [
     { href: '/portal', label: 'ملفاتي', active: /^\/portal(\/(cases|executions).*)?\/?$/.test(page.url.split('?')[0]) },
+    { href: '/portal/reports', label: 'التقارير', active: page.url.startsWith('/portal/reports') },
     ...(canSubmit ? [{ href: '/portal/claims', label: 'المطالبات', active: page.url.startsWith('/portal/claims') }] : []),
   ];
   return (
