@@ -1,6 +1,6 @@
 import { Head, router } from '@inertiajs/react';
 import { Lock, LockOpen, RefreshCcw, Send, Trash2, Undo2 } from 'lucide-react';
-import { ReportView, StatusPill, type Catalog, type Report } from '@/Components/ReportView';
+import { ReportView, StatusPill, type Catalog, type Links, type Report } from '@/Components/ReportView';
 import { Button, DateText, PageHeader } from '@/Components/ui';
 
 /**
@@ -9,7 +9,7 @@ import { Button, DateText, PageHeader } from '@/Components/ui';
  * - مكتمل: أُغلق فثبت محتواه، بانتظار الاعتماد والنشر.
  * - منشور: يراه العميل.
  */
-export default function Show({ report, catalog }: { report: Report; catalog: Catalog }) {
+export default function Show({ report, catalog, links }: { report: Report; catalog: Catalog; links: Links }) {
   const url = `/office/client-reports/${report.id}`;
   const post = (path: string, msg?: string) => { if (!msg || confirm(msg)) router.post(`${url}/${path}`, {}, { preserveScroll: true }); };
   const open = report.status === 'draft';
@@ -43,7 +43,7 @@ export default function Show({ report, catalog }: { report: Report; catalog: Cat
           {!published && report.autoSync && <Button onClick={() => post('regenerate', 'إعادة بناء الإجراءات من الصفر؟ إضافاتك اليدوية تبقى، أما تعديلاتك وحذفك للإجراءات المولَّدة فتُلغى.')}><RefreshCcw className="size-4" />إعادة البناء من الصفر</Button>}
           <Button variant="danger" onClick={() => { if (confirm('حذف التقرير نهائيًا؟')) router.delete(url); }}><Trash2 className="size-4" />حذف</Button>
         </>} />
-      <ReportView report={report} editable catalog={catalog} pdfHref={`${url}/pdf`} />
+      <ReportView report={report} editable catalog={catalog} links={links} pdfHref={`${url}/pdf`} />
     </>
   );
 }

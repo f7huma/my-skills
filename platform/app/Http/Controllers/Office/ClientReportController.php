@@ -97,7 +97,7 @@ class ClientReportController extends Controller
         $this->svc->sync($report);
         $report->refresh();
 
-        return Inertia::render('Office/ClientReports/Show', ['report' => $this->svc->present($report), 'catalog' => WorkCatalog::forClient()]);
+        return Inertia::render('Office/ClientReports/Show', ['report' => $this->svc->present($report), 'catalog' => WorkCatalog::forClient(), 'links' => $this->svc->links($report->client_id)]);
     }
 
     public function update(Request $request, ClientReport $report)
@@ -131,7 +131,7 @@ class ClientReportController extends Controller
     public function storeItem(Request $request, ClientReport $report)
     {
         $data = $request->validate(['kind' => 'required|string|max:40', 'fields' => 'array', 'notes' => 'nullable|string|max:3000'], ['kind.required' => 'اختر نوع العمل.']);
-        [$fields, $title] = WorkCatalog::validate($data['kind'], $data['fields'] ?? []);
+        [$fields, $title] = WorkCatalog::validate($data['kind'], $data['fields'] ?? [], $this->linkIds($report));
         $on = min(today_local()->toDateString(), $report->period_end->toDateString());
         $item = $report->items()->create([
             'matter_key' => 'general', 'occurred_on' => max($on, $report->period_start->toDateString()), 'source' => 'manual',
@@ -147,13 +147,20 @@ class ClientReportController extends Controller
         $data = $request->validate(['kind' => 'required|string|max:40', 'fields' => 'array', 'notes' => 'nullable|string|max:3000']);
         // ما عكسته المنصة يُعدَّل نصه فقط
         $kind = $item->source === 'auto' ? 'other' : $data['kind'];
-        [$fields, $title] = WorkCatalog::validate($kind, $data['fields'] ?? []);
+        [$fields, $title] = WorkCatalog::validate($kind, $data['fields'] ?? [], $this->linkIds($item->report));
         $item->update($item->source === 'auto'
             ? ['title' => $fields['action_label'], 'details' => $data['notes'] ?? null]
             : ['kind' => $kind, 'fields' => $fields, 'title' => $title, 'details' => $data['notes'] ?? null]);
         Audit::log('client_report.item_updated', $item->report, ['item' => $item->id]);
 
         return back()->with('success', 'عُدّل العمل.');
+    }
+
+    private function linkIds(ClientReport $report): array
+    {
+        $l = $this->svc->links($report->client_id);
+
+        return ['case' => array_column($l['cases'], 'id'), 'execution' => array_column($l['executions'], 'id')];
     }
 
     /** تشغيل عكس أعمال المنصة أو إيقافه. الإيقاف يزيل ما جلبته المنصة ويُبقي أعمالك */
@@ -214,9 +221,12 @@ class ClientReportController extends Controller
             $report->refresh();
         }
         $report->forceFill(['status' => 'published', 'closed_at' => $report->closed_at ?? now(), 'published_at' => now(), 'published_by' => $request->user()->id])->save();
-        Audit::log('client_report.published', $report);
+        $reflected = $this->svc->reflect($report);
+        Audit::log('client_report.published', $report, ['reflected' => $reflected]);
 
-        return back()->with('success', 'اعتُمد التقرير ونُشر في صفحة العميل.');
+        return back()->with('success', 'اعتُمد التقرير ونُشر في صفحة العميل.'.($reflected ? ' وسُجّل '.match (true) {
+            $reflected === 1 => 'عمل واحد', $reflected === 2 => 'عملان', $reflected <= 10 => $reflected.' أعمال', default => $reflected.' عملًا'
+        }.' في صفحات القضايا وطلبات التنفيذ المرتبطة.' : ''));
     }
 
     public function unpublish(ClientReport $report)

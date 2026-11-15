@@ -10,7 +10,7 @@ import { money } from '@/lib/format';
 
 export type Amount = { currency: string; amount: string };
 export type Fact = { label: string; value: string };
-export type WorkItem = { id: number; kind: string | null; headline: string; facts: Fact[]; notes: string | null; fields: Record<string, string>; source: 'auto' | 'manual' };
+export type WorkItem = { id: number; kind: string | null; headline: string; facts: Fact[]; notes: string | null; fields: Record<string, string>; source: 'auto' | 'manual'; link?: string | null; reflected?: boolean };
 export type WorkGroup = { key: string; label: string; items: WorkItem[] };
 export type ReportMatter = { key: string; kind: 'case' | 'execution'; id: number; title: string; number: string | null; court: string | null; stage: string | null; stageLabel: string | null;
   status: string | null; statusKey: string; hidden?: boolean; items: WorkItem[]; collected?: Amount[] };
@@ -21,8 +21,10 @@ export type Report = {
   groups: WorkGroup[]; platform: { matters: ReportMatter[]; general: WorkItem[]; count: number };
   stats: { total: number; groups: { key: string; label: string; count: number }[]; collected: Amount[] };
 };
-export type CatalogField = { key: string; label: string; type: 'text' | 'select' | 'money'; required: boolean; when: string[] | null; options: { value: string; label: string }[] | null };
-export type CatalogKind = { key: string; label: string; fields: CatalogField[] };
+export type CatalogField = { key: string; label: string; type: 'text' | 'select' | 'money' | 'case' | 'execution'; required: boolean; when: string[] | null; options: { value: string; label: string }[] | null };
+export type CatalogKind = { key: string; label: string; custom?: boolean; fields: CatalogField[] };
+export type LinkOption = { id: number; label: string; number: string | null; party: string | null };
+export type Links = { cases: LinkOption[]; executions: LinkOption[]; parties: string[] };
 export type Catalog = { key: string; label: string; kinds: CatalogKind[] }[];
 
 const GROUP_ICON: Record<string, typeof IconCase> = {
@@ -45,8 +47,26 @@ function Bidi({ text }: { text: string }) {
 
 
 /** نموذج عمل منظَّم: حقول النوع المختار، ويظهر من الحقول ما يخص نوع إجراء التنفيذ فقط */
-function WorkForm({ reportId, kind, item, suggestions, onDone, onAdded }: {
-  reportId: number; kind: CatalogKind; item?: WorkItem; suggestions: Record<string, string[]>; onDone: () => void; onAdded?: () => void;
+/** قائمة بخيار «أخرى — اكتبها»: القيمة خارج الخيارات تُكتب نصًا حرًا */
+function FreeSelect({ f, value, onChange, error }: { f: CatalogField; value: string; onChange: (v: string) => void; error?: string }) {
+  const known = f.options!.some((o) => o.value === value);
+  const [free, setFree] = useState(value !== '' && !known);
+  return (
+    <label className="block">
+      <span className="field-label">{f.label}{f.required && <span className="text-negative"> *</span>}</span>
+      <select className="input" value={free ? '__free' : value} onChange={(e) => { if (e.target.value === '__free') { setFree(true); onChange(''); } else { setFree(false); onChange(e.target.value); } }}>
+        <option value="">—</option>
+        {f.options!.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+        <option value="__free">أخرى — أكتبها بنفسي</option>
+      </select>
+      {free && <input className="input mt-1.5" aria-label={`${f.label} (نص حر)`} placeholder="اكتب ما تشاء" value={value} onChange={(e) => onChange(e.target.value)} maxLength={300} autoFocus />}
+      {error && <span role="alert" className="mt-1 block text-[12.5px] text-negative">{error}</span>}
+    </label>
+  );
+}
+
+function WorkForm({ reportId, kind, item, suggestions, links, onDone, onAdded }: {
+  reportId: number; kind: CatalogKind; item?: WorkItem; suggestions: Record<string, string[]>; links?: Links; onDone: () => void; onAdded?: () => void;
 }) {
   const [fields, setFields] = useState<Record<string, string>>(item?.fields ?? {});
   const [notes, setNotes] = useState(item?.notes ?? '');
@@ -54,6 +74,13 @@ function WorkForm({ reportId, kind, item, suggestions, onDone, onAdded }: {
   const [busy, setBusy] = useState(false);
   const visible = kind.fields.filter((f) => !f.when || f.when.includes(fields.action ?? ''));
   const set = (k: string, v: string) => setFields((x) => ({ ...x, [k]: v }));
+  const known = kind.fields.find((f) => f.key === 'action')?.options?.some((o) => o.value === fields.action) ?? false;
+  const [freeAction, setFreeAction] = useState(Boolean(fields.action) && !known);
+  /** ربط بقضية أو طلب تنفيذ: يُعبّأ رقمه والطرف الآخر تلقائيًا إن كانا فارغين */
+  const pickLink = (f: CatalogField, id: string) => {
+    const opt = (f.type === 'case' ? links?.cases : links?.executions)?.find((o) => String(o.id) === id);
+    setFields((x) => ({ ...x, [f.key]: id, ...(opt?.number && !x.number ? { number: opt.number } : {}), ...(opt?.party && !x.party ? { party: opt.party } : {}) }));
+  };
   const submit = () => {
     setBusy(true);
     const payload = { kind: kind.key, fields: Object.fromEntries(visible.map((f) => [f.key, fields[f.key] ?? ''])), notes };
@@ -63,7 +90,7 @@ function WorkForm({ reportId, kind, item, suggestions, onDone, onAdded }: {
         setErrors({});
         if (item) { onDone(); return; }
         // إضافة متتالية أسرع: يبقى النوع ورقم الطلب والطرف، ويُفرَّغ الباقي
-        setFields((x) => ({ ...(x.number ? { number: x.number } : {}), ...(x.party ? { party: x.party } : {}), ...(x.action ? { action: x.action } : {}) }));
+        setFields((x) => Object.fromEntries(Object.entries(x).filter(([k]) => ['number', 'party', 'action', 'case_id', 'execution_id'].includes(k))));
         setNotes(''); onAdded?.();
       },
     };
@@ -81,21 +108,29 @@ function WorkForm({ reportId, kind, item, suggestions, onDone, onAdded }: {
             <legend className="field-label">{f.label}<span className="text-negative"> *</span></legend>
             <div className="flex flex-wrap gap-1.5">
               {f.options!.map((o) => (
-                <button key={o.value} type="button" aria-pressed={fields.action === o.value} onClick={() => set('action', o.value)}
-                  className={cx('rounded-full border px-3 py-1.5 text-[13px] transition-colors duration-150', fields.action === o.value ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-control')}>{o.label}</button>
+                <button key={o.value} type="button" aria-pressed={!freeAction && fields.action === o.value} onClick={() => { setFreeAction(false); set('action', o.value); }}
+                  className={cx('rounded-full border px-3 py-1.5 text-[13px] transition-colors duration-150', !freeAction && fields.action === o.value ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-control')}>{o.label}</button>
               ))}
+              <button type="button" aria-pressed={freeAction} onClick={() => { setFreeAction(true); set('action', ''); }}
+                className={cx('rounded-full border border-dashed px-3 py-1.5 text-[13px] transition-colors duration-150', freeAction ? 'border-ink bg-ink text-white' : 'border-control bg-white hover:border-ink')}>
+                <Pencil className="me-1 inline size-3.5" />إجراء آخر أكتبه
+              </button>
             </div>
+            {freeAction && <input className="input mt-2" aria-label="اسم الإجراء" placeholder="اكتب الإجراء، مثل: طلب حجز على عقار" value={fields.action ?? ''} onChange={(e) => set('action', e.target.value)} maxLength={300} autoFocus />}
             {errors['fields.action'] && <span role="alert" className="mt-1 block text-[12.5px] text-negative">{errors['fields.action']}</span>}
           </fieldset>
-        ) : f.type === 'select' ? (
+        ) : f.type === 'case' || f.type === 'execution' ? (
           <label key={f.key} className="block">
-            <span className="field-label">{f.label}{f.required && <span className="text-negative"> *</span>}</span>
-            <select className="input" value={fields[f.key] ?? ''} onChange={(e) => set(f.key, e.target.value)}>
-              <option value="">—</option>
-              {f.options!.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            <span className="field-label">{f.label}{f.type === 'execution' ? ' (من طلبات العميل)' : ' (من قضايا العميل)'}</span>
+            <select className="input" value={fields[f.key] ?? ''} onChange={(e) => pickLink(f, e.target.value)}>
+              <option value="">— بدون ربط —</option>
+              {(f.type === 'case' ? links?.cases : links?.executions)?.map((o) => <option key={o.id} value={o.id}>{o.label}{o.number ? ` — ${o.number}` : ''}{o.party ? ` — ${o.party}` : ''}</option>)}
             </select>
+            {fields[f.key] ? <span className="mt-1 block text-[12px] text-muted">يُسجَّل هذا العمل في صفحة {f.type === 'execution' ? 'الطلب' : 'القضية'} عند نشر التقرير.</span> : null}
             {errors[`fields.${f.key}`] && <span role="alert" className="mt-1 block text-[12.5px] text-negative">{errors[`fields.${f.key}`]}</span>}
           </label>
+        ) : f.type === 'select' ? (
+          <FreeSelect key={f.key} f={f} value={fields[f.key] ?? ''} onChange={(v) => set(f.key, v)} error={errors[`fields.${f.key}`]} />
         ) : (
           <div key={f.key}>
             <TextField label={f.label} required={f.required} value={fields[f.key] ?? ''} onChange={(e) => set(f.key, e.target.value)} error={errors[`fields.${f.key}`]}
@@ -116,7 +151,7 @@ function WorkForm({ reportId, kind, item, suggestions, onDone, onAdded }: {
 }
 
 /** لوحة «إضافة عمل»: أنواع أعمال المكتب مجمّعة حسب المرحلة */
-function AddPanel({ report, catalog, suggestions }: { report: Report; catalog: Catalog; suggestions: Record<string, string[]> }) {
+function AddPanel({ report, catalog, suggestions, links }: { report: Report; catalog: Catalog; suggestions: Record<string, string[]>; links?: Links }) {
   const [kind, setKind] = useState<CatalogKind | null>(null);
   const [added, setAdded] = useState(0);
   return (
@@ -139,7 +174,7 @@ function AddPanel({ report, catalog, suggestions }: { report: Report; catalog: C
       </div>
       {kind && (
         <div className="mt-4">
-          <WorkForm key={kind.key} reportId={report.id} kind={kind} suggestions={suggestions} onDone={() => setKind(null)} onAdded={() => setAdded((n) => n + 1)} />
+          <WorkForm key={kind.key} reportId={report.id} kind={kind} suggestions={suggestions} links={links} onDone={() => setKind(null)} onAdded={() => setAdded((n) => n + 1)} />
           {added > 0 && <p className="mt-2 text-[12.5px] text-positive" role="status">أُضيف {added === 1 ? 'عمل واحد' : `${added} أعمال`}. يمكنك إضافة عمل آخر من النوع نفسه مباشرة.</p>}
         </div>
       )}
@@ -148,7 +183,7 @@ function AddPanel({ report, catalog, suggestions }: { report: Report; catalog: C
 }
 
 /** عمل واحد: العنوان، ثم الحقائق (تسمية: قيمة)، ثم الملاحظة */
-function WorkRow({ it, editable, catalog, suggestions }: { it: WorkItem; editable: boolean; catalog?: Catalog; suggestions: Record<string, string[]> }) {
+function WorkRow({ it, editable, catalog, suggestions, links }: { it: WorkItem; editable: boolean; catalog?: Catalog; suggestions: Record<string, string[]>; links?: Links }) {
   const [editing, setEditing] = useState(false);
   const kind = useMemo(() => {
     const all = (catalog ?? []).flatMap((g) => g.kinds);
@@ -156,7 +191,7 @@ function WorkRow({ it, editable, catalog, suggestions }: { it: WorkItem; editabl
   }, [catalog, it]);
   if (editing && kind) {
     const fields = it.source === 'auto' ? { action_label: it.headline } : it.fields;
-    return <li className="py-2"><WorkForm reportId={0} kind={kind} item={{ ...it, fields }} suggestions={suggestions} onDone={() => setEditing(false)} /></li>;
+    return <li className="py-2"><WorkForm reportId={0} kind={kind} item={{ ...it, fields }} suggestions={suggestions} links={links} onDone={() => setEditing(false)} /></li>;
   }
   return (
     <li className="group flex items-start gap-2.5 py-2">
@@ -178,12 +213,18 @@ function WorkRow({ it, editable, catalog, suggestions }: { it: WorkItem; editabl
           </p>
         )}
         {it.notes && <p className="whitespace-pre-line text-[12.5px] leading-6 text-muted"><Bidi text={it.notes} /></p>}
+        {editable && it.link && (
+          <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[11.5px]">
+            <span className="rounded-md bg-raised px-2 py-0.5 text-muted">{it.link}</span>
+            <span className={cx('rounded-md px-2 py-0.5', it.reflected ? 'bg-[var(--positive-soft)] text-positive' : 'bg-raised text-muted')}>{it.reflected ? 'سُجّل في صفحته' : 'يُسجَّل في صفحته عند النشر'}</span>
+          </p>
+        )}
       </div>
     </li>
   );
 }
 
-function GroupSection({ g, editable, catalog, suggestions }: { g: WorkGroup; editable: boolean; catalog?: Catalog; suggestions: Record<string, string[]> }) {
+function GroupSection({ g, editable, catalog, suggestions, links }: { g: WorkGroup; editable: boolean; catalog?: Catalog; suggestions: Record<string, string[]>; links?: Links }) {
   return (
     <section className="rounded-[16px] border border-line bg-surface">
       <header className="flex items-center gap-2.5 border-b border-line px-4 py-2.5 sm:px-5">
@@ -192,7 +233,7 @@ function GroupSection({ g, editable, catalog, suggestions }: { g: WorkGroup; edi
         <span className="rounded-full bg-raised px-2.5 py-0.5 text-[12px] tabular-nums text-muted">{g.items.length}</span>
       </header>
       <ul className="divide-y divide-line/70 px-4 sm:px-5">
-        {g.items.map((it) => <WorkRow key={it.id} it={it} editable={editable} catalog={catalog} suggestions={suggestions} />)}
+        {g.items.map((it) => <WorkRow key={it.id} it={it} editable={editable} catalog={catalog} suggestions={suggestions} links={links} />)}
       </ul>
     </section>
   );
@@ -338,7 +379,7 @@ function ClientMark({ report, editable }: { report: Report; editable: boolean })
  * عرض التقرير — نفس البنية للمحامي (قابل للتحرير) وللعميل (للاطلاع).
  * أعمال المكتب مجمّعة حسب المرحلة؛ وما عكسته المنصة (إن فُعِّل) في قسم مستقل حسب الملف.
  */
-export function ReportView({ report, editable = false, pdfHref, toolbar, catalog }: { report: Report; editable?: boolean; pdfHref: string; toolbar?: ReactNode; catalog?: Catalog }) {
+export function ReportView({ report, editable = false, pdfHref, toolbar, catalog, links }: { report: Report; editable?: boolean; pdfHref: string; toolbar?: ReactNode; catalog?: Catalog; links?: Links }) {
   const [hidden, setHidden] = useState<string[]>(report.platform.matters.filter((m) => m.hidden).map((m) => m.key));
   const [texts, setTexts] = useState({ title: report.title, intro: report.intro ?? '', next_steps: report.nextSteps ?? '' });
   const [dirty, setDirty] = useState(false);
@@ -353,8 +394,10 @@ export function ReportView({ report, editable = false, pdfHref, toolbar, catalog
   const suggestions = useMemo(() => {
     const out: Record<string, Set<string>> = { number: new Set(), party: new Set(), entity: new Set(), court: new Set() };
     report.groups.flatMap((g) => g.items).forEach((i) => Object.entries(i.fields ?? {}).forEach(([k, v]) => { if (out[k] && v) out[k].add(v); }));
+    // أطراف قضايا العميل وطلبات تنفيذه المسجلة في المنصة
+    links?.parties.forEach((p) => out.party.add(p));
     return Object.fromEntries(Object.entries(out).map(([k, v]) => [k, [...v]]));
-  }, [report.groups]);
+  }, [report.groups, links]);
   const empty = report.groups.length === 0 && report.platform.count === 0;
 
   return (
@@ -396,7 +439,7 @@ export function ReportView({ report, editable = false, pdfHref, toolbar, catalog
         </dl>
       </section>
 
-      {editable && catalog && <AddPanel report={report} catalog={catalog} suggestions={suggestions} />}
+      {editable && catalog && <AddPanel report={report} catalog={catalog} suggestions={suggestions} links={links} />}
 
       {(editable || report.intro) && (
         <Note title="ملخص الفترة" icon={<IconReports size={18} />}>
@@ -408,7 +451,7 @@ export function ReportView({ report, editable = false, pdfHref, toolbar, catalog
 
       {empty && editable && <p className="rounded-[14px] border border-dashed border-control px-5 py-6 text-center text-[13.5px] text-muted">لم تُضف أعمال بعد. اختر نوع العمل من «إضافة عمل» أعلاه.</p>}
 
-      {report.groups.map((g) => <GroupSection key={g.key} g={g} editable={editable} catalog={catalog} suggestions={suggestions} />)}
+      {report.groups.map((g) => <GroupSection key={g.key} g={g} editable={editable} catalog={catalog} suggestions={suggestions} links={links} />)}
 
       {report.platform.count > 0 && (
         <section>

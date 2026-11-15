@@ -2,9 +2,12 @@
 
 namespace App\Services\Reports;
 
+use App\Models\ActionType;
+use App\Models\CaseParty;
 use App\Models\Client;
 use App\Models\ClientReport;
 use App\Models\Collection;
+use App\Models\ExecutionParty;
 use App\Models\ExecutionRequest;
 use App\Models\Hearing;
 use App\Models\LegalCase;
@@ -12,6 +15,8 @@ use App\Models\TimelineEvent;
 use App\Models\User;
 use App\Services\Calendar;
 use App\Services\Media\ClientLogo;
+use App\Services\Timeline;
+use App\Services\Workflow\ExecutionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -125,6 +130,7 @@ class ClientReportService
         $touched = [];
         $events = TimelineEvent::where('client_id', $cid)->whereBetween('occurred_at', [$from->utc(), $to->utc()])
             ->where(fn ($q) => $q->where('client_visible', true)->orWhereIn('type', self::TITLE_ONLY))
+            ->where('type', '!=', 'report.work') // ما سجّله التقرير نفسه في صفحات الملفات لا يعود إليه
             ->orderBy('occurred_at')->orderBy('id')->get();
         foreach ($events as $e) {
             $key = $e->execution_request_id ? 'execution:'.$e->execution_request_id : ($e->legal_case_id ? 'case:'.$e->legal_case_id : 'general');
@@ -269,6 +275,74 @@ class ClientReportService
         });
     }
 
+    /** قضايا العميل وطلبات تنفيذه للربط: الاسم، والرقم، والطرف الآخر لتعبئتهما تلقائيًا */
+    public function links(int $clientId): array
+    {
+        $cases = LegalCase::with(['filings', 'parties'])->where('client_id', $clientId)->whereNull('archived_at')->orderByDesc('id')->get()
+            ->map(fn ($c) => ['id' => $c->id, 'label' => $c->title,
+                'number' => $c->filings->whereNotNull('case_number')->sortByDesc('registered_on')->first()?->case_number,
+                'party' => $c->parties->where('role', '!=', 'plaintiff')->first()?->name])->values()->all();
+        $execs = ExecutionRequest::with('parties')->where('client_id', $clientId)->orderByDesc('id')->get()
+            ->map(fn ($e) => ['id' => $e->id,
+                'label' => ExecutionRequest::EXECUTION_TYPES[$e->execution_type].' — '.($e->instrument_type === 'other' ? ($e->instrument_label ?: 'أخرى') : ExecutionRequest::INSTRUMENT_TYPES[$e->instrument_type]),
+                'number' => $e->request_number, 'party' => $e->parties->where('role', 'respondent')->first()?->name])->values()->all();
+        $parties = collect($cases)->pluck('party')->merge(collect($execs)->pluck('party'))
+            ->merge(CaseParty::whereIn('legal_case_id', LegalCase::where('client_id', $clientId)->select('id'))->where('role', '!=', 'plaintiff')->pluck('name'))
+            ->merge(ExecutionParty::whereIn('execution_request_id', ExecutionRequest::where('client_id', $clientId)->select('id'))->where('role', 'respondent')->pluck('name'))
+            ->filter()->unique()->values()->all();
+
+        return ['cases' => $cases, 'executions' => $execs, 'parties' => $parties];
+    }
+
+    /**
+     * عند النشر: كل عمل مرتبط بقضية أو طلب تنفيذ يُسجَّل في صفحته مرة واحدة.
+     * إجراءات التنفيذ تُضاف إجراءً فعليًا في سجل طلب التنفيذ؛ وغيرها يُضاف إلى سجل أعمال الملف.
+     */
+    public function reflect(ClientReport $report): int
+    {
+        $done = 0;
+        DB::transaction(function () use ($report, &$done) {
+            $refs = [];
+            $items = $report->items()->where('source', 'manual')->whereNull('reflected_at')->get();
+            foreach ($items as $item) {
+                $p = WorkCatalog::present($item->kind, $item->fields);
+                if (! $p['link']) {
+                    continue;
+                }
+                $owner = $p['link']['type'] === 'case'
+                    ? LegalCase::where('client_id', $report->client_id)->find($p['link']['id'])
+                    : ExecutionRequest::where('client_id', $report->client_id)->find($p['link']['id']);
+                if (! $owner) {
+                    continue;
+                }
+                $facts = collect($p['facts'])->map(fn ($f) => $f['label'].': '.$f['value'])->implode(' · ');
+                $details = trim($facts.($item->details ? "\n".$item->details : '')) ?: null;
+                $on = $item->occurred_on->toDateString();
+                if ($item->kind === 'execution_action' && $owner instanceof ExecutionRequest) {
+                    $action = $item->fields['action'] ?? '';
+                    $name = WorkCatalog::ACTION_TYPE_NAMES[$action] ?? WorkCatalog::EXECUTION_ACTIONS[$action] ?? 'طلب اتخاذ أمر أو إجراء';
+                    $type = ActionType::firstOrCreate(['name' => $name], ['interval_day_type' => 'calendar', 'interval_from_last_same_type' => true]);
+                    $notes = (isset(WorkCatalog::EXECUTION_ACTIONS[$action]) ? '' : $p['headline']."\n").$details;
+                    $a = app(ExecutionService::class)->addAction($owner, [
+                        'action_type_id' => $type->id, 'submitted_on' => $on, 'status' => 'submitted', 'result' => $item->fields['result'] ?? null, 'notes' => trim($notes) ?: null,
+                    ]);
+                    $refs = [...$refs, ...TimelineEvent::where('subject_type', $a->getMorphClass())->where('subject_id', $a->id)->pluck('id')->map(fn ($id) => 'event:'.$id)->all()];
+                } else {
+                    $e = Timeline::record($owner, 'report.work', $p['headline'] ?? $item->title, $details, null, true,
+                        CarbonImmutable::parse($on.' 12:00', config('office.display_timezone')));
+                    $refs[] = 'event:'.$e->id;
+                }
+                $item->forceFill(['reflected_at' => now()])->save();
+                $done++;
+            }
+            if ($refs) {
+                $report->forceFill(['dismissed_refs' => array_values(array_unique([...($report->dismissed_refs ?? []), ...$refs]))])->save();
+            }
+        });
+
+        return $done;
+    }
+
     /** يزامن كل المسودات المفتوحة للعميل التي تشمل فترتها هذا التاريخ */
     public function syncOpenFor(?int $clientId, $date = null): void
     {
@@ -308,11 +382,27 @@ class ClientReportService
 
         $groups = [];
         $collectedManual = 0.0;
+        $labels = [];
+        if (! $forClient) {
+            $l = $this->links($r->client_id);
+            foreach ($l['cases'] as $c) {
+                $labels['case:'.$c['id']] = 'القضية: '.$c['label'];
+            }
+            foreach ($l['executions'] as $e) {
+                $labels['execution:'.$e['id']] = 'طلب التنفيذ: '.$e['label'].($e['number'] ? ' ('.$e['number'].')' : '');
+            }
+        }
         foreach ($manual as $i) {
             $p = WorkCatalog::present($i->kind, $i->fields);
             $collectedManual += $p['collected'] ?? 0;
-            $groups[$p['group']][] = ['id' => $i->id, 'kind' => $i->kind ?? 'other', 'headline' => $p['headline'] ?? $i->title, 'facts' => $p['facts'],
+            $row = ['id' => $i->id, 'kind' => $i->kind ?? 'other', 'headline' => $p['headline'] ?? $i->title, 'facts' => $p['facts'],
                 'notes' => $i->details, 'fields' => $i->fields ?? ($i->kind ? [] : ['action_label' => $i->title]), 'source' => 'manual'];
+            if (! $forClient) {
+                // للمحامي فقط: بأي ملف يرتبط العمل، وهل سُجّل في صفحته
+                $row['link'] = $p['link'] ? ($labels[$p['link']['type'].':'.$p['link']['id']] ?? null) : null;
+                $row['reflected'] = $i->reflected_at !== null;
+            }
+            $groups[$p['group']][] = $row;
         }
         $groups = collect(WorkCatalog::GROUPS)->map(fn ($label, $key) => ['key' => $key, 'label' => $label, 'items' => $groups[$key] ?? []])
             ->filter(fn ($g) => count($g['items']))->values()->all();

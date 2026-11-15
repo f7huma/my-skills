@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Client;
 use App\Models\ClientReport;
+use App\Models\ExecutionRequest;
 use App\Models\LegalCase;
 use App\Models\TimelineEvent;
 use App\Models\User;
@@ -66,7 +67,7 @@ class ClientReportTest extends TestCase
 
         // التحقق: الحقول المطلوبة والقيم غير الصالحة
         $this->add($r, 'execution_action', ['action' => 'disclosure'])->assertSessionHasErrors('fields.party');
-        $this->add($r, 'execution_action', ['action' => 'hack', 'party' => 'س'])->assertSessionHasErrors('fields.action');
+        $this->add($r, 'execution_action', ['action' => str_repeat('س', 301), 'party' => 'س'])->assertSessionHasErrors('fields.action');
         $this->add($r, 'debtor_contact', ['party' => 'س', 'amount' => 'مبلغ'])->assertSessionHasErrors('fields.amount');
         $this->add($r, 'nope', [])->assertSessionHasErrors('kind');
 
@@ -201,5 +202,52 @@ class ClientReportTest extends TestCase
         $this->actingAs($noura)->get("/portal/client-logo/{$r->client_id}")->assertNotFound();
         $this->actingAs($this->lawyer())->delete("/office/clients/{$r->client_id}/logo")->assertSessionHasNoErrors();
         $this->assertNull($client->fresh()->logo_path);
+    }
+
+    public function test_linked_work_is_reflected_on_its_request_or_case_page_once_on_publish(): void
+    {
+        $this->demo();
+        $r = $this->make();
+        $exec = ExecutionRequest::where('client_id', $r->client_id)->first()
+            ?? ExecutionRequest::forceCreate(['reference' => 'EX-TEST-0001', 'client_id' => $r->client_id, 'execution_type' => 'financial',
+                'instrument_type' => 'judgment_deed', 'request_number' => '470099887', 'status' => 'submitted']);
+        $case = LegalCase::where('client_id', $r->client_id)->whereNull('archived_at')->firstOrFail();
+        $foreign = LegalCase::where('client_id', '!=', $r->client_id)->firstOrFail();
+
+        $links = $this->page($r)['links'];
+        $this->assertContains($exec->id, array_column($links['executions'], 'id'));
+        $this->assertNotContains($foreign->id, array_column($links['cases'], 'id'), 'القوائم لهذا العميل فقط');
+
+        $this->add($r, 'execution_action', ['action' => 'travel_ban', 'execution_id' => $exec->id, 'party' => 'خالد سعد', 'duration' => 'سنة'])->assertSessionHasNoErrors();
+        $this->add($r, 'execution_action', ['action' => 'طلب حجز على عقار', 'execution_id' => $exec->id, 'party' => 'خالد سعد'])->assertSessionHasNoErrors();
+        $this->add($r, 'memo', ['case_id' => $case->id, 'subject' => 'الرد على دفوع المدعى عليه'])->assertSessionHasNoErrors();
+        $this->add($r, 'debtor_contact', ['party' => 'شركة البناء', 'channel' => 'واتساب'])->assertSessionHasNoErrors(); // نص حر في قائمة
+        $this->add($r, 'execution_custom', ['action_label' => 'متابعة مع مأمور التنفيذ', 'execution_id' => $exec->id])->assertSessionHasNoErrors();
+        $this->add($r, 'memo', ['case_id' => $foreign->id])->assertSessionHasErrors('fields.case_id');
+
+        $rep = $this->page($r)['report'];
+        $items = collect($rep['groups'])->flatMap(fn ($g) => $g['items']);
+        $this->assertSame(['إصدار قرار منع من السفر', 'طلب حجز على عقار'], $items->where('kind', 'execution_action')->pluck('headline')->values()->all());
+        $this->assertSame('واتساب', collect($items->firstWhere('kind', 'debtor_contact')['facts'])->firstWhere('label', 'وسيلة التواصل')['value']);
+        $this->assertFalse($items->firstWhere('kind', 'memo')['reflected']);
+
+        $actionsBefore = $exec->actions()->count();
+        $eventsBefore = $case->timeline()->count();
+        $this->post("/office/client-reports/{$r->id}/publish")->assertSessionHasNoErrors();
+        $this->assertSame($actionsBefore + 2, $exec->actions()->count(), 'إجراءا التنفيذ أُضيفا لسجل الطلب');
+        $this->assertTrue($exec->actions()->whereHas('type', fn ($q) => $q->where('name', 'إصدار قرار منع من السفر'))->exists());
+        $this->assertTrue(TimelineEvent::where('execution_request_id', $exec->id)->where('type', 'report.work')->where('title', 'متابعة مع مأمور التنفيذ')->exists());
+        $this->assertSame($eventsBefore + 1, $case->timeline()->count());
+        $this->assertSame(4, $r->items()->whereNotNull('reflected_at')->count());
+
+        // إعادة النشر لا تكرر
+        $this->post("/office/client-reports/{$r->id}/unpublish");
+        $this->post("/office/client-reports/{$r->id}/publish");
+        $this->assertSame($actionsBefore + 2, $exec->actions()->count());
+        $this->assertSame($eventsBefore + 1, $case->timeline()->count());
+        // والعميل لا يرى بيانات الربط الداخلية
+        $cfo = User::where('email', 'cfo@example.test')->first();
+        $p = $this->actingAs($cfo)->get("/portal/reports/{$r->id}")->viewData('page')['props']['report'];
+        $this->assertArrayNotHasKey('link', $p['groups'][0]['items'][0]);
     }
 }
