@@ -2,7 +2,7 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import { IconReports } from '@/Components/Icons';
 import { StatusPill } from '@/Components/ReportView';
-import { Button, cx, DateText, EmptyState, PageHeader, SelectField, TextField } from '@/Components/ui';
+import { Button, cx, EmptyState, PageHeader, SelectField, TextField } from '@/Components/ui';
 import { countNoun } from '@/lib/format';
 import type { Option } from '@/types';
 
@@ -11,11 +11,13 @@ type Row = { id: number; title: string; client: string; clientId: number; period
 const FILTERS: [string, string][] = [['all', 'الكل'], ['draft', 'مفتوحة'], ['closed', 'مكتملة'], ['published', 'منشورة']];
 
 /** التقارير الدورية: فتح تقرير جديد وقائمة التقارير */
-export default function Index({ reports, clients, preset }: { reports: Row[]; clients: Option[]; preset: { client: number | null; today: string } }) {
-  const form = useForm({ client_id: preset.client ? String(preset.client) : '', period: 'monthly', anchor: preset.today });
+export default function Index({ reports, clients, preset }: { reports: Row[]; clients: Option[]; preset: { client: number | null; today: string; ranges: Record<string, [string, string]> } }) {
+  const [s0, e0] = preset.ranges.monthly;
+  const form = useForm({ client_id: preset.client ? String(preset.client) : '', period: 'monthly', start: s0, end: e0 });
+  const pick = (k: string) => { const r = preset.ranges[k]; form.setData((d) => ({ ...d, period: k, ...(r ? { start: r[0], end: r[1] } : {}) })); };
   const [filter, setFilter] = useState('all');
   const shown = filter === 'all' ? reports : reports.filter((r) => r.status === filter);
-  const periods: [string, string, string][] = [['weekly', 'أسبوعي', 'الأحد إلى السبت'], ['monthly', 'شهري', 'الشهر كاملًا'], ['yearly', 'سنوي', 'السنة كاملة']];
+  const periods: [string, string][] = [['weekly', 'أسبوعي'], ['monthly', 'شهري'], ['yearly', 'سنوي'], ['custom', 'فترة محددة']];
   return (
     <>
       <Head title="التقارير الدورية" />
@@ -23,20 +25,20 @@ export default function Index({ reports, clients, preset }: { reports: Row[]; cl
 
       <section className="mist mb-6 rounded-[22px] p-5 sm:p-6" aria-labelledby="new-r">
         <h2 id="new-r" className="mb-4 flex items-center gap-2 text-[17px] font-semibold"><IconReports size={20} />تقرير جديد</h2>
-        <form onSubmit={(e) => { e.preventDefault(); form.post('/office/client-reports'); }} className="grid gap-4 lg:grid-cols-[1.2fr_1.3fr_1fr_auto] lg:items-end">
+        <form onSubmit={(e) => { e.preventDefault(); form.post('/office/client-reports'); }} className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1fr_1.2fr_auto_auto_auto] xl:items-end">
           <SelectField label="العميل" required options={clients} placeholder="اختر العميل" value={form.data.client_id} onChange={(e) => form.setData('client_id', e.target.value)} error={form.errors.client_id} />
           <fieldset>
             <legend className="field-label">نوع التقرير</legend>
-            <div className="grid grid-cols-3 gap-1.5">
-              {periods.map(([k, l, h]) => (
-                <label key={k} className={cx('cursor-pointer rounded-[12px] border px-3 py-2 text-center transition-colors duration-150', form.data.period === k ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-control')}>
-                  <input type="radio" className="sr-only" name="period" checked={form.data.period === k} onChange={() => form.setData('period', k)} />
-                  <span className="block text-[14px] font-medium">{l}</span><span className={cx('block text-[11.5px]', form.data.period === k ? 'text-white/75' : 'text-muted')}>{h}</span>
+            <div className="grid grid-cols-4 gap-1.5">
+              {periods.map(([k, l]) => (
+                <label key={k} className={cx('cursor-pointer rounded-[12px] border px-2 py-2.5 text-center text-[13.5px] font-medium transition-colors duration-150', form.data.period === k ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-control')}>
+                  <input type="radio" className="sr-only" name="period" checked={form.data.period === k} onChange={() => pick(k)} />{l}
                 </label>
               ))}
             </div>
           </fieldset>
-          <TextField label="أي يوم داخل الفترة" type="date" value={form.data.anchor} onChange={(e) => form.setData('anchor', e.target.value)} error={form.errors.anchor} />
+          <TextField label="من تاريخ" type="date" required value={form.data.start} onChange={(e) => form.setData('start', e.target.value)} error={form.errors.start} />
+          <TextField label="إلى تاريخ" type="date" required value={form.data.end} onChange={(e) => form.setData('end', e.target.value)} error={form.errors.end} />
           <Button variant="primary" type="submit" loading={form.processing}>فتح التقرير</Button>
         </form>
       </section>
@@ -67,7 +69,7 @@ export default function Index({ reports, clients, preset }: { reports: Row[]; cl
                   </div>
                   <StatusPill status={r.status} label={r.statusLabel} />
                 </div>
-                <p className="mt-auto pt-3 text-[12.5px] text-muted">{r.period} · <DateText value={r.start} /> — <DateText value={r.end} /> · {countNoun(r.items, { one: 'إجراء واحد', two: 'إجراءان', few: 'إجراءات', many: 'إجراءً' })}</p>
+                <p className="mt-auto pt-3 text-[12.5px] text-muted">{r.period} · <bdi dir="ltr" className="num">{r.start}</bdi> إلى <bdi dir="ltr" className="num">{r.end}</bdi> · {countNoun(r.items, { one: 'إجراء واحد', two: 'إجراءان', few: 'إجراءات', many: 'إجراءً' })}</p>
               </Link>
             </li>
           ))}

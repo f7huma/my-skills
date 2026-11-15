@@ -50,6 +50,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/reports', [Portal\ReportController::class, 'index'])->name('reports.index');
         Route::get('/reports/{report}', [Portal\ReportController::class, 'show'])->whereNumber('report')->name('reports.show');
         Route::get('/reports/{report}/pdf', [Portal\ReportController::class, 'pdf'])->whereNumber('report')->middleware('throttle:reports')->name('reports.pdf');
+        Route::get('/client-logo/{client}', [Portal\ReportController::class, 'logo'])->whereNumber('client')->name('client-logo');
         Route::controller(Portal\ClaimController::class)->prefix('claims')->name('claims.')->group(function () {
             Route::get('/', 'index')->name('index');
             Route::post('/', 'store')->name('store');
@@ -169,6 +170,10 @@ Route::middleware('auth')->group(function () {
             Route::post('/client-reports/{report}/regenerate', 'regenerate')->name('client-reports.regenerate');
             Route::post('/client-reports/{report}/publish', 'publish')->name('client-reports.publish');
             Route::post('/client-reports/{report}/close', 'close')->name('client-reports.close');
+            Route::put('/client-reports/{report}/period', 'period')->name('client-reports.period');
+            Route::get('/clients/{client}/logo', 'logo')->name('clients.logo');
+            Route::post('/clients/{client}/logo', 'storeLogo')->middleware('throttle:uploads')->name('clients.logo.store');
+            Route::delete('/clients/{client}/logo', 'destroyLogo')->name('clients.logo.destroy');
             Route::post('/client-reports/{report}/reopen', 'reopen')->name('client-reports.reopen');
             Route::post('/client-reports/{report}/unpublish', 'unpublish')->name('client-reports.unpublish');
             Route::get('/client-reports/{report}/pdf', 'pdf')->middleware('throttle:reports')->name('client-reports.pdf');

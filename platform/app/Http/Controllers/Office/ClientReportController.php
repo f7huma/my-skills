@@ -7,7 +7,7 @@ use App\Models\Client;
 use App\Models\ClientReport;
 use App\Models\ClientReportItem;
 use App\Services\Audit;
-use App\Services\Calendar;
+use App\Services\Media\ClientLogo;
 use App\Services\Reports\ClientReportService;
 use App\Services\Reports\PdfRenderer;
 use Illuminate\Http\Request;
@@ -17,7 +17,50 @@ use Inertia\Inertia;
 /** التقارير الدورية: إعداد وتحرير كامل للمحامي، ثم نشر لبوابة العميل بعد الاعتماد */
 class ClientReportController extends Controller
 {
+    private const DATE_MESSAGES = [
+        'start.required' => 'حدّد تاريخ بداية الفترة.', 'end.required' => 'حدّد تاريخ نهاية الفترة.',
+        'end.after_or_equal' => 'تاريخ النهاية يجب أن يكون في يوم البداية أو بعده.',
+    ];
+
     public function __construct(private ClientReportService $svc) {}
+
+    /** شعار العميل: يُرفع من محرر التقرير ويُستخدم في كل تقاريره */
+    public function storeLogo(Request $request, Client $client)
+    {
+        $request->validate(['logo' => 'required|file|mimes:png,jpg,jpeg,webp|max:3072'], [
+            'logo.required' => 'اختر صورة الشعار.', 'logo.mimes' => 'الشعار يجب أن يكون PNG أو JPG أو WEBP.', 'logo.max' => 'حجم الصورة يتجاوز 3 ميجابايت.',
+        ]);
+        ClientLogo::store($client, $request->file('logo'));
+        Audit::log('client.logo_updated', $client);
+
+        return back()->with('success', 'حُفظ شعار العميل، وسيظهر في تقاريره.');
+    }
+
+    public function destroyLogo(Client $client)
+    {
+        ClientLogo::remove($client);
+        Audit::log('client.logo_removed', $client);
+
+        return back()->with('success', 'أُزيل شعار العميل.');
+    }
+
+    public function logo(Client $client)
+    {
+        return ClientLogo::response($client);
+    }
+
+    /** تعديل مدى التقرير (البداية والنهاية) بعد إنشائه */
+    public function period(Request $request, ClientReport $report)
+    {
+        abort_if($report->isPublished(), 422, 'اسحب التقرير من صفحة العميل أولًا.');
+        $data = $request->validate([
+            'period' => ['required', Rule::in(array_keys(ClientReport::PERIODS))], 'start' => 'required|date', 'end' => 'required|date|after_or_equal:start',
+        ], self::DATE_MESSAGES);
+        $this->svc->changePeriod($report, $data['period'], $data['start'], $data['end']);
+        Audit::log('client_report.period_changed', $report, ['start' => $data['start'], 'end' => $data['end']]);
+
+        return back()->with('success', 'عُدّلت فترة التقرير، وحُدّثت الأعمال وفقها.');
+    }
 
     public function index(Request $request)
     {
@@ -31,16 +74,18 @@ class ClientReportController extends Controller
                     'status' => $r->status, 'statusLabel' => ClientReport::STATUSES[$r->status], 'items' => $r->items_count,
                     'publishedAt' => $r->published_at?->toIso8601String(), 'closedAt' => $r->closed_at?->toIso8601String()]),
             'clients' => Client::whereNull('archived_at')->orderBy('name')->get(['id', 'name'])->map(fn ($c) => ['value' => $c->id, 'label' => $c->name]),
-            'preset' => ['client' => $clientId, 'today' => today_local()->toDateString()],
+            'preset' => ['client' => $clientId, 'today' => today_local()->toDateString(),
+                'ranges' => collect(['weekly', 'monthly', 'yearly'])->mapWithKeys(fn ($p) => [$p => collect($this->svc->range($p, today_local()->toDateString()))->map->toDateString()->all()])],
         ]);
     }
 
     public function store(Request $request)
     {
         $data = $request->validate([
-            'client_id' => 'required|exists:clients,id', 'period' => ['required', Rule::in(array_keys(ClientReport::PERIODS))], 'anchor' => 'required|date',
-        ], ['anchor.required' => 'اختر تاريخًا داخل الفترة.']);
-        $report = $this->svc->generate(Client::findOrFail($data['client_id']), $data['period'], $data['anchor'], $request->user());
+            'client_id' => 'required|exists:clients,id', 'period' => ['required', Rule::in(array_keys(ClientReport::PERIODS))],
+            'start' => 'required|date', 'end' => 'required|date|after_or_equal:start',
+        ], self::DATE_MESSAGES);
+        $report = $this->svc->generate(Client::findOrFail($data['client_id']), $data['period'], $data['start'], $data['end'], $request->user());
         Audit::log('client_report.created', $report, ['period' => $report->period]);
 
         return redirect()->route('client-reports.show', $report)->with('success', 'فُتح التقرير مسودةً من أعمال الفترة، وسيلتقط كل إجراء جديد تلقائيًا حتى تُغلقه.');
@@ -187,9 +232,9 @@ class ClientReportController extends Controller
     /** ملف PDF بهوية المكتب — يستخدمه المحامي والعميل */
     public static function pdfResponse(array $r, PdfRenderer $pdf)
     {
+        $r['clientLogo'] = ClientLogo::dataUri(Client::findOrFail($r['client']['id']));
         $r['logo'] = 'data:image/png;base64,'.base64_encode(file_get_contents(resource_path('brand/logo-mark.png')));
         $r['issuedAt'] = now(config('office.display_timezone'))->format('Y-m-d');
-        $r['issuedHijri'] = app(Calendar::class)->hijri(today_local());
         $html = view('reports.client-report', ['r' => $r])->render();
         $bytes = $pdf->render($html, $r['title']);
         $name = 'report-'.$r['start'].'-'.$r['end'].'.pdf';

@@ -11,7 +11,7 @@ class ClientReport extends Model
 {
     protected $guarded = ['id', 'lock_version'];
 
-    public const PERIODS = ['weekly' => 'أسبوعي', 'monthly' => 'شهري', 'yearly' => 'سنوي'];
+    public const PERIODS = ['weekly' => 'أسبوعي', 'monthly' => 'شهري', 'yearly' => 'سنوي', 'custom' => 'لفترة محددة'];
 
     public const STATUSES = ['draft' => 'مسودة مفتوحة', 'closed' => 'مكتمل — بانتظار النشر', 'published' => 'منشور للعميل'];
 

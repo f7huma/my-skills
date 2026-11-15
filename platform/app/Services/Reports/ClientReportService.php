@@ -11,6 +11,7 @@ use App\Models\LegalCase;
 use App\Models\TimelineEvent;
 use App\Models\User;
 use App\Services\Calendar;
+use App\Services\Media\ClientLogo;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -67,8 +68,8 @@ class ClientReportService
 
         return match ($period) {
             'weekly' => [$d->subDays($d->dayOfWeek), $d->subDays($d->dayOfWeek)->addDays(6)],
-            'monthly' => [$d->startOfMonth(), $d->endOfMonth()->startOfDay()],
             'yearly' => [$d->startOfYear(), $d->endOfYear()->startOfDay()],
+            default => [$d->startOfMonth(), $d->endOfMonth()->startOfDay()],
         };
     }
 
@@ -76,16 +77,24 @@ class ClientReportService
     {
         $fmt = fn (CarbonImmutable $x, string $p) => (new \IntlDateFormatter('ar_SA@calendar=gregorian;numbers=latn', 0, 0, config('office.display_timezone'), null, $p))->format($x);
 
+        $span = $fmt($start, $start->year === $end->year ? 'd MMMM' : 'd MMMM y').' إلى '.$fmt($end, 'd MMMM y');
+        // العنوان المختصر فقط إن طابقت الحدود الشهر أو السنة كاملة؛ وإلا يُذكر المدى
+        $fullMonth = $start->isSameDay($start->startOfMonth()) && $end->isSameDay($start->endOfMonth());
+        $fullYear = $start->isSameDay($start->startOfYear()) && $end->isSameDay($start->endOfYear());
+
         return match ($period) {
-            'weekly' => 'التقرير الأسبوعي — '.$fmt($start, 'd MMMM').' إلى '.$fmt($end, 'd MMMM y'),
-            'monthly' => 'التقرير الشهري — '.$fmt($start, 'MMMM y'),
-            'yearly' => 'التقرير السنوي — '.$start->year,
+            'weekly' => 'التقرير الأسبوعي — '.$span,
+            'monthly' => 'التقرير الشهري — '.($fullMonth ? $fmt($start, 'MMMM y') : $span),
+            'yearly' => 'التقرير السنوي — '.($fullYear ? $start->year : $span),
+            default => 'تقرير الأعمال — '.$span,
         };
     }
 
-    public function generate(Client $client, string $period, string $anchor, User $by): ClientReport
+    public function generate(Client $client, string $period, string $from, string $to, User $by): ClientReport
     {
-        [$start, $end] = $this->range($period, $anchor);
+        $tz = config('office.display_timezone');
+        $start = CarbonImmutable::parse($from, $tz)->startOfDay();
+        $end = CarbonImmutable::parse($to, $tz)->startOfDay();
 
         return DB::transaction(function () use ($client, $period, $start, $end, $by) {
             $report = ClientReport::create([
@@ -229,6 +238,35 @@ class ClientReportService
         });
     }
 
+    /**
+     * تعديل بداية الفترة ونهايتها: يُزال من المولَّد ما خرج عن المدى الجديد، ويدخل ما صار داخله.
+     * ما أضافه المحامي يدويًا يبقى. يُحدَّث العنوان إن كان هو العنوان التلقائي السابق.
+     */
+    public function changePeriod(ClientReport $report, string $period, string $from, string $to): void
+    {
+        DB::transaction(function () use ($report, $period, $from, $to) {
+            $tz = config('office.display_timezone');
+            $oldTitle = $this->title($report->period, CarbonImmutable::parse($report->period_start->toDateString(), $tz), CarbonImmutable::parse($report->period_end->toDateString(), $tz));
+            $start = CarbonImmutable::parse($from, $tz)->startOfDay();
+            $end = CarbonImmutable::parse($to, $tz)->startOfDay();
+            $report->forceFill([
+                'period' => $period, 'period_start' => $start->toDateString(), 'period_end' => $end->toDateString(),
+                'title' => $report->title === $oldTitle ? $this->title($period, $start, $end) : $report->title,
+            ])->save();
+            $report->items()->where('source', 'auto')->where(fn ($q) => $q->whereDate('occurred_on', '<', $start->toDateString())->orWhereDate('occurred_on', '>', $end->toDateString()))->delete();
+            $report->items()->where('source', 'manual')->whereDate('occurred_on', '<', $start->toDateString())->update(['occurred_on' => $start->toDateString()]);
+            $report->items()->where('source', 'manual')->whereDate('occurred_on', '>', $end->toDateString())->update(['occurred_on' => $end->toDateString()]);
+            if ($report->isOpen()) {
+                $this->sync($report);
+            } else {
+                // المغلق لا يلتقط جديدًا تلقائيًا، لكن تغيير المدى صريح من المحامي فيُحدَّث وفقه
+                $report->forceFill(['status' => 'draft'])->save();
+                $this->sync($report);
+                $report->forceFill(['status' => 'closed'])->save();
+            }
+        });
+    }
+
     /** يزامن كل المسودات المفتوحة للعميل التي تشمل فترتها هذا التاريخ */
     public function syncOpenFor(?int $clientId, $date = null): void
     {
@@ -258,7 +296,7 @@ class ClientReportService
     /** بنية العرض المشتركة بين الشاشة وPDF */
     public function present(ClientReport $r, bool $forClient = false): array
     {
-        $r->loadMissing('client:id,name', 'items');
+        $r->loadMissing('client:id,name,logo_path', 'items');
         $byKey = $r->items->groupBy('matter_key');
         // المولَّد تُحذف منه التواريخ؛ ما كتبه المحامي بيده يُعرض كما كتبه
         $item = fn ($i) => ['id' => $i->id, 'on' => $i->occurred_on->toDateString(),
@@ -281,8 +319,7 @@ class ClientReportService
         return [
             'id' => $r->id, 'title' => $r->title, 'period' => $r->period, 'periodLabel' => ClientReport::PERIODS[$r->period],
             'start' => $r->period_start->toDateString(), 'end' => $r->period_end->toDateString(),
-            'startHijri' => $this->cal->hijri($r->period_start), 'endHijri' => $this->cal->hijri($r->period_end),
-            'client' => ['id' => $r->client_id, 'name' => $r->client->name],
+            'client' => ['id' => $r->client_id, 'name' => $r->client->name, 'logo' => ClientLogo::url($r->client, $forClient)],
             'intro' => $r->intro, 'nextSteps' => $r->next_steps, 'status' => $r->status, 'statusLabel' => ClientReport::STATUSES[$r->status],
             'publishedAt' => $r->published_at?->toIso8601String(), 'closedAt' => $r->closed_at?->toIso8601String(), 'lockVersion' => $r->lock_version,
             'matters' => $matters, 'general' => $general,

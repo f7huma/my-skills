@@ -16,7 +16,7 @@ export default function Show({ report }: { report: Report }) {
   const published = report.status === 'published';
 
   const subtitle = open
-    ? <>لا يراها العميل. كل إجراء جديد على قضاياه وطلبات تنفيذه خلال <DateText value={report.start} /> — <DateText value={report.end} /> يدخل التقرير تلقائيًا، وتستطيع الإضافة والتعديل متى شئت حتى تُغلقه.</>
+    ? <>لا يراها العميل. كل إجراء جديد على قضاياه وطلبات تنفيذه خلال الفترة يدخل التقرير تلقائيًا، وتستطيع الإضافة والتعديل متى شئت حتى تُغلقه.</>
     : published && report.publishedAt
       ? <>منشور في صفحة العميل منذ <DateText value={report.publishedAt} time /> — أي تعديل يظهر له مباشرة.</>
       : <>أُغلق{report.closedAt ? <> في <DateText value={report.closedAt} time /></> : null} وثبت محتواه، فلا تدخله إجراءات جديدة. راجعه ثم اعتمده للنشر.</>;
