@@ -25,21 +25,25 @@ export default function Index({ reports, clients, preset }: { reports: Row[]; cl
 
       <section className="mist mb-6 rounded-[22px] p-5 sm:p-6" aria-labelledby="new-r">
         <h2 id="new-r" className="mb-4 flex items-center gap-2 text-[17px] font-semibold"><IconReports size={20} />تقرير جديد</h2>
-        <form onSubmit={(e) => { e.preventDefault(); form.post('/office/client-reports'); }} className="grid gap-4 lg:grid-cols-2 xl:grid-cols-[1fr_1.2fr_auto_auto_auto] xl:items-end">
+        <form onSubmit={(e) => { e.preventDefault(); form.post('/office/client-reports'); }} className="grid gap-4">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] lg:items-end">
           <SelectField label="العميل" required options={clients} placeholder="اختر العميل" value={form.data.client_id} onChange={(e) => form.setData('client_id', e.target.value)} error={form.errors.client_id} />
           <fieldset>
             <legend className="field-label">نوع التقرير</legend>
             <div className="grid grid-cols-4 gap-1.5">
               {periods.map(([k, l]) => (
-                <label key={k} className={cx('cursor-pointer rounded-[12px] border px-2 py-2.5 text-center text-[13.5px] font-medium transition-colors duration-150', form.data.period === k ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-control')}>
+                <label key={k} className={cx('cursor-pointer whitespace-nowrap rounded-[12px] border px-2 py-2.5 text-center text-[13.5px] font-medium transition-colors duration-150', form.data.period === k ? 'border-ink bg-ink text-white' : 'border-line bg-white hover:border-control')}>
                   <input type="radio" className="sr-only" name="period" checked={form.data.period === k} onChange={() => pick(k)} />{l}
                 </label>
               ))}
             </div>
           </fieldset>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-start">
           <TextField label="من تاريخ" type="date" required value={form.data.start} onChange={(e) => form.setData('start', e.target.value)} error={form.errors.start} />
           <TextField label="إلى تاريخ" type="date" required value={form.data.end} onChange={(e) => form.setData('end', e.target.value)} error={form.errors.end} />
-          <Button variant="primary" type="submit" loading={form.processing}>فتح التقرير</Button>
+          <Button variant="primary" type="submit" loading={form.processing} className="sm:col-span-2 lg:col-span-1 lg:mt-[26px] lg:min-w-[140px]">فتح التقرير</Button>
+          </div>
         </form>
       </section>
 
