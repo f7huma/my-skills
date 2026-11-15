@@ -168,6 +168,8 @@ Route::middleware('auth')->group(function () {
             Route::delete('/client-reports/{report}', 'destroy')->name('client-reports.destroy');
             Route::post('/client-reports/{report}/regenerate', 'regenerate')->name('client-reports.regenerate');
             Route::post('/client-reports/{report}/publish', 'publish')->name('client-reports.publish');
+            Route::post('/client-reports/{report}/close', 'close')->name('client-reports.close');
+            Route::post('/client-reports/{report}/reopen', 'reopen')->name('client-reports.reopen');
             Route::post('/client-reports/{report}/unpublish', 'unpublish')->name('client-reports.unpublish');
             Route::get('/client-reports/{report}/pdf', 'pdf')->middleware('throttle:reports')->name('client-reports.pdf');
             Route::post('/client-reports/{report}/items', 'storeItem')->name('client-reports.items.store');

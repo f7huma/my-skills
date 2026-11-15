@@ -2,12 +2,17 @@
 
 namespace App\Providers;
 
+use App\Models\Collection;
+use App\Models\Hearing;
+use App\Models\LegalCase;
+use App\Models\TimelineEvent;
 use App\Services\Calendar;
 use App\Services\Files\ClamAvScanner;
 use App\Services\Files\DisabledScanner;
 use App\Services\Files\FakeScanner;
 use App\Services\Files\FileCipher;
 use App\Services\Files\MalwareScanner;
+use App\Services\Reports\ClientReportService;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -51,6 +56,28 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('uploads', fn (Request $r) => Limit::perMinute(30)->by($r->user()?->id ?: $r->ip()));
         RateLimiter::for('downloads', fn (Request $r) => Limit::perMinute(60)->by($r->user()?->id ?: $r->ip()));
         RateLimiter::for('reports', fn (Request $r) => Limit::perMinute(10)->by($r->user()?->id ?: $r->ip()));
+        $this->liveReports();
+
         RateLimiter::for('invitations', fn (Request $r) => Limit::perMinute(10)->by($r->ip()));
+    }
+
+    /** كل إجراء جديد على أعمال العميل يدخل تقاريره المفتوحة فورًا، حتى يُغلقها المحامي */
+    private function liveReports(): void
+    {
+        $sync = function (?int $clientId, $date) {
+            try {
+                app(ClientReportService::class)->syncOpenFor($clientId, $date);
+            } catch (\Throwable $e) {
+                report($e); // لا يُعطَّل الإجراء الأصلي بسبب التقرير؛ يُستكمل عند فتح التقرير
+            }
+        };
+        $attr = fn (Model $m, string $k) => $m->getAttributes()[$k] ?? null;
+        TimelineEvent::created(fn (TimelineEvent $e) => $sync($attr($e, 'client_id'), $attr($e, 'occurred_at') ? $e->occurred_at : null));
+        Collection::saved(fn (Collection $c) => $sync($attr($c, 'client_id'), $attr($c, 'occurred_on') ? $c->occurred_on : null));
+        Hearing::saved(function (Hearing $h) use ($sync, $attr) {
+            if ($attr($h, 'status') === 'completed' && $h->wasChanged('status') || ($h->wasRecentlyCreated && $attr($h, 'status') === 'completed')) {
+                $sync(LegalCase::whereKey($attr($h, 'legal_case_id'))->value('client_id'), $h->scheduled_at);
+            }
+        });
     }
 }

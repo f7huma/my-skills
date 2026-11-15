@@ -5,14 +5,14 @@ import { CountUp } from '@/Components/motion';
 import { IconCase, IconExecution, IconHearing, IconReports, IconTasks } from '@/Components/Icons';
 import { DiamondRule } from '@/Components/LegalArt';
 import { StageDots } from '@/Components/StagePath';
-import { Button, cx, DateText, Num, TextArea, TextField } from '@/Components/ui';
+import { Button, cx, DateText, Num, Pill, TextArea, TextField } from '@/Components/ui';
 
 export type ReportItem = { id: number; on: string; hijri: string; title: string; details: string | null; source: 'auto' | 'manual'; matter: string };
 export type ReportMatter = { key: string; kind: 'case' | 'execution'; id: number; title: string; number: string | null; court: string | null; stage: string | null; stageLabel: string | null;
   status: string | null; statusKey: string; hidden?: boolean; items: ReportItem[] };
 export type Report = {
   id: number; title: string; period: string; periodLabel: string; start: string; end: string; startHijri: string; endHijri: string;
-  client: { id: number; name: string }; intro: string | null; nextSteps: string | null; status: 'draft' | 'published'; statusLabel: string;
+  client: { id: number; name: string }; intro: string | null; nextSteps: string | null; status: 'draft' | 'closed' | 'published'; statusLabel: string; closedAt?: string | null;
   publishedAt: string | null; lockVersion: number; matters: ReportMatter[]; general: ReportItem[];
   stats: { cases: number; executions: number; actions: number; hearings: number };
 };
@@ -234,3 +234,16 @@ export function ReportView({ report, editable = false, pdfHref, toolbar }: { rep
     </div>
   );
 }
+
+/** شارة الحالة: المسودة المفتوحة تنبض بنقطة حية لأنها تتحدث تلقائيًا */
+export function StatusPill({ status, label }: { status: string; label: string }) {
+  if (status === 'draft') {
+    return (
+      <Pill tone="warning" className="inline-flex items-center gap-1.5">
+        <span className="pulse-dot inline-block size-2 rounded-full bg-current" aria-hidden />{label} — تتحدث تلقائيًا
+      </Pill>
+    );
+  }
+  return <Pill tone={status === 'published' ? 'positive' : 'neutral'}>{label}</Pill>;
+}
+

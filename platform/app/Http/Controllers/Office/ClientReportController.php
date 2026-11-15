@@ -7,6 +7,7 @@ use App\Models\Client;
 use App\Models\ClientReport;
 use App\Models\ClientReportItem;
 use App\Services\Audit;
+use App\Services\Calendar;
 use App\Services\Reports\ClientReportService;
 use App\Services\Reports\PdfRenderer;
 use Illuminate\Http\Request;
@@ -28,7 +29,7 @@ class ClientReportController extends Controller
                 ->map(fn (ClientReport $r) => ['id' => $r->id, 'title' => $r->title, 'client' => $r->client->name, 'clientId' => $r->client_id,
                     'period' => ClientReport::PERIODS[$r->period], 'start' => $r->period_start->toDateString(), 'end' => $r->period_end->toDateString(),
                     'status' => $r->status, 'statusLabel' => ClientReport::STATUSES[$r->status], 'items' => $r->items_count,
-                    'publishedAt' => $r->published_at?->toIso8601String()]),
+                    'publishedAt' => $r->published_at?->toIso8601String(), 'closedAt' => $r->closed_at?->toIso8601String()]),
             'clients' => Client::whereNull('archived_at')->orderBy('name')->get(['id', 'name'])->map(fn ($c) => ['value' => $c->id, 'label' => $c->name]),
             'preset' => ['client' => $clientId, 'today' => today_local()->toDateString()],
         ]);
@@ -42,11 +43,14 @@ class ClientReportController extends Controller
         $report = $this->svc->generate(Client::findOrFail($data['client_id']), $data['period'], $data['anchor'], $request->user());
         Audit::log('client_report.created', $report, ['period' => $report->period]);
 
-        return redirect()->route('client-reports.show', $report)->with('success', 'أُعدّت مسودة التقرير من أعمال الفترة. راجعها وعدّلها ثم اعتمدها للنشر.');
+        return redirect()->route('client-reports.show', $report)->with('success', 'فُتح التقرير مسودةً من أعمال الفترة، وسيلتقط كل إجراء جديد تلقائيًا حتى تُغلقه.');
     }
 
     public function show(ClientReport $report)
     {
+        $this->svc->sync($report);
+        $report->refresh();
+
         return Inertia::render('Office/ClientReports/Show', ['report' => $this->svc->present($report)]);
     }
 
@@ -70,10 +74,11 @@ class ClientReportController extends Controller
 
     public function regenerate(ClientReport $report)
     {
+        abort_if($report->isPublished(), 422, 'اسحب التقرير من صفحة العميل أولًا.');
         $this->svc->fill($report);
         Audit::log('client_report.regenerated', $report);
 
-        return back()->with('success', 'حُدّثت الإجراءات من سجل الأعمال، وبقيت إضافاتك اليدوية كما هي.');
+        return back()->with('success', 'أُعيد بناء الإجراءات من سجل الأعمال، وبقيت إضافاتك اليدوية كما هي.');
     }
 
     private function matterKeys(ClientReport $report): array
@@ -108,15 +113,44 @@ class ClientReportController extends Controller
     public function destroyItem(ClientReportItem $item)
     {
         $report = $item->report;
+        if ($item->source === 'auto' && $item->source_ref) {
+            // لا يعود الإجراء المحذوف في المزامنة التلقائية التالية
+            $report->forceFill(['dismissed_refs' => array_values(array_unique([...($report->dismissed_refs ?? []), $item->source_ref]))])->save();
+        }
         $item->delete();
         Audit::log('client_report.item_deleted', $report, ['item' => $item->id]);
 
         return back()->with('success', 'حُذف الإجراء من التقرير.');
     }
 
+    /** إغلاق المسودة: تتوقف المزامنة التلقائية ويثبت محتوى التقرير */
+    public function close(ClientReport $report)
+    {
+        abort_unless($report->isOpen(), 422, 'التقرير مغلق بالفعل.');
+        $this->svc->sync($report); // آخر التقاط قبل التثبيت
+        $report->refresh()->forceFill(['status' => 'closed', 'closed_at' => now()])->save();
+        Audit::log('client_report.closed', $report);
+
+        return back()->with('success', 'أُغلق التقرير واكتمل. راجعه ثم اعتمده للنشر.');
+    }
+
+    /** إعادة الفتح: يعود مسودة تلتقط الجديد (ويُسحب من صفحة العميل إن كان منشورًا) */
+    public function reopen(ClientReport $report)
+    {
+        $report->forceFill(['status' => 'draft', 'closed_at' => null, 'published_at' => null, 'published_by' => null])->save();
+        Audit::log('client_report.reopened', $report);
+        $this->svc->sync($report);
+
+        return back()->with('success', 'أُعيد فتح التقرير، وسيلتقط الإجراءات الجديدة تلقائيًا.');
+    }
+
     public function publish(Request $request, ClientReport $report)
     {
-        $report->forceFill(['status' => 'published', 'published_at' => now(), 'published_by' => $request->user()->id])->save();
+        if ($report->isOpen()) {
+            $this->svc->sync($report);
+            $report->refresh();
+        }
+        $report->forceFill(['status' => 'published', 'closed_at' => $report->closed_at ?? now(), 'published_at' => now(), 'published_by' => $request->user()->id])->save();
         Audit::log('client_report.published', $report);
 
         return back()->with('success', 'اعتُمد التقرير ونُشر في صفحة العميل.');
@@ -124,10 +158,10 @@ class ClientReportController extends Controller
 
     public function unpublish(ClientReport $report)
     {
-        $report->forceFill(['status' => 'draft', 'published_at' => null, 'published_by' => null])->save();
+        $report->forceFill(['status' => 'closed', 'published_at' => null, 'published_by' => null])->save();
         Audit::log('client_report.unpublished', $report);
 
-        return back()->with('success', 'سُحب التقرير من صفحة العميل وعاد مسودة.');
+        return back()->with('success', 'سُحب التقرير من صفحة العميل، وبقي مكتملًا دون تغيير.');
     }
 
     public function destroy(ClientReport $report)
@@ -141,6 +175,8 @@ class ClientReportController extends Controller
 
     public function pdf(ClientReport $report, PdfRenderer $pdf)
     {
+        $this->svc->sync($report);
+        $report->refresh();
         Audit::log('client_report.pdf', $report);
 
         return self::pdfResponse($this->svc->present($report, true), $pdf);
@@ -151,7 +187,7 @@ class ClientReportController extends Controller
     {
         $r['logo'] = 'data:image/png;base64,'.base64_encode(file_get_contents(resource_path('brand/logo-mark.png')));
         $r['issuedAt'] = now(config('office.display_timezone'))->format('Y-m-d');
-        $r['issuedHijri'] = app(\App\Services\Calendar::class)->hijri(today_local());
+        $r['issuedHijri'] = app(Calendar::class)->hijri(today_local());
         $html = view('reports.client-report', ['r' => $r])->render();
         $bytes = $pdf->render($html, $r['title']);
         $name = 'report-'.$r['start'].'-'.$r['end'].'.pdf';

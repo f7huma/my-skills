@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\ClientReport;
+use App\Models\LegalCase;
 use App\Models\TimelineEvent;
 use App\Models\User;
+use App\Services\Timeline;
 use Tests\TestCase;
 
 /** التقارير الدورية: الإعداد من أعمال الفترة، تحرير المحامي، النشر، والعزل بين العملاء */
@@ -89,5 +91,64 @@ class ClientReportTest extends TestCase
         $this->get("/office/client-reports/{$r->id}/pdf")->assertOk()->assertHeader('Content-Type', 'application/pdf');
         $y = $this->make('شركة الأمثلة', 'yearly');
         $this->assertSame(today_local()->year.'-01-01', $y->period_start->toDateString());
+    }
+
+    public function test_open_draft_captures_new_work_automatically_until_closed(): void
+    {
+        $this->demo();
+        $r = $this->make();
+        $case = LegalCase::where('client_id', $r->client_id)->whereNull('archived_at')->where('work_status', '!=', 'draft')->firstOrFail();
+        $before = $r->items()->count();
+
+        // إجراء جديد على قضية العميل يدخل المسودة المفتوحة فورًا، بلا ضغط أي زر
+        Timeline::record($case, 'case.note', 'تقديم مذكرة جوابية', null, null, true, now());
+        $this->assertSame($before + 1, $r->items()->count());
+        $item = $r->items()->where('title', 'تقديم مذكرة جوابية')->firstOrFail();
+        $this->assertSame('auto', $item->source);
+        $this->assertSame('case:'.$case->id, $item->matter_key);
+
+        // ما يعدّله المحامي يبقى، وما يحذفه لا يعود عند فتح التقرير
+        $this->actingAs($this->lawyer())->put("/office/client-report-items/{$item->id}", ['matter_key' => $item->matter_key, 'occurred_on' => $item->occurred_on->toDateString(), 'title' => 'قدّمنا مذكرة جوابية مفصلة', 'details' => null])->assertSessionHasNoErrors();
+        $victim = $r->items()->where('source', 'auto')->where('id', '!=', $item->id)->firstOrFail();
+        $this->delete("/office/client-report-items/{$victim->id}")->assertSessionHasNoErrors();
+        $this->get("/office/client-reports/{$r->id}")->assertOk();
+        $this->assertSame('قدّمنا مذكرة جوابية مفصلة', $item->fresh()->title);
+        $this->assertFalse($r->items()->where('source_ref', $victim->source_ref)->exists(), 'المحذوف لا يعود');
+        $this->assertSame($before, $r->items()->count());
+
+        // بعد الإغلاق لا يدخل شيء جديد
+        $this->post("/office/client-reports/{$r->id}/close")->assertSessionHasNoErrors();
+        $this->assertSame('closed', $r->fresh()->status);
+        $this->assertNotNull($r->fresh()->closed_at);
+        Timeline::record($case, 'case.note', 'إجراء بعد الإغلاق', null, null, true, now());
+        $this->get("/office/client-reports/{$r->id}")->assertOk();
+        $this->assertFalse($r->items()->where('title', 'إجراء بعد الإغلاق')->exists());
+
+        // المكتمل لا يراه العميل حتى يُنشر، والسحب يعيده مكتملًا لا مسودة
+        $cfo = User::where('email', 'cfo@example.test')->first();
+        $this->actingAs($cfo)->get("/portal/reports/{$r->id}")->assertNotFound();
+        $this->actingAs($this->lawyer())->post("/office/client-reports/{$r->id}/publish")->assertSessionHasNoErrors();
+        $this->actingAs($cfo)->get("/portal/reports/{$r->id}")->assertOk();
+        $this->actingAs($this->lawyer())->post("/office/client-reports/{$r->id}/unpublish")->assertSessionHasNoErrors();
+        $this->assertSame('closed', $r->fresh()->status);
+
+        // إعادة الفتح تلتقط ما فاته
+        $this->post("/office/client-reports/{$r->id}/reopen")->assertSessionHasNoErrors();
+        $this->assertSame('draft', $r->fresh()->status);
+        $this->assertTrue($r->items()->where('title', 'إجراء بعد الإغلاق')->exists());
+        $this->assertFalse($r->items()->where('source_ref', $victim->source_ref)->exists(), 'المحذوف لا يعود حتى بعد إعادة الفتح');
+    }
+
+    public function test_work_outside_the_period_or_for_another_client_does_not_enter(): void
+    {
+        $this->demo();
+        $r = $this->make();
+        $other = LegalCase::where('client_id', '!=', $r->client_id)->whereNull('archived_at')->firstOrFail();
+        $mine = LegalCase::where('client_id', $r->client_id)->whereNull('archived_at')->where('work_status', '!=', 'draft')->firstOrFail();
+        $count = $r->items()->count();
+        Timeline::record($other, 'case.note', 'إجراء لعميل آخر', null, null, true, now());
+        Timeline::record($mine, 'case.note', 'إجراء خارج الفترة', null, null, true, now()->addMonths(2));
+        Timeline::record($mine, 'case.note', 'ملاحظة داخلية', null, null, false, now());
+        $this->assertSame($count, $r->items()->count());
     }
 }

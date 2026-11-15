@@ -77,8 +77,11 @@ class ClientReportService
         });
     }
 
-    /** يعيد بناء الإجراءات المولَّدة ولقطة الملفات، ويُبقي ما أضافه المحامي يدويًا */
-    public function fill(ClientReport $report): void
+    /**
+     * ما يصح دخوله التقرير من أعمال الفترة، كلٌّ بمرجع مصدره (event:ID / hearing:ID / collection:ID)
+     * حتى لا يتكرر عند المزامنة ولا يعود ما حذفه المحامي. يعيد [الإجراءات، لقطة الملفات].
+     */
+    private function candidates(ClientReport $report): array
     {
         $tz = config('office.display_timezone');
         $from = CarbonImmutable::parse($report->period_start->toDateString(), $tz)->startOfDay();
@@ -90,32 +93,34 @@ class ClientReportService
         $touched = [];
         $events = TimelineEvent::where('client_id', $cid)->whereBetween('occurred_at', [$from->utc(), $to->utc()])
             ->where(fn ($q) => $q->where('client_visible', true)->orWhereIn('type', self::TITLE_ONLY))
-            ->orderBy('occurred_at')->get();
+            ->orderBy('occurred_at')->orderBy('id')->get();
         foreach ($events as $e) {
             $key = $e->execution_request_id ? 'execution:'.$e->execution_request_id : ($e->legal_case_id ? 'case:'.$e->legal_case_id : 'general');
             $items[] = ['matter_key' => $key, 'occurred_on' => $e->occurred_at->copy()->setTimezone($tz)->toDateString(),
-                'title' => self::clean($e->title) ?? $e->title, 'details' => in_array($e->type, self::TITLE_ONLY, true) ? null : self::clean($e->details)];
+                'title' => self::clean($e->title) ?? $e->title, 'details' => in_array($e->type, self::TITLE_ONLY, true) ? null : self::clean($e->details),
+                'source_ref' => 'event:'.$e->id];
             $touched[$key] = true;
         }
         // الجلسات التي انعقدت خلال الفترة (بلا نتائجها الداخلية)
         $hearings = Hearing::with('legalCase:id,client_id')->whereHas('legalCase', fn ($q) => $q->where('client_id', $cid))
-            ->where('status', 'completed')->whereBetween('scheduled_at', [$from->utc(), $to->utc()])->get();
+            ->where('status', 'completed')->whereBetween('scheduled_at', [$from->utc(), $to->utc()])->orderBy('scheduled_at')->get();
         foreach ($hearings as $h) {
             $key = 'case:'.$h->legal_case_id;
             $on = $h->scheduled_at->copy()->setTimezone($tz);
             $exists = collect($items)->contains(fn ($i) => $i['matter_key'] === $key && $i['occurred_on'] === $on->toDateString() && str_contains($i['title'], 'جلسة'));
             if (! $exists) {
-                $items[] = ['matter_key' => $key, 'occurred_on' => $on->toDateString(), 'title' => 'حضور '.Hearing::KINDS[$h->kind].($h->authority ? ' — '.$h->authority : ''), 'details' => null];
+                $items[] = ['matter_key' => $key, 'occurred_on' => $on->toDateString(), 'title' => 'حضور '.Hearing::KINDS[$h->kind].($h->authority ? ' — '.$h->authority : ''),
+                    'details' => null, 'source_ref' => 'hearing:'.$h->id];
             }
             $touched[$key] = true;
         }
         // المبالغ المقبوضة الظاهرة للعميل
         $received = Collection::where('client_id', $cid)->where('kind', 'received')->where('visible_to_client', true)
-            ->whereBetween('occurred_on', [$from->toDateString(), $to->toDateString()])->get();
+            ->whereBetween('occurred_on', [$from->toDateString(), $to->toDateString()])->orderBy('occurred_on')->get();
         foreach ($received as $c) {
             $key = $c->execution_request_id ? 'execution:'.$c->execution_request_id : ($c->legal_case_id ? 'case:'.$c->legal_case_id : 'general');
             $items[] = ['matter_key' => $key, 'occurred_on' => $c->occurred_on->toDateString(),
-                'title' => 'تحصيل مبلغ '.number_format((float) $c->amount, 2).' '.$c->currency, 'details' => $c->description];
+                'title' => 'تحصيل مبلغ '.number_format((float) $c->amount, 2).' '.$c->currency, 'details' => $c->description, 'source_ref' => 'collection:'.$c->id];
             $touched[$key] = true;
         }
 
@@ -146,11 +151,85 @@ class ClientReportService
         }
         unset($i);
 
-        $report->items()->where('source', 'auto')->delete();
-        foreach ($items as $i) {
-            $report->items()->create($i + ['source' => 'auto']);
+        return [$items, $matters];
+    }
+
+    /** إعادة بناء كاملة: تحذف المولَّد كله (وما حُذف سابقًا يعود)، وتُبقي إضافات المحامي اليدوية */
+    public function fill(ClientReport $report): void
+    {
+        DB::transaction(function () use ($report) {
+            [$items, $matters] = $this->candidates($report);
+            $report->items()->where('source', 'auto')->delete();
+            foreach ($items as $i) {
+                $report->items()->create($i + ['source' => 'auto']);
+            }
+            $report->forceFill(['matters' => $this->keepManualMatters($report, $matters), 'dismissed_refs' => null])->save();
+        });
+    }
+
+    /**
+     * مزامنة المسودة المفتوحة: تضيف كل إجراء جديد لم يدخلها بعد ولم يحذفه المحامي، وتحدّث مراحل الملفات.
+     * لا تمس ما عدّله المحامي أو أضافه. التقرير المغلق أو المنشور لا يتغير.
+     */
+    public function sync(ClientReport $report): int
+    {
+        if (! $report->isOpen()) {
+            return 0;
         }
-        $report->forceFill(['matters' => $matters])->save();
+
+        return DB::transaction(function () use ($report) {
+            $report = ClientReport::lockForUpdate()->findOrFail($report->id);
+            if (! $report->isOpen()) {
+                return 0;
+            }
+            [$items, $matters] = $this->candidates($report);
+            $existing = $report->items()->get();
+            // إجراءات أُنشئت قبل وجود المراجع: تُربط بمصدرها إن طابقته حتى لا تتكرر
+            foreach ($existing->where('source', 'auto')->whereNull('source_ref') as $old) {
+                $match = collect($items)->first(fn ($i) => $i['matter_key'] === $old->matter_key && $i['occurred_on'] === $old->occurred_on->toDateString() && $i['title'] === $old->title
+                    && ! $existing->contains('source_ref', $i['source_ref']));
+                if ($match) {
+                    $old->forceFill(['source_ref' => $match['source_ref']])->save();
+                }
+            }
+            $known = $existing->pluck('source_ref')->filter()->merge($report->dismissed_refs ?? [])->flip();
+            $added = 0;
+            foreach ($items as $i) {
+                if (! isset($known[$i['source_ref']])) {
+                    $report->items()->create($i + ['source' => 'auto']);
+                    $added++;
+                }
+            }
+            $report->forceFill(['matters' => $this->keepManualMatters($report, $matters)])->save();
+
+            return $added;
+        });
+    }
+
+    /** يزامن كل المسودات المفتوحة للعميل التي تشمل فترتها هذا التاريخ */
+    public function syncOpenFor(?int $clientId, $date = null): void
+    {
+        if (! $clientId) {
+            return;
+        }
+        $day = $date ? CarbonImmutable::parse($date)->setTimezone(config('office.display_timezone'))->toDateString() : today_local()->toDateString();
+        ClientReport::where('client_id', $clientId)->where('status', 'draft')
+            ->whereDate('period_start', '<=', $day)->whereDate('period_end', '>=', $day)
+            ->get()->each(fn (ClientReport $r) => $this->sync($r));
+    }
+
+    /** يُبقي في اللقطة أي ملف سابق ما زالت تحته إجراءات في التقرير، حتى لا تختفي */
+    private function keepManualMatters(ClientReport $report, array $matters): array
+    {
+        $keys = collect($matters)->pluck('key')->all();
+        $used = $report->items()->pluck('matter_key')->unique()->all();
+        foreach ($report->matters ?? [] as $old) {
+            if (! in_array($old['key'], $keys, true) && in_array($old['key'], $used, true)) {
+                $matters[] = $old;
+            }
+        }
+
+        return $matters;
     }
 
     /** بنية العرض المشتركة بين الشاشة وPDF */
@@ -172,7 +251,7 @@ class ClientReportService
             'startHijri' => $this->cal->hijri($r->period_start), 'endHijri' => $this->cal->hijri($r->period_end),
             'client' => ['id' => $r->client_id, 'name' => $r->client->name],
             'intro' => $r->intro, 'nextSteps' => $r->next_steps, 'status' => $r->status, 'statusLabel' => ClientReport::STATUSES[$r->status],
-            'publishedAt' => $r->published_at?->toIso8601String(), 'lockVersion' => $r->lock_version,
+            'publishedAt' => $r->published_at?->toIso8601String(), 'closedAt' => $r->closed_at?->toIso8601String(), 'lockVersion' => $r->lock_version,
             'matters' => $matters, 'general' => $general,
             'stats' => [
                 'cases' => collect($matters)->where('kind', 'case')->count(),

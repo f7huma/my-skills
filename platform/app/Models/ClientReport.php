@@ -13,11 +13,11 @@ class ClientReport extends Model
 
     public const PERIODS = ['weekly' => 'أسبوعي', 'monthly' => 'شهري', 'yearly' => 'سنوي'];
 
-    public const STATUSES = ['draft' => 'مسودة', 'published' => 'منشور للعميل'];
+    public const STATUSES = ['draft' => 'مسودة مفتوحة', 'closed' => 'مكتمل — بانتظار النشر', 'published' => 'منشور للعميل'];
 
     protected function casts(): array
     {
-        return ['period_start' => 'date', 'period_end' => 'date', 'matters' => 'array', 'published_at' => 'datetime'];
+        return ['period_start' => 'date', 'period_end' => 'date', 'matters' => 'array', 'published_at' => 'datetime', 'closed_at' => 'datetime', 'dismissed_refs' => 'array'];
     }
 
     public function client(): BelongsTo
@@ -28,6 +28,12 @@ class ClientReport extends Model
     public function items(): HasMany
     {
         return $this->hasMany(ClientReportItem::class)->orderBy('occurred_on')->orderBy('id');
+    }
+
+    /** المسودة المفتوحة وحدها تلتقط الإجراءات الجديدة تلقائيًا */
+    public function isOpen(): bool
+    {
+        return $this->status === 'draft';
     }
 
     public function isPublished(): bool
