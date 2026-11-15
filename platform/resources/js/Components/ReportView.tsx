@@ -6,15 +6,23 @@ import { IconCase, IconExecution, IconHearing, IconReports, IconTasks } from '@/
 import { DiamondRule } from '@/Components/LegalArt';
 import { StageDots } from '@/Components/StagePath';
 import { Button, cx, DateText, Num, Pill, TextArea, TextField } from '@/Components/ui';
+import { money } from '@/lib/format';
 
-export type ReportItem = { id: number; on: string; hijri: string; title: string; details: string | null; source: 'auto' | 'manual'; matter: string };
+const cur = (c: string) => (c === 'SAR' ? 'ريال' : c);
+/** المبالغ المحصّلة بعملاتها: «12,500.00 ريال» */
+function Amounts({ list }: { list: Amount[] }) {
+  return <>{list.map((a, i) => <span key={a.currency}>{i > 0 && ' + '}<bdi dir="ltr" className="num">{money(a.amount)}</bdi> {cur(a.currency)}</span>)}</>;
+}
+
+export type ReportItem = { id: number; on: string; title: string; details: string | null; source: 'auto' | 'manual'; matter: string };
 export type ReportMatter = { key: string; kind: 'case' | 'execution'; id: number; title: string; number: string | null; court: string | null; stage: string | null; stageLabel: string | null;
-  status: string | null; statusKey: string; hidden?: boolean; items: ReportItem[] };
+  status: string | null; statusKey: string; hidden?: boolean; items: ReportItem[]; collected?: Amount[] };
+export type Amount = { currency: string; amount: string };
 export type Report = {
   id: number; title: string; period: string; periodLabel: string; start: string; end: string; startHijri: string; endHijri: string;
   client: { id: number; name: string }; intro: string | null; nextSteps: string | null; status: 'draft' | 'closed' | 'published'; statusLabel: string; closedAt?: string | null;
   publishedAt: string | null; lockVersion: number; matters: ReportMatter[]; general: ReportItem[];
-  stats: { cases: number; executions: number; actions: number; hearings: number };
+  stats: { cases: number; executions: number; actions: number; hearings: number; collected?: Amount[] };
 };
 
 /** يعزل التواريخ والأرقام داخل النص العربي حتى لا ينقلب ترتيبها (2026-11-15 13:00) */
@@ -24,8 +32,8 @@ function Bidi({ text }: { text: string }) {
 }
 
 /** نموذج إضافة/تعديل إجراء — للمحامي فقط */
-function ItemForm({ reportId, item, matter, matters, onDone, start, end }: { reportId: number; item?: ReportItem; matter: string; matters: ReportMatter[]; onDone: () => void; start: string; end: string }) {
-  const [d, setD] = useState({ matter_key: item?.matter ?? matter, occurred_on: item?.on ?? end, title: item?.title ?? '', details: item?.details ?? '' });
+function ItemForm({ reportId, item, matter, matters, onDone }: { reportId: number; item?: ReportItem; matter: string; matters: ReportMatter[]; onDone: () => void }) {
+  const [d, setD] = useState({ matter_key: item?.matter ?? matter, title: item?.title ?? '', details: item?.details ?? '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const submit = () => {
@@ -36,8 +44,7 @@ function ItemForm({ reportId, item, matter, matters, onDone, start, end }: { rep
   return (
     <div className="detail-swap grid gap-3 rounded-[14px] border border-line bg-raised p-4 sm:grid-cols-2">
       <TextField className="sm:col-span-2" label="الإجراء" required value={d.title} onChange={(e) => setD({ ...d, title: e.target.value })} error={errors.title} placeholder="مثل: حضور اجتماع تسوية مع الطرف الآخر" maxLength={300} />
-      <TextField label="التاريخ" type="date" value={d.occurred_on} onChange={(e) => setD({ ...d, occurred_on: e.target.value })} error={errors.occurred_on} hint={`الفترة: ${start} — ${end}`} />
-      <label className="block">
+      <label className="block sm:col-span-2">
         <span className="field-label">يتبع</span>
         <select className="input" value={d.matter_key} onChange={(e) => setD({ ...d, matter_key: e.target.value })}>
           {matters.map((m) => <option key={m.key} value={m.key}>{m.title}</option>)}
@@ -53,19 +60,14 @@ function ItemForm({ reportId, item, matter, matters, onDone, start, end }: { rep
   );
 }
 
-/** خط زمني للإجراءات: تاريخ ميلادي وهجري، عقدة معيّن على مسار، والعنوان والتفاصيل */
-function Timeline({ items, editable, onEdit }: { items: ReportItem[]; editable: boolean; onEdit: (i: ReportItem) => void }) {
+/** قائمة الأعمال المنجزة خلال الفترة — بلا تواريخ، معيّن صغير لكل عمل */
+function WorkList({ items, editable, onEdit }: { items: ReportItem[]; editable: boolean; onEdit: (i: ReportItem) => void }) {
   return (
-    <ol className="relative">
-      <span aria-hidden className="absolute bottom-3 top-3 start-[118px] w-px bg-line sm:start-[142px]" />
-      {items.map((it, idx) => (
-        <li key={it.id} className="group relative grid grid-cols-[104px_28px_1fr] items-start gap-x-1 py-2.5 sm:grid-cols-[128px_28px_1fr]" style={{ animationDelay: `${idx * 40}ms` }}>
-          <span className="pt-0.5 text-[12.5px] leading-tight">
-            <bdi dir="ltr" className="num block font-semibold text-ink">{it.on}</bdi>
-            <span className="block text-[11.5px] text-muted">{it.hijri}</span>
-          </span>
-          <span className="flex justify-center pt-1.5"><span className="diamond size-2.5 bg-ink text-ink ring-4 ring-surface" aria-hidden /></span>
-          <span className="min-w-0">
+    <ul className="divide-y divide-line/70">
+      {items.map((it) => (
+        <li key={it.id} className="group flex items-start gap-3 py-2.5">
+          <span className="diamond mt-2 size-2 shrink-0 bg-ink text-ink" aria-hidden />
+          <span className="min-w-0 flex-1">
             <span className="flex items-start gap-2">
               <span className="flex-1 font-medium text-text"><Bidi text={it.title} /></span>
               {editable && (
@@ -73,7 +75,7 @@ function Timeline({ items, editable, onEdit }: { items: ReportItem[]; editable: 
                   {it.source === 'manual' && <span className="pill pill-info !h-5">يدوي</span>}
                   <button type="button" className="btn btn-ghost btn-sm h-7 px-1.5" onClick={() => onEdit(it)} aria-label={`تعديل: ${it.title}`}><Pencil className="size-3.5" /></button>
                   <button type="button" className="btn btn-ghost btn-sm h-7 px-1.5 text-negative" aria-label={`حذف: ${it.title}`}
-                    onClick={() => { if (confirm('حذف هذا الإجراء من التقرير؟')) router.delete(`/office/client-report-items/${it.id}`, { preserveScroll: true }); }}><Trash2 className="size-3.5" /></button>
+                    onClick={() => { if (confirm('حذف هذا العمل من التقرير؟')) router.delete(`/office/client-report-items/${it.id}`, { preserveScroll: true }); }}><Trash2 className="size-3.5" /></button>
                 </span>
               )}
             </span>
@@ -81,7 +83,7 @@ function Timeline({ items, editable, onEdit }: { items: ReportItem[]; editable: 
           </span>
         </li>
       ))}
-    </ol>
+    </ul>
   );
 }
 
@@ -112,10 +114,12 @@ function MatterCard({ m, editable, report, hidden, onToggleHidden }: { m: Report
       {open && (
         <div className="detail-swap px-5 pb-4 pt-3">
           {m.kind === 'case' && m.stage && <div className="mb-2 flex items-center gap-3 text-[12.5px] text-muted"><StageDots current={m.stage} /><span>المرحلة: {m.stageLabel}</span></div>}
-          {m.items.length ? <Timeline items={m.items} editable={editable} onEdit={(i) => setForm(i)} />
-            : <p className="py-3 text-[13.5px] text-muted">لا إجراءات جديدة خلال هذه الفترة — الملف في مرحلة «{m.stageLabel ?? m.status}».</p>}
-          {editable && (form ? <ItemForm reportId={report.id} item={form === 'new' ? undefined : form} matter={m.key} matters={report.matters} start={report.start} end={report.end} onDone={() => setForm(null)} />
-            : <button type="button" className="btn btn-ghost btn-sm mt-1" onClick={() => setForm('new')}><Plus className="size-4" />إضافة إجراء لهذا الملف</button>)}
+          <WorkList items={m.items} editable={editable} onEdit={(i) => setForm(i)} />
+          {m.collected && m.collected.length > 0 && (
+            <p className="mt-2 inline-flex items-center gap-2 rounded-[10px] bg-[var(--positive-soft)] px-3 py-1.5 text-[13.5px] text-positive">المحصَّل خلال الفترة: <strong className="font-semibold"><Amounts list={m.collected} /></strong></p>
+          )}
+          {editable && (form ? <ItemForm reportId={report.id} item={form === 'new' ? undefined : form} matter={m.key} matters={report.matters} onDone={() => setForm(null)} />
+            : <button type="button" className="btn btn-ghost btn-sm mt-1" onClick={() => setForm('new')}><Plus className="size-4" />إضافة عمل لهذا الملف</button>)}
         </div>
       )}
     </article>
@@ -148,9 +152,10 @@ export function ReportView({ report, editable = false, pdfHref, toolbar }: { rep
   const toggle = (key: string) => { const h = hidden.includes(key) ? hidden.filter((k) => k !== key) : [...hidden, key]; setHidden(h); save(h); };
   const cases = report.matters.filter((m) => m.kind === 'case');
   const execs = report.matters.filter((m) => m.kind === 'execution');
+  const collected = report.stats.collected ?? [];
   const stats: [string, number, ReactNode][] = [
     ['قضايا مشمولة', report.stats.cases, <IconCase key="c" size={18} />], ['طلبات تنفيذ', report.stats.executions, <IconExecution key="e" size={18} />],
-    ['إجراءات خلال الفترة', report.stats.actions, <IconTasks key="t" size={18} />], ['جلسات', report.stats.hearings, <IconHearing key="h" size={18} />],
+    ['أعمال خلال الفترة', report.stats.actions, <IconTasks key="t" size={18} />], ['جلسات', report.stats.hearings, <IconHearing key="h" size={18} />],
   ];
 
   return (
@@ -173,13 +178,19 @@ export function ReportView({ report, editable = false, pdfHref, toolbar }: { rep
             <p className="text-[13.5px] font-medium text-ink">مكتب فيصل حميضان الحميضان للمحاماة</p>
           </div>
         </div>
-        <dl className="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <dl className={cx('mt-6 grid grid-cols-2 gap-3', collected.length ? 'lg:grid-cols-5' : 'lg:grid-cols-4')}>
           {stats.map(([l, v, ic]) => (
             <div key={l} className="rounded-[14px] border border-ink/10 bg-white/85 px-4 py-3">
               <dt className="flex items-center gap-1.5 text-[12.5px] text-muted">{ic}{l}</dt>
               <dd className="mt-1 text-[30px] font-semibold leading-none text-ink"><CountUp value={v} /></dd>
             </div>
           ))}
+          {collected.length > 0 && (
+            <div className="col-span-2 rounded-[14px] border border-positive/25 bg-white/90 px-4 py-3 lg:col-span-1">
+              <dt className="flex items-center gap-1.5 text-[12.5px] text-muted"><IconExecution size={18} />المبالغ المحصَّلة</dt>
+              <dd className="mt-1.5 text-[19px] font-semibold leading-tight text-positive"><Amounts list={collected} /></dd>
+            </div>
+          )}
         </dl>
         <div className="mt-5 flex flex-wrap gap-2">
           <a href={pdfHref} className="btn btn-primary"><IconReports size={18} />تنزيل PDF</a>
@@ -207,8 +218,8 @@ export function ReportView({ report, editable = false, pdfHref, toolbar }: { rep
 
       {(report.general.length > 0 || editable) && (
         <Note title="أعمال أخرى لصالحكم" icon={<IconTasks size={19} />}>
-          {report.general.length ? <Timeline items={report.general} editable={editable} onEdit={(i) => setGeneralForm(i)} /> : <p className="text-[13.5px] text-muted">أضف هنا أي عمل أنجزته للعميل خارج المنصة أو خارج ملف محدد.</p>}
-          {editable && (generalForm ? <ItemForm reportId={report.id} item={generalForm === 'new' ? undefined : generalForm} matter="general" matters={report.matters} start={report.start} end={report.end} onDone={() => setGeneralForm(null)} />
+          {report.general.length ? <WorkList items={report.general} editable={editable} onEdit={(i) => setGeneralForm(i)} /> : <p className="text-[13.5px] text-muted">أضف هنا أي عمل أنجزته للعميل خارج المنصة أو خارج ملف محدد.</p>}
+          {editable && (generalForm ? <ItemForm reportId={report.id} item={generalForm === 'new' ? undefined : generalForm} matter="general" matters={report.matters} onDone={() => setGeneralForm(null)} />
             : <button type="button" className="btn btn-ghost btn-sm mt-1" onClick={() => setGeneralForm('new')}><Plus className="size-4" />إضافة عمل</button>)}
         </Note>
       )}

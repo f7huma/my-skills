@@ -89,10 +89,12 @@ class ClientReportController extends Controller
     public function storeItem(Request $request, ClientReport $report)
     {
         $data = $request->validate([
-            'matter_key' => ['required', Rule::in($this->matterKeys($report))], 'occurred_on' => 'required|date',
+            'matter_key' => ['required', Rule::in($this->matterKeys($report))],
             'title' => 'required|string|max:300', 'details' => 'nullable|string|max:3000',
         ], ['title.required' => 'اكتب الإجراء.']);
-        $item = $report->items()->create($data + ['source' => 'manual']);
+        // لا تاريخ يُعرض للإجراءات؛ يُحفظ داخليًا لترتيب القائمة فقط (آخر القائمة)
+        $on = min(today_local()->toDateString(), $report->period_end->toDateString());
+        $item = $report->items()->create($data + ['occurred_on' => max($on, $report->period_start->toDateString()), 'source' => 'manual']);
         Audit::log('client_report.item_added', $report, ['item' => $item->id]);
 
         return back()->with('success', 'أُضيف الإجراء.');
@@ -101,7 +103,7 @@ class ClientReportController extends Controller
     public function updateItem(Request $request, ClientReportItem $item)
     {
         $data = $request->validate([
-            'matter_key' => ['required', Rule::in($this->matterKeys($item->report))], 'occurred_on' => 'required|date',
+            'matter_key' => ['required', Rule::in($this->matterKeys($item->report))],
             'title' => 'required|string|max:300', 'details' => 'nullable|string|max:3000',
         ]);
         $item->update($data);

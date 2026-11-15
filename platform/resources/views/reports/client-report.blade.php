@@ -4,6 +4,8 @@
   $stages = ['intake', 'reconciliation', 'filing', 'court', 'judgment', 'objection', 'execution', 'closed'];
   $stageShort = ['intake' => 'الإعداد', 'reconciliation' => 'الصلح', 'filing' => 'القيد', 'court' => 'المحكمة', 'judgment' => 'الحكم', 'objection' => 'الاعتراض', 'execution' => 'التنفيذ', 'closed' => 'منتهية'];
   $visible = collect($r['matters'])->filter(fn ($m) => count($m['items']) || true);
+  $amounts = fn ($list) => collect($list)->map(fn ($a) => '<span class="num">'.number_format((float) $a['amount'], 2).'</span> '.($a['currency'] === 'SAR' ? 'ريال' : e($a['currency'])))->implode(' + ');
+  $collected = $r['stats']['collected'] ?? [];
   $ink = '#303741'; $mist = '#e1e5e6'; $off = '#f4f5f4'; $line = '#d5dadc'; $muted = '#5b6570';
 @endphp
 <!doctype html>
@@ -93,9 +95,15 @@
   <table class="stats" style="margin-top:5mm; border-spacing:2mm; border-collapse:separate;"><tr>
     <td><div class="v num">{{ $r['stats']['cases'] }}</div><div class="k">قضايا مشمولة</div></td>
     <td><div class="v num">{{ $r['stats']['executions'] }}</div><div class="k">طلبات تنفيذ</div></td>
-    <td><div class="v num">{{ $r['stats']['actions'] }}</div><div class="k">إجراءات خلال الفترة</div></td>
+    <td><div class="v num">{{ $r['stats']['actions'] }}</div><div class="k">أعمال خلال الفترة</div></td>
     <td><div class="v num">{{ $r['stats']['hearings'] }}</div><div class="k">جلسات</div></td>
   </tr></table>
+  @if(count($collected))
+  <table style="margin-top:2mm;"><tr><td style="background:#ffffff; border:0.6pt solid #b9dccb; padding:3mm 4mm;">
+    <span class="small muted">المبالغ المحصَّلة خلال الفترة</span>&nbsp;&nbsp;
+    <span style="font-size:14pt; font-weight:700; color:#136a43;">{!! $amounts($collected) !!}</span>
+  </td></tr></table>
+  @endif
 </div>
 
 @if($r['intro'])
@@ -128,18 +136,16 @@
           @endforeach
         </tr></table>
       @endif
-      @if(count($m['items']))
-        <table class="tl">
+      <table class="tl">
           @foreach($m['items'] as $it)
           <tr>
-            <td class="date"><div class="g num">{{ $it['on'] }}</div><div class="h">{!! $n($it['hijri']) !!}</div></td>
             <td class="mark"><table style="width:2mm; margin:1.6mm auto 0;"><tr><td style="height:2mm; background:{{ $ink }};"></td></tr></table></td>
             <td class="what"><div class="a">{!! $n($it['title']) !!}</div>@if($it['details'])<div class="d">{!! $n($it['details']) !!}</div>@endif</td>
           </tr>
           @endforeach
         </table>
-      @else
-        <div class="empty">لا إجراءات جديدة خلال هذه الفترة — الملف في مرحلة «{{ $m['stageLabel'] ?? $m['status'] }}».</div>
+      @if(count($m['collected'] ?? []))
+        <div style="margin-top:2mm; color:#136a43; font-size:9.5pt;">المحصَّل خلال الفترة: <b>{!! $amounts($m['collected']) !!}</b></div>
       @endif
     </div>
   </div>
@@ -152,7 +158,6 @@
 <table class="tl">
   @foreach($r['general'] as $it)
   <tr>
-    <td class="date"><div class="g num">{{ $it['on'] }}</div><div class="h">{!! $n($it['hijri']) !!}</div></td>
     <td class="mark"><table style="width:2mm; margin:1.6mm auto 0;"><tr><td style="height:2mm; background:{{ $ink }};"></td></tr></table></td>
     <td class="what"><div class="a">{!! $n($it['title']) !!}</div>@if($it['details'])<div class="d">{!! $n($it['details']) !!}</div>@endif</td>
   </tr>

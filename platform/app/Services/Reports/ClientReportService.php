@@ -39,6 +39,27 @@ class ClientReportService
         return $v === '' ? null : $v;
     }
 
+    /** يحذف التواريخ والأوقات من نص الإجراء المولَّد (التقرير قائمة أعمال بلا تواريخ) */
+    public static function undate(?string $v): ?string
+    {
+        if ($v === null) {
+            return null;
+        }
+        $date = '(?:\d{4}-\d{1,2}-\d{1,2}|\d{1,2}\/\d{1,2}\/\d{4})(?:\s*هـ)?(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?';
+        $lines = [];
+        foreach (preg_split('/\R/u', $v) as $line) {
+            // سطر تاريخ فقط، أو «تاريخ …: 2026-11-12»
+            if (preg_match('/^\s*(?:[^:\n]{0,40}:\s*)?'.$date.'\s*[.،]?\s*$/u', $line)) {
+                continue;
+            }
+            $line = preg_replace('/\s{2,}/u', ' ', preg_replace('/\s*(?:بتاريخ|في|يوم)?\s*'.$date.'/u', '', $line));
+            $lines[] = preg_replace('/^[\s—\-·:،]+|[\s—\-·:،]+$/u', '', $line); // trim() يكسر الحروف متعددة البايت
+        }
+        $out = trim(implode("\n", array_filter($lines, fn ($l) => $l !== '')));
+
+        return $out === '' ? null : $out;
+    }
+
     /** حدود الفترة بالتقويم الميلادي: الأسبوع يبدأ الأحد، والشهر والسنة كاملان */
     public function range(string $period, string $anchor): array
     {
@@ -114,21 +135,20 @@ class ClientReportService
             }
             $touched[$key] = true;
         }
-        // المبالغ المقبوضة الظاهرة للعميل
-        $received = Collection::where('client_id', $cid)->where('kind', 'received')->where('visible_to_client', true)
-            ->whereBetween('occurred_on', [$from->toDateString(), $to->toDateString()])->orderBy('occurred_on')->get();
-        foreach ($received as $c) {
-            $key = $c->execution_request_id ? 'execution:'.$c->execution_request_id : ($c->legal_case_id ? 'case:'.$c->legal_case_id : 'general');
-            $items[] = ['matter_key' => $key, 'occurred_on' => $c->occurred_on->toDateString(),
-                'title' => 'تحصيل مبلغ '.number_format((float) $c->amount, 2).' '.$c->currency, 'details' => $c->description, 'source_ref' => 'collection:'.$c->id];
-            $touched[$key] = true;
-        }
+        // المبالغ المقبوضة الظاهرة للعميل: لا تُدرج إجراءاتٍ، بل مؤشرًا بمجموعها حسب الملف والعملة
+        $collected = Collection::where('client_id', $cid)->where('kind', 'received')->where('visible_to_client', true)
+            ->whereBetween('occurred_on', [$from->toDateString(), $to->toDateString()])
+            ->selectRaw('legal_case_id, execution_request_id, currency, sum(amount)::text as total')
+            ->groupBy('legal_case_id', 'execution_request_id', 'currency')->toBase()->get()
+            ->map(fn ($c) => ['matter' => $c->execution_request_id ? 'execution:'.$c->execution_request_id : ($c->legal_case_id ? 'case:'.$c->legal_case_id : 'general'),
+                'currency' => $c->currency, 'amount' => $c->total])
+            ->filter(fn ($c) => (float) $c['amount'] > 0)->values()->all();
 
-        // لقطة الملفات: كل الملفات السارية، وأي ملف وقع عليه إجراء خلال الفترة
-        $cases = LegalCase::with('filings')->where('client_id', $cid)->whereNull('archived_at')->where('work_status', '!=', 'draft')->get()
-            ->filter(fn ($c) => in_array($c->work_status, LegalCase::ACTIVE_STATUSES, true) || isset($touched['case:'.$c->id]));
-        $execs = ExecutionRequest::where('client_id', $cid)->where('status', '!=', 'draft')->get()
-            ->filter(fn ($e) => ! in_array($e->status, ['completed', 'closed', 'rejected'], true) || isset($touched['execution:'.$e->id]));
+        // لقطة الملفات: فقط القضايا والطلبات التي وقع عليها إجراء خلال الفترة
+        $caseIds = collect(array_keys($touched))->filter(fn ($k) => str_starts_with($k, 'case:'))->map(fn ($k) => (int) substr($k, 5))->all();
+        $execIds = collect(array_keys($touched))->filter(fn ($k) => str_starts_with($k, 'execution:'))->map(fn ($k) => (int) substr($k, 10))->all();
+        $cases = LegalCase::with('filings')->where('client_id', $cid)->whereIn('id', $caseIds)->whereNull('archived_at')->where('work_status', '!=', 'draft')->get();
+        $execs = ExecutionRequest::where('client_id', $cid)->whereIn('id', $execIds)->where('status', '!=', 'draft')->get();
         $matters = [];
         foreach ($cases as $c) {
             $filing = $c->filings->whereNotNull('case_number')->sortByDesc('registered_on')->first();
@@ -151,19 +171,19 @@ class ClientReportService
         }
         unset($i);
 
-        return [$items, $matters];
+        return [$items, $matters, $collected];
     }
 
     /** إعادة بناء كاملة: تحذف المولَّد كله (وما حُذف سابقًا يعود)، وتُبقي إضافات المحامي اليدوية */
     public function fill(ClientReport $report): void
     {
         DB::transaction(function () use ($report) {
-            [$items, $matters] = $this->candidates($report);
+            [$items, $matters, $collected] = $this->candidates($report);
             $report->items()->where('source', 'auto')->delete();
             foreach ($items as $i) {
                 $report->items()->create($i + ['source' => 'auto']);
             }
-            $report->forceFill(['matters' => $this->keepManualMatters($report, $matters), 'dismissed_refs' => null])->save();
+            $report->forceFill(['matters' => $this->keepManualMatters($report, $matters), 'collected' => $collected, 'dismissed_refs' => null])->save();
         });
     }
 
@@ -182,7 +202,10 @@ class ClientReportService
             if (! $report->isOpen()) {
                 return 0;
             }
-            [$items, $matters] = $this->candidates($report);
+            [$items, $matters, $collected] = $this->candidates($report);
+            // التحصيل صار مؤشرًا لا إجراءً: تُزال بنوده القديمة من القائمة
+            $report->items()->where('source', 'auto')->where(fn ($q) => $q->where('source_ref', 'like', 'collection:%')
+                ->orWhere(fn ($q) => $q->whereNull('source_ref')->where('title', 'like', 'تحصيل مبلغ %')))->delete();
             $existing = $report->items()->get();
             // إجراءات أُنشئت قبل وجود المراجع: تُربط بمصدرها إن طابقته حتى لا تتكرر
             foreach ($existing->where('source', 'auto')->whereNull('source_ref') as $old) {
@@ -200,7 +223,7 @@ class ClientReportService
                     $added++;
                 }
             }
-            $report->forceFill(['matters' => $this->keepManualMatters($report, $matters)])->save();
+            $report->forceFill(['matters' => $this->keepManualMatters($report, $matters), 'collected' => $collected])->save();
 
             return $added;
         });
@@ -237,12 +260,22 @@ class ClientReportService
     {
         $r->loadMissing('client:id,name', 'items');
         $byKey = $r->items->groupBy('matter_key');
-        $item = fn ($i) => ['id' => $i->id, 'on' => $i->occurred_on->toDateString(), 'hijri' => $this->cal->hijri($i->occurred_on),
-            'title' => $i->title, 'details' => $i->details, 'source' => $i->source, 'matter' => $i->matter_key];
+        // المولَّد تُحذف منه التواريخ؛ ما كتبه المحامي بيده يُعرض كما كتبه
+        $item = fn ($i) => ['id' => $i->id, 'on' => $i->occurred_on->toDateString(),
+            'title' => $i->source === 'auto' ? (self::undate($i->title) ?? $i->title) : $i->title,
+            'details' => $i->source === 'auto' ? self::undate($i->details) : $i->details, 'source' => $i->source, 'matter' => $i->matter_key];
+        $money = collect($r->collected ?? []);
+        $sum = fn ($rows) => collect($rows)->groupBy('currency')->map(fn ($g, $cur) => ['currency' => $cur, 'amount' => number_format($g->sum(fn ($x) => (float) $x['amount']), 2, '.', '')])
+            ->filter(fn ($x) => (float) $x['amount'] > 0)->values()->all();
+        // لا يظهر في التقرير إلا ملف وقع فيه إجراء خلال الفترة
         $matters = collect($r->matters ?? [])
             ->when($forClient, fn ($m) => $m->reject(fn ($x) => $x['hidden'] ?? false))
-            ->map(fn ($m) => $m + ['items' => ($byKey[$m['key']] ?? collect())->map($item)->values()->all()])->values()->all();
+            ->map(fn ($m) => $m + ['items' => ($byKey[$m['key']] ?? collect())->map($item)->values()->all(),
+                'collected' => $sum($money->where('matter', $m['key']))])
+            ->filter(fn ($m) => count($m['items']) > 0)->values()->all();
         $general = ($byKey['general'] ?? collect())->map($item)->values()->all();
+        $hiddenKeys = collect($r->matters ?? [])->where('hidden', true)->pluck('key')->all();
+        $collectedTotal = $sum($money->reject(fn ($c) => $forClient && in_array($c['matter'], $hiddenKeys, true)));
         $visibleItems = collect($matters)->sum(fn ($m) => count($m['items'])) + count($general);
 
         return [
@@ -258,6 +291,7 @@ class ClientReportService
                 'executions' => collect($matters)->where('kind', 'execution')->count(),
                 'actions' => $visibleItems,
                 'hearings' => collect($matters)->flatMap(fn ($m) => $m['items'])->filter(fn ($i) => str_contains($i['title'], 'جلسة'))->count(),
+                'collected' => $collectedTotal, // فارغ إن لم يُحصَّل شيء، فلا يظهر المؤشر
             ],
         ];
     }

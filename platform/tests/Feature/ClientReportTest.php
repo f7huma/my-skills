@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\Client;
 use App\Models\ClientReport;
+use App\Models\Collection;
 use App\Models\LegalCase;
 use App\Models\TimelineEvent;
 use App\Models\User;
@@ -150,5 +152,40 @@ class ClientReportTest extends TestCase
         Timeline::record($mine, 'case.note', 'إجراء خارج الفترة', null, null, true, now()->addMonths(2));
         Timeline::record($mine, 'case.note', 'ملاحظة داخلية', null, null, false, now());
         $this->assertSame($count, $r->items()->count());
+    }
+
+    public function test_only_matters_with_work_in_period_and_collected_indicator_only_when_collected(): void
+    {
+        $this->demo();
+        $r = $this->make();
+        $page = $this->actingAs($this->lawyer())->get("/office/client-reports/{$r->id}")->viewData('page')['props']['report'];
+        foreach ($page['matters'] as $m) {
+            $this->assertNotEmpty($m['items'], 'كل ملف معروض وقع فيه عمل خلال الفترة');
+            foreach ($m['items'] as $i) {
+                $this->assertStringNotContainsString('تحصيل مبلغ', $i['title'], 'التحصيل مؤشر لا بند في القائمة');
+                $this->assertArrayNotHasKey('hijri', $i);
+                if ($i['source'] === 'auto') {
+                    $this->assertDoesNotMatchRegularExpression('/\d{4}-\d{2}-\d{2}/', $i['title'].' '.$i['details'], 'لا تواريخ في الأعمال');
+                }
+            }
+        }
+        $touched = $r->items()->pluck('matter_key')->unique()->all();
+        foreach ($r->fresh()->matters as $m) {
+            $this->assertContains($m['key'], $touched);
+        }
+        $expected = Collection::where('client_id', $r->client_id)->where('kind', 'received')->where('visible_to_client', true)
+            ->whereBetween('occurred_on', [$r->period_start->toDateString(), $r->period_end->toDateString()])->sum('amount');
+        if ((float) $expected > 0) {
+            $this->assertEqualsWithDelta((float) $expected, collect($page['stats']['collected'])->sum(fn ($a) => (float) $a['amount']), 0.01);
+        } else {
+            $this->assertSame([], $page['stats']['collected'], 'لا مؤشر إن لم يُحصَّل شيء');
+        }
+
+        // عميل بلا تحصيل في الفترة: لا مؤشر إطلاقًا
+        $c = Client::create(['name' => 'عميل بلا تحصيل', 'type' => 'individual']);
+        $this->post('/office/client-reports', ['client_id' => $c->id, 'period' => 'monthly', 'anchor' => today_local()->toDateString()]);
+        $empty = ClientReport::latest('id')->firstOrFail();
+        $p2 = $this->get("/office/client-reports/{$empty->id}")->viewData('page')['props']['report'];
+        $this->assertSame([], $p2['stats']['collected']);
     }
 }

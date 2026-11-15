@@ -17,7 +17,7 @@ class ClientReport extends Model
 
     protected function casts(): array
     {
-        return ['period_start' => 'date', 'period_end' => 'date', 'matters' => 'array', 'published_at' => 'datetime', 'closed_at' => 'datetime', 'dismissed_refs' => 'array'];
+        return ['period_start' => 'date', 'period_end' => 'date', 'matters' => 'array', 'published_at' => 'datetime', 'closed_at' => 'datetime', 'dismissed_refs' => 'array', 'collected' => 'array'];
     }
 
     public function client(): BelongsTo
